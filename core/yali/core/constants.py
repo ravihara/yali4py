@@ -1,0 +1,7 @@
+from os import cpu_count
+
+_OS_CPU_COUNT = cpu_count() or 1
+
+DEFAULT_PROC_WORKERS = _OS_CPU_COUNT
+DEFAULT_THREAD_WORKERS = min(32, _OS_CPU_COUNT + 4)
+DEFAULT_TERMINATOR = None

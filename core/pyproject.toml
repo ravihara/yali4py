@@ -1,0 +1,52 @@
+[build-system]
+requires = ["poetry-core>=1.0.0"]
+build-backend = "poetry.core.masonry.api"
+
+[tool.poetry]
+name = "yali-core"
+version = "0.1.0"
+description = "Core modules for Yali toolkit"
+license = "Apache-2.0"
+authors = ["Ravishankar Haranath <ravikh@gmail.com>"]
+readme = "README.md"
+include = ["VERSION", "README.md", "CHANGELOG.md"]
+packages = [{ include = "yali" }]
+
+[tool.poetry.dependencies]
+python = "^3.11"
+pydantic = { extras = ["email"], version = "^2.8.2" }
+pydantic-settings = "^2.4.0"
+pydantic-extra-types = "^2.9.0"
+cachetools = "^5.4.0"
+lz4 = "^4.3.3"
+zstandard = "^0.23.0"
+netifaces2 = "^0.0.22"
+
+[tool.poetry.group.dev.dependencies]
+black = "^24.8.0"
+flake8 = "^7.1.1"
+isort = "^5.13.2"
+pylint = "^3.2.6"
+pyright = "^1.1.376"
+
+[tool.poetry.group.test.dependencies]
+pytest = "^8.3.2"
+pytest-asyncio = "^0.23.8"
+pytest-dependency = "^0.6.0"
+
+[tool.black]
+line-length = 100
+target-version = ['py311']
+
+[tool.pyright]
+
+[tool.pylint."messages control"]
+disable = "all"
+enable = [
+    "empty-docstring",
+    "missing-module-docstring",
+    "missing-class-docstring",
+    "missing-function-docstring",
+]
+ignore = ["setup.py", "__init__.py"]
+ignore-paths = ["tests"]
