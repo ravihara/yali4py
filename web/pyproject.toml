@@ -1,0 +1,48 @@
+[build-system]
+requires = ["poetry-core>=1.0.0"]
+build-backend = "poetry.core.masonry.api"
+
+[tool.poetry]
+name = "yali-telemetry"
+version = "0.1.0"
+description = "Logging, metrics and tracing modules for Yali toolkit"
+license = "Apache-2.0"
+authors = ["Ravishankar Haranath <ravikh@gmail.com>"]
+readme = "README.md"
+include = ["VERSION", "README.md", "CHANGELOG.md"]
+packages = [{ include = "yali" }]
+
+[tool.poetry.dependencies]
+python = "^3.11"
+yali-core = { path = "../core", develop = true }
+
+[tool.poetry.group.dev.dependencies]
+black = "^24.8.0"
+flake8 = "^7.1.1"
+isort = "^5.13.2"
+pylint = "^3.2.6"
+pyright = "^1.1.376"
+
+[tool.poetry.group.test.dependencies]
+pytest = "^8.3.2"
+pytest-asyncio = "^0.23.8"
+pytest-dependency = "^0.6.0"
+
+[tool.poetry-monorepo.deps]
+
+[tool.black]
+line-length = 100
+target-version = ['py311']
+
+[tool.pyright]
+
+[tool.pylint."messages control"]
+disable = "all"
+enable = [
+    "empty-docstring",
+    "missing-module-docstring",
+    "missing-class-docstring",
+    "missing-function-docstring",
+]
+ignore = ["setup.py", "__init__.py"]
+ignore-paths = ["tests"]
