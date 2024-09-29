@@ -9,6 +9,9 @@ from pydantic import (
     StringConstraints,
 )
 from typing import Annotated, Literal
+from .utils.common import syshash_id
+
+_SERVICE_INST_ID_KEY = "service.instance.id"
 
 
 class MongoDBSettings(BaseSettings):
@@ -31,7 +34,7 @@ OTelResourceAttrsStr = Annotated[
     StringConstraints(
         strip_whitespace=True,
         to_lower=True,
-        pattern=r"^service.name=[a-zA-Z0-9_.-]+,service.version=[a-zA-Z0-9_.-]+,deployment.environment=[a-zA-Z0-9_.-]+(,\w+=[a-zA-Z0-9_.,%&@\'\"\[\]-]+)*$",
+        pattern=r"^service.name=[a-zA-Z0-9_.-]+,service.version=[a-zA-Z0-9_.-]+,deployment.environment=[a-zA-Z0-9_.-]+(,[a-zA-Z0-9_.]+=[a-zA-Z0-9_.,%&@\'\"\[\]-]+)*$",
     ),
 ]
 
@@ -55,9 +58,7 @@ class OTelOTLPSettings(BaseSettings):
     otel_export_interval_millis: float = Field(
         5000,
         ge=1000,
-        validation_alias=AliasChoices(
-            "YALI_OTEL_EXPORT_INTERVAL_MILLIS", "OTEL_EXPORT_INTERVAL_MILLIS"
-        ),
+        validation_alias=AliasChoices("YALI_OTEL_EXPORT_INTERVAL_MILLIS"),
     )
     otel_exporter_certificate: str | None = Field(
         None,
@@ -67,13 +68,11 @@ class OTelOTLPSettings(BaseSettings):
     )
     otel_exporter_certchain: str | None = Field(
         None,
-        validation_alias=AliasChoices(
-            "YALI_OTEL_EXPORTER_CERTCHAIN", "OTEL_EXPORTER_OTLP_CERTCHAIN"
-        ),
+        validation_alias=AliasChoices("YALI_OTEL_EXPORTER_CERTCHAIN"),
     )
     otel_exporter_privkey: str | None = Field(
         None,
-        validation_alias=AliasChoices("YALI_OTEL_EXPORTER_PRIVKEY", "OTEL_EXPORTER_OTLP_PRIVKEY"),
+        validation_alias=AliasChoices("YALI_OTEL_EXPORTER_PRIVKEY"),
     )
 
     @computed_field
@@ -85,6 +84,9 @@ class OTelOTLPSettings(BaseSettings):
         for resource_pair in resource_pairs:
             key, value = resource_pair.split("=")
             res_attributes[key] = value
+
+        if _SERVICE_INST_ID_KEY not in res_attributes:
+            res_attributes[_SERVICE_INST_ID_KEY] = syshash_id()
 
         return res_attributes
 

@@ -1,4 +1,4 @@
-from core.tests.samples.uni_type import ChildClass, GrandChildClass, ParentClass
+from tests.samples.ri_singleton import ChildClass, GrandChildClass, ParentClass
 
 parent01: ParentClass = ParentClass("parent-01")
 parent02: ParentClass = ParentClass("parent-02")
@@ -47,9 +47,9 @@ def test_instance_values():
     assert c01_val == c02_val
     assert g01_val == g02_val
 
-    assert p01_val == "parent-01"
-    assert c01_val == "child-01"
-    assert g01_val == "grand-child-01"
+    assert p01_val == "parent-02"
+    assert c01_val == "child-02"
+    assert g01_val == "grand-child-02"
 
 
 def test_class_values():

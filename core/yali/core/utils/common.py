@@ -11,6 +11,12 @@ from cachetools.func import ttl_cache
 
 
 @staticmethod
+def os_uname_str():
+    uname_info = os.uname()
+    return f"{uname_info.nodename}|{uname_info.sysname}|{uname_info.release}|{uname_info.version}|{uname_info.machine}"
+
+
+@staticmethod
 def is_json_data(data: Any):
     return isinstance(data, (dict, list))
 
@@ -25,14 +31,14 @@ def safe_load_json(data: str, **kwargs):
 
 
 @staticmethod
-def sorted_alphanumeric(data: Iterable):
+def alphanum_sorted(data: Iterable):
     convert = lambda text: int(text) if text.isdigit() else text.lower()
     alphanum_key = lambda key: [convert(c) for c in re.split(r"(\d+)", key)]
     return sorted(data, key=alphanum_key)
 
 
 @staticmethod
-def size_of_object(obj, seen=None):
+def sizeof_object(obj, seen=None):
     """Recursively find the total size of an object including its contents."""
     size = sys.getsizeof(obj)
 
@@ -47,16 +53,16 @@ def size_of_object(obj, seen=None):
     seen.add(obj_id)
 
     if isinstance(obj, dict):
-        size += sum([size_of_object(k, seen) for k in obj.keys()])
-        size += sum([size_of_object(v, seen) for v in obj.values()])
+        size += sum([sizeof_object(k, seen) for k in obj.keys()])
+        size += sum([sizeof_object(v, seen) for v in obj.values()])
     elif isinstance(obj, (list, tuple, set, frozenset)):
-        size += sum([size_of_object(i, seen) for i in obj])
+        size += sum([sizeof_object(i, seen) for i in obj])
 
     return size
 
 
 @staticmethod
-def get_ip_addresses():
+def get_sys_ipaddrs():
     """Get all IP addresses of the machine.
 
     Returns:
@@ -79,80 +85,77 @@ def get_ip_addresses():
 
 
 @staticmethod
-def runtime_net_uuid(hash_algo: str = "md5"):
-    """Generate a unique ID combined with pid and ip-addresses.
-
-    Args:
-        hash_algo: The hashing algorithm to use. Default is "md5".
-
-    Returns:
-        A unique ID.
-    """
-
-    ip_addresses = get_ip_addresses()
-
-    if not ip_addresses:
-        ip_addresses = ["127.0.0.1"]
-
-    ip_addresses.sort()
-
-    str_val = "".join(ip_addresses) + str(os.getpid()) + uuid4().hex
-
-    if hash_algo and hash_algo in hashlib.algorithms_guaranteed:
-        return hashlib.new(hash_algo, str_val.encode()).hexdigest()
-
-    return hashlib.sha256(str_val.encode()).hexdigest()
-
-
-@staticmethod
 @ttl_cache(maxsize=128, ttl=600)
-def runtime_net_id(suffix: str, hash_algo: str = "md5"):
+def id_by_proc(suffix: str, hash_algo: str = "sha256"):
     """Generate an identifier combined with pid and ip-addresses.
 
     Args:
         suffix: The suffix to add to the ID.
-        hash_algo: The hashing algorithm to use. Default is "md5".
+        hash_algo: The hashing algorithm to use. Default is "sha256".
 
     Returns:
         A unique ID.
     """
 
-    ip_addresses = get_ip_addresses()
+    ip_addresses = get_sys_ipaddrs()
 
     if not ip_addresses:
         ip_addresses = ["127.0.0.1"]
 
     ip_addresses.sort()
 
-    str_val = "".join(ip_addresses) + str(os.getpid()) + suffix
+    str_val = "".join(ip_addresses) + os_uname_str() + str(os.getpid())
 
     if hash_algo and hash_algo in hashlib.algorithms_guaranteed:
-        return hashlib.new(hash_algo, str_val.encode()).hexdigest()
+        id_val = hashlib.new(hash_algo, str_val.encode()).hexdigest() + suffix
+    else:
+        id_val = hashlib.sha256(str_val.encode()).hexdigest() + suffix
 
-    return hashlib.sha256(str_val.encode()).hexdigest()
+    return id_val
 
 
 @staticmethod
 @ttl_cache(maxsize=128, ttl=600)
-def netinfo_suffixed_name(basename: str, extension: str = ".out"):
-    """Get the base name of the file.
+def syshash_filename(basename: str, extension: str = ".out"):
+    """Get filename suffixed with hashed system info.
 
     Args:
         basename: The name of the file.
         extension: The extension of the file. Default is ".out".
 
     Returns:
-        The base name of the file.
+        The suffixed filename.
     """
 
-    ip_addresses = get_ip_addresses()
+    ip_addresses = get_sys_ipaddrs()
 
     if not ip_addresses:
         ip_addresses = ["127.0.0.1"]
 
     ip_addresses.sort()
 
-    suffix = "".join(ip_addresses)
+    suffix = "".join(ip_addresses) + os_uname_str()
     suffix = hashlib.md5(suffix.encode()).hexdigest()
 
     return f"{basename}_{suffix}{extension}"
+
+
+@staticmethod
+def syshash_id():
+    """Get identifier based on hashed system info.
+
+    Returns:
+        The identifier.
+    """
+
+    ip_addresses = get_sys_ipaddrs()
+
+    if not ip_addresses:
+        ip_addresses = ["127.0.0.1"]
+
+    ip_addresses.sort()
+
+    sysid = "".join(ip_addresses) + os_uname_str()
+    sysid = hashlib.md5(sysid.encode()).hexdigest()
+
+    return sysid

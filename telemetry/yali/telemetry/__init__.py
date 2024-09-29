@@ -4,7 +4,7 @@ from opentelemetry.sdk.trace.export import BatchSpanProcessor
 from opentelemetry.exporter.otlp.proto.grpc.trace_exporter import OTLPSpanExporter
 from opentelemetry.sdk.resources import Resource
 
-from yali.core.metatypes import UniType
+from yali.core.metatypes import YaliSingleton
 from yali.core.settings import OTelOTLPSettings
 from opentelemetry import metrics as otel_metrics
 from opentelemetry.sdk.metrics import MeterProvider, Meter
@@ -16,7 +16,7 @@ from typing import Dict
 import grpc
 
 
-class YaliTelemetry(metaclass=UniType):
+class YaliTelemetry(metaclass=YaliSingleton):
     __settings = OTelOTLPSettings()
 
     def __init__(self):
