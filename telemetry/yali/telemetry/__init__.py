@@ -5,7 +5,7 @@ from opentelemetry.exporter.otlp.proto.grpc.trace_exporter import OTLPSpanExport
 from opentelemetry.sdk.resources import Resource
 
 from yali.core.metatypes import YaliSingleton
-from yali.core.settings import OTelOTLPSettings
+from yali.core.settings import TelemetrySettings
 from opentelemetry import metrics as otel_metrics
 from opentelemetry.sdk.metrics import MeterProvider, Meter
 from opentelemetry.sdk.metrics.export import PeriodicExportingMetricReader
@@ -17,7 +17,7 @@ import grpc
 
 
 class YaliTelemetry(metaclass=YaliSingleton):
-    __settings = OTelOTLPSettings()
+    __settings = TelemetrySettings()
 
     def __init__(self):
         self._insecure: bool = True

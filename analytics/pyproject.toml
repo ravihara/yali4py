@@ -3,9 +3,9 @@ requires = ["poetry-core>=1.0.0"]
 build-backend = "poetry.core.masonry.api"
 
 [tool.poetry]
-name = "yali-telemetry"
+name = "yali-analytics"
 version = "0.1.0"
-description = "Logging, metrics and tracing modules for Yali toolkit"
+description = "Analytics related modules for Yali toolkit"
 license = "Apache-2.0"
 authors = ["Ravishankar Haranath <ravikh@gmail.com>"]
 readme = "README.md"
@@ -15,6 +15,7 @@ packages = [{ include = "yali" }]
 [tool.poetry.dependencies]
 python = "^3.11"
 yali-core = { path = "../core", develop = true }
+yali-telemetry = { path = "../telemetry", develop = true }
 
 [tool.poetry.group.dev.dependencies]
 black = "^24.8.0"

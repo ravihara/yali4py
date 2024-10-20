@@ -11,7 +11,7 @@ from concurrent.futures import Executor as BaseExecutor
 from concurrent.futures import Future as BaseFuture
 from typing import Coroutine, MutableSet
 
-from .constants import DEFAULT_THREAD_WORKERS
+from .constants import YALI_NUM_THREAD_WORKERS
 
 _logger = logging.getLogger("yali.core.threadasync")
 _threads_queues = weakref.WeakKeyDictionary()
@@ -158,7 +158,7 @@ class ThreadPoolAsyncExecutor(BaseExecutor):
             # We use cpu_count + 4 for both types of tasks.
             # But we limit it to 32 to avoid consuming surprisingly large resource
             # on many core machine.
-            max_workers = DEFAULT_THREAD_WORKERS
+            max_workers = YALI_NUM_THREAD_WORKERS
 
         if max_workers <= 0:
             raise ValueError("max_workers must be greater than 0")

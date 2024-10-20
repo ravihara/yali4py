@@ -1,7 +1,7 @@
 import datetime as dt
 from logging import Formatter as LogFormatter
 
-from .common import YALI_LOG_DATETIME_FORMAT
+from yali.core.constants import YALI_LOG_DATETIME_FORMAT
 
 
 class _BaseLogFormatter(LogFormatter):

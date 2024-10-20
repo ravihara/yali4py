@@ -5,7 +5,6 @@ from typing import Iterable, Any
 import hashlib
 import os
 import socket
-from uuid import uuid4
 import netifaces
 from cachetools.func import ttl_cache
 
@@ -25,6 +24,7 @@ def is_json_data(data: Any):
 def safe_load_json(data: str, **kwargs):
     try:
         payload = json.loads(data, **kwargs)
+        assert isinstance(payload, (dict, list))
         return payload
     except json.JSONDecodeError:
         return data
@@ -86,12 +86,13 @@ def get_sys_ipaddrs():
 
 @staticmethod
 @ttl_cache(maxsize=128, ttl=600)
-def id_by_proc(suffix: str, hash_algo: str = "sha256"):
+def id_by_sysinfo(suffix: str = "", use_pid: bool = False, hash_algo: str = "md5"):
     """Generate an identifier combined with pid and ip-addresses.
 
     Args:
-        suffix: The suffix to add to the ID.
-        hash_algo: The hashing algorithm to use. Default is "sha256".
+        suffix: The suffix to add to the ID. Default is "".
+        use_pid: Whether to include the process ID. Default is False.
+        hash_algo: The hashing algorithm to use. Default is "md5".
 
     Returns:
         A unique ID.
@@ -104,19 +105,22 @@ def id_by_proc(suffix: str, hash_algo: str = "sha256"):
 
     ip_addresses.sort()
 
-    str_val = "".join(ip_addresses) + os_uname_str() + str(os.getpid())
+    sysid = "".join(ip_addresses) + os_uname_str()
+
+    if use_pid:
+        sysid += str(os.getpid())
 
     if hash_algo and hash_algo in hashlib.algorithms_guaranteed:
-        id_val = hashlib.new(hash_algo, str_val.encode()).hexdigest() + suffix
+        sysid = hashlib.new(hash_algo, sysid.encode()).hexdigest() + suffix
     else:
-        id_val = hashlib.sha256(str_val.encode()).hexdigest() + suffix
+        sysid = hashlib.md5(sysid.encode()).hexdigest() + suffix
 
-    return id_val
+    return sysid
 
 
 @staticmethod
 @ttl_cache(maxsize=128, ttl=600)
-def syshash_filename(basename: str, extension: str = ".out"):
+def filename_by_sysinfo(basename: str, extension: str = ".out"):
     """Get filename suffixed with hashed system info.
 
     Args:
@@ -138,24 +142,3 @@ def syshash_filename(basename: str, extension: str = ".out"):
     suffix = hashlib.md5(suffix.encode()).hexdigest()
 
     return f"{basename}_{suffix}{extension}"
-
-
-@staticmethod
-def syshash_id():
-    """Get identifier based on hashed system info.
-
-    Returns:
-        The identifier.
-    """
-
-    ip_addresses = get_sys_ipaddrs()
-
-    if not ip_addresses:
-        ip_addresses = ["127.0.0.1"]
-
-    ip_addresses.sort()
-
-    sysid = "".join(ip_addresses) + os_uname_str()
-    sysid = hashlib.md5(sysid.encode()).hexdigest()
-
-    return sysid

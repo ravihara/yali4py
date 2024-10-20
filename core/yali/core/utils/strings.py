@@ -10,6 +10,14 @@ DEFAULT_DELIMITERS = " -_"
 ALLCHARS_REGEX = r"[{}]+"
 
 
+def lower_with_underscores(in_str: str):
+    return re.sub(ALLCHARS_REGEX.format(re.escape(DEFAULT_DELIMITERS)), "_", in_str).lower()
+
+
+def lower_with_hyphens(in_str: str):
+    return re.sub(ALLCHARS_REGEX.format(re.escape(DEFAULT_DELIMITERS)), "-", in_str).lower()
+
+
 class TokenMarkerArgs(FlexiTypesModel):
     in_buffer: StringIO
     out_buffer: StringIO
@@ -62,7 +70,12 @@ class OnLowerUpperAppendUpperMarker(TokenMarker):
         super().__init__(tmargs)
 
     def mark(self, curr_char: str, prev_char: str | None = None):
-        if prev_char == None or not prev_char.isalpha() or not prev_char.islower() or not curr_char.isupper():
+        if (
+            prev_char == None
+            or not prev_char.isalpha()
+            or not prev_char.islower()
+            or not curr_char.isupper()
+        ):
             return False
 
         self._out_buffer.write(self._join_char)
@@ -76,7 +89,12 @@ class OnLowerUpperAppendLowerMarker(TokenMarker):
         super().__init__(tmargs)
 
     def mark(self, curr_char: str, prev_char: str | None = None):
-        if prev_char == None or not prev_char.isalpha() or not prev_char.islower() or not curr_char.isupper():
+        if (
+            prev_char == None
+            or not prev_char.isalpha()
+            or not prev_char.islower()
+            or not curr_char.isupper()
+        ):
             return False
 
         self._out_buffer.write(self._join_char)
@@ -90,7 +108,12 @@ class OnUpperUpperAppendJoinMarker(TokenMarker):
         super().__init__(tmargs)
 
     def mark(self, curr_char: str, prev_char: str | None = None):
-        if prev_char == None or not prev_char.isalpha() or not prev_char.isupper() or not curr_char.isupper():
+        if (
+            prev_char == None
+            or not prev_char.isalpha()
+            or not prev_char.isupper()
+            or not curr_char.isupper()
+        ):
             return False
 
         self._out_buffer.write(self._join_char)
@@ -104,7 +127,12 @@ class OnUpperUpperAppendCurrentMarker(TokenMarker):
         super().__init__(tmargs)
 
     def mark(self, curr_char: str, prev_char: str | None = None):
-        if prev_char == None or not prev_char.isalpha() or not prev_char.isupper() or not curr_char.isupper():
+        if (
+            prev_char == None
+            or not prev_char.isalpha()
+            or not prev_char.isupper()
+            or not curr_char.isupper()
+        ):
             return False
 
         self._out_buffer.write(curr_char)
@@ -164,7 +192,9 @@ class StringConv:
         delimiters: str = DEFAULT_DELIMITERS,
         clear_punctuation: bool = True,
     ) -> str:
-        out_str = StringConv._prepared_string(in_str=in_str, delimiters=delimiters, clear_punctuation=clear_punctuation)
+        out_str = StringConv._prepared_string(
+            in_str=in_str, delimiters=delimiters, clear_punctuation=clear_punctuation
+        )
 
         in_buffer = StringIO(out_str)
         out_buffer = StringIO()
@@ -180,7 +210,9 @@ class StringConv:
             OnLowerUpperAppendLowerMarker(tmargs),
         ]
 
-        StringConv._process_markers(token_markers=token_markers, in_buffer=in_buffer, out_buffer=out_buffer)
+        StringConv._process_markers(
+            token_markers=token_markers, in_buffer=in_buffer, out_buffer=out_buffer
+        )
 
         return out_buffer.getvalue()
 
@@ -190,7 +222,9 @@ class StringConv:
         delimiters: str = DEFAULT_DELIMITERS,
         clear_punctuation: bool = True,
     ) -> str:
-        out_str = StringConv._prepared_string(in_str=in_str, delimiters=delimiters, clear_punctuation=clear_punctuation)
+        out_str = StringConv._prepared_string(
+            in_str=in_str, delimiters=delimiters, clear_punctuation=clear_punctuation
+        )
 
         in_buffer = StringIO(out_str)
         out_buffer = StringIO()
@@ -201,7 +235,9 @@ class StringConv:
             OnLowerUpperAppendUpperMarker(tmargs),
         ]
 
-        StringConv._process_markers(token_markers=token_markers, in_buffer=in_buffer, out_buffer=out_buffer)
+        StringConv._process_markers(
+            token_markers=token_markers, in_buffer=in_buffer, out_buffer=out_buffer
+        )
 
         return out_buffer.getvalue()
 
@@ -211,7 +247,9 @@ class StringConv:
         delimiters: str = DEFAULT_DELIMITERS,
         clear_punctuation: bool = True,
     ) -> str:
-        out_str = StringConv._prepared_string(in_str=in_str, delimiters=delimiters, clear_punctuation=clear_punctuation)
+        out_str = StringConv._prepared_string(
+            in_str=in_str, delimiters=delimiters, clear_punctuation=clear_punctuation
+        )
 
         in_buffer = StringIO(out_str)
         out_buffer = StringIO()
@@ -224,7 +262,9 @@ class StringConv:
         ]
 
         out_buffer.write(in_buffer.read(1).upper())
-        StringConv._process_markers(token_markers=token_markers, in_buffer=in_buffer, out_buffer=out_buffer)
+        StringConv._process_markers(
+            token_markers=token_markers, in_buffer=in_buffer, out_buffer=out_buffer
+        )
 
         return out_buffer.getvalue()
 
@@ -234,7 +274,9 @@ class StringConv:
         delimiters: str = DEFAULT_DELIMITERS,
         clear_punctuation: bool = True,
     ) -> str:
-        out_str = StringConv._prepared_string(in_str=in_str, delimiters=delimiters, clear_punctuation=clear_punctuation)
+        out_str = StringConv._prepared_string(
+            in_str=in_str, delimiters=delimiters, clear_punctuation=clear_punctuation
+        )
 
         in_buffer = StringIO(out_str)
         out_buffer = StringIO()
@@ -250,7 +292,9 @@ class StringConv:
             OnLowerUpperAppendLowerMarker(tmargs),
         ]
 
-        StringConv._process_markers(token_markers=token_markers, in_buffer=in_buffer, out_buffer=out_buffer)
+        StringConv._process_markers(
+            token_markers=token_markers, in_buffer=in_buffer, out_buffer=out_buffer
+        )
 
         return out_buffer.getvalue()
 
@@ -265,7 +309,9 @@ class StringConv:
         if in_str.isupper():
             return re.sub(ALLCHARS_REGEX.format(re.escape(delimiters)), join_ch, in_str)
 
-        out_str = StringConv._prepared_string(in_str=in_str, delimiters=delimiters, clear_punctuation=clear_punctuation)
+        out_str = StringConv._prepared_string(
+            in_str=in_str, delimiters=delimiters, clear_punctuation=clear_punctuation
+        )
 
         in_buffer = StringIO(out_str)
         out_buffer = StringIO()
@@ -301,7 +347,9 @@ class StringConv:
         if in_str.isupper():
             return re.sub(ALLCHARS_REGEX.format(re.escape(delimiters)), join_ch, in_str)
 
-        out_str = StringConv._prepared_string(in_str=in_str, delimiters=delimiters, clear_punctuation=clear_punctuation)
+        out_str = StringConv._prepared_string(
+            in_str=in_str, delimiters=delimiters, clear_punctuation=clear_punctuation
+        )
 
         in_buffer = StringIO(out_str)
         out_buffer = StringIO()
@@ -333,7 +381,9 @@ class StringConv:
         delimiters: str = DEFAULT_DELIMITERS,
         clear_punctuation: bool = True,
     ) -> str:
-        out_str = StringConv._prepared_string(in_str=in_str, delimiters=delimiters, clear_punctuation=clear_punctuation)
+        out_str = StringConv._prepared_string(
+            in_str=in_str, delimiters=delimiters, clear_punctuation=clear_punctuation
+        )
 
         in_buffer = StringIO(out_str)
         out_buffer = StringIO()
@@ -344,7 +394,9 @@ class StringConv:
             OnLowerUpperAppendLowerMarker(tmargs),
         ]
 
-        StringConv._process_markers(token_markers=token_markers, in_buffer=in_buffer, out_buffer=out_buffer)
+        StringConv._process_markers(
+            token_markers=token_markers, in_buffer=in_buffer, out_buffer=out_buffer
+        )
 
         return out_buffer.getvalue()
 
@@ -354,7 +406,9 @@ class StringConv:
         delimiters: str = DEFAULT_DELIMITERS,
         clear_punctuation: bool = True,
     ) -> str:
-        out_str = StringConv._prepared_string(in_str=in_str, delimiters=delimiters, clear_punctuation=clear_punctuation)
+        out_str = StringConv._prepared_string(
+            in_str=in_str, delimiters=delimiters, clear_punctuation=clear_punctuation
+        )
 
         in_buffer = StringIO(out_str)
         out_buffer = StringIO()

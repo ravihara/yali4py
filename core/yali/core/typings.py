@@ -6,6 +6,10 @@ from multiprocessing.context import ForkContext, ForkServerContext, SpawnContext
 from typing import Annotated, Any, Coroutine, Dict, List, Literal, Union
 from pydantic import BaseModel, ConfigDict, Field, StringConstraints, model_validator
 
+PASS_MESSAGE = "success"
+FAIL_MESSAGE = "failure"
+
+JsonType = Dict | List
 MultiProcContext = ForkContext | ForkServerContext | SpawnContext
 Awaitable = Coroutine | asyncio.Future | asyncio.Task
 PoolExecutor = ProcessPoolExecutor | ThreadPoolExecutor
@@ -13,11 +17,6 @@ ResultCode = int | str
 
 EmptyStr = Annotated[str, StringConstraints(strip_whitespace=True, max_length=0)]
 NonEmptyStr = Annotated[str, StringConstraints(strip_whitespace=True, min_length=1)]
-
-PASS_MESSAGE = "success"
-FAIL_MESSAGE = "failure"
-
-JsonType = Dict | List
 
 
 class StrictTypesModel(BaseModel):

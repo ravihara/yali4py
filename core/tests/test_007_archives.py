@@ -20,8 +20,10 @@ lz4_conf = Lz4Compression()
 zstd_conf = ZstdCompression()
 
 
-test_bytes = b"123pneumonoultramicroscopicsilicovolcanoconiosis!#$"
-test_string = "Yali says hello to all!!"
+test_bytes = (
+    b"123inthisworldofpracticalrealitiesapurelybookisheducationhasnoperfectjustification!#$"
+)
+test_string = "Hello world from Yali!!"
 test_json: dict = {"a": 1, "b": [2, 3]}
 
 

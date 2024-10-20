@@ -1,6 +1,6 @@
 from logging import Filter as LogFilter
-from .common import LogLevelName, LogLevelNumber
 from typing import Dict
+from yali.core.settings import LogLevelName, LogLevelNumber
 
 
 class CriticalLogFilter(LogFilter):
