@@ -517,6 +517,16 @@ files = [
 colors = ["colorama (>=0.4.6)"]
 
 [[package]]
+name = "json-log-formatter"
+version = "1.1"
+description = "JSON log formatter"
+optional = false
+python-versions = ">=3.6"
+files = [
+    {file = "json_log_formatter-1.1.tar.gz", hash = "sha256:fe8fd801c58c1234df86211720921f60149105ef8d1e2a72966bb61da9bed584"},
+]
+
+[[package]]
 name = "lz4"
 version = "4.3.3"
 description = "LZ4 Bindings for Python"
@@ -1490,4 +1500,4 @@ cffi = ["cffi (>=1.11)"]
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.11"
-content-hash = "c04c6a7e05e65d80c6978276776b1b3598353d7e72eac698648a5bd2e35ba9bc"
+content-hash = "4be7f7c9b54f1aed80ed974e40f74dc47c7cc589abe2b29dd9676fdb83ce4bdc"

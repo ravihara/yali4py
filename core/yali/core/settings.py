@@ -12,7 +12,6 @@ from pydantic import (
 from typing import Annotated, Literal
 from .utils.common import id_by_sysinfo
 from enum import StrEnum, IntEnum
-from .constants import YALI_LOG_MESSAGE_FORMAT
 
 _SERVICE_INST_ID_KEY = "service.instance.id"
 
@@ -55,9 +54,6 @@ class CommonSettings(BaseSettings):
     )
     log_to_file: bool = Field(
         False, validation_alias=AliasChoices("YALI_LOG_TO_FILE", "LOG_TO_FILE")
-    )
-    log_format: str = Field(
-        YALI_LOG_MESSAGE_FORMAT, validation_alias=AliasChoices("YALI_LOG_FORMAT", "LOG_FORMAT")
     )
     max_log_file_bytes: int = Field(
         10485760, validation_alias=AliasChoices("YALI_MAX_LOG_FILE_BYTES", "MAX_LOG_FILE_BYTES")
