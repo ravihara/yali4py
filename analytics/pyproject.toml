@@ -15,7 +15,6 @@ packages = [{ include = "yali" }]
 [tool.poetry.dependencies]
 python = "^3.11"
 yali-core = { path = "../core", develop = true }
-yali-telemetry = { path = "../telemetry", develop = true }
 
 [tool.poetry.group.dev.dependencies]
 black = "^24.8.0"

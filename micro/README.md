@@ -1,3 +1,3 @@
-# yali-telemetry
+# yali-micro
 
-The package of Yali toolkit providing logging, metrics and tracing modules.
+The package of Yali micro service modules.
