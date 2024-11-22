@@ -3,9 +3,9 @@ requires = ["poetry-core>=1.0.0"]
 build-backend = "poetry.core.masonry.api"
 
 [tool.poetry]
-name = "yali-analytics"
+name = "yali-mbus"
 version = "0.1.0"
-description = "Analytics related modules for Yali toolkit"
+description = "Messaging related modules for Yali toolkit"
 license = "Apache-2.0"
 authors = ["Ravishankar Haranath <ravikh@gmail.com>"]
 readme = "README.md"

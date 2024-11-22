@@ -33,7 +33,7 @@ def init_mproc_logging(queue: LogQueue, is_main: bool = True):
     )
 
 
-def process_mproc_logs(queue: LogQueue, config: Dict[str, Any]):
+def handle_mproc_logs(queue: LogQueue, config: Dict[str, Any]):
     dict_logging_config(config=config)
     curr_process_name = current_process().name
 
@@ -104,7 +104,7 @@ class YaliLog(metaclass=YaliSingleton):
 
             self._log_worker = self._mproc_context.Process(
                 name=f"{current_process().name}-{self._log_name}",
-                target=process_mproc_logs,
+                target=handle_mproc_logs,
                 kwargs={"queue": self._mproc_queue, "config": log_config},
             )
 
@@ -150,7 +150,7 @@ class YaliLog(metaclass=YaliSingleton):
                 "backupCount": log_settings.max_log_rotations,
                 "mode": "a",
             }
-            log_config["root"]["handlers"] = ["console", "rotating_file"]
+            log_config["root"]["handlers"].append("rotating_file")
 
         return log_config
 
