@@ -15,6 +15,9 @@ packages = [{ include = "yali" }]
 [tool.poetry.dependencies]
 python = "^3.11"
 yali-core = { path = "../core", develop = true }
+minio = "^7.2.11"
+azure-storage-blob = "^12.24.0"
+cachetools = "^5.5.0"
 
 [tool.poetry.group.dev.dependencies]
 black = "^24.8.0"
