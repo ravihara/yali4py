@@ -1,7 +1,13 @@
 import os
 import re
+import json
+import yaml
 from re import Pattern as RegExPattern
-from typing import List
+from typing import List, Literal
+
+from ..typings import YaliError
+
+FileFormat = Literal["bytes", "text", "json", "yaml"]
 
 
 # Internal function to select a file-path with matching extensions. Here
@@ -132,6 +138,14 @@ def _recursive_dir_content(
 
 
 class FilesConv:
+    @staticmethod
+    def file_exists(file_path: str) -> bool:
+        return os.path.exists(file_path) and os.path.isfile(file_path)
+
+    @staticmethod
+    def dir_exists(dir_path: str) -> bool:
+        return os.path.exists(dir_path) and os.path.isdir(dir_path)
+
     @staticmethod
     def is_file_readable(file_path: str) -> bool:
         """
@@ -305,3 +319,64 @@ class FilesConv:
             ignore_extn_case=ignore_extn_case,
             dir_pattern=regex_pattern if dir_pattern else None,
         )
+
+    @staticmethod
+    def read_file(
+        file_path: str,
+        read_out: FileFormat = "bytes",
+        json_decoder_cls: json.decoder.JSONDecoder | None = None,
+    ):
+        if not FilesConv.is_file_readable(file_path):
+            raise YaliError(f"File '{file_path}' is not readable")
+
+        if read_out == "bytes":
+            with open(file_path, "rb") as f:
+                return f.read()
+
+        with open(file_path, "r") as f:
+            if read_out == "json":
+                return json.load(f, cls=json_decoder_cls)
+
+            if read_out == "yaml":
+                return yaml.safe_load(f)
+
+            return f.read()
+
+    @staticmethod
+    def write_file(
+        file_path: str, data: bytes, *, write_out: FileFormat = "bytes", overwrite: bool = False
+    ):
+        if not FilesConv.is_file_writable(file_path, check_creatable=True):
+            raise YaliError(f"File '{file_path}' is not writable")
+
+        if not overwrite and FilesConv.file_exists(file_path):
+            return
+
+        os.makedirs(os.path.dirname(file_path), exist_ok=True)
+
+        if write_out == "bytes":
+            with open(file_path, "wb") as f:
+                return f.write(data)
+
+        with open(file_path, "w") as f:
+            if write_out == "json":
+                return json.dump(data, f)
+
+            if write_out == "yaml":
+                return yaml.safe_dump(data, f)
+
+            return f.write(data)
+
+    @staticmethod
+    def delete_file(file_path: str):
+        if not FilesConv.is_file_writable(file_path):
+            raise YaliError(f"File '{file_path}' is not writable")
+
+        os.remove(file_path)
+
+    @staticmethod
+    def delete_dir(dir_path: str):
+        if not FilesConv.is_dir_writable(dir_path):
+            raise YaliError(f"Directory '{dir_path}' is not writable")
+
+        os.rmdir(dir_path)

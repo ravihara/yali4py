@@ -33,7 +33,7 @@ def init_mproc_logging(queue: LogQueue, is_main: bool = True):
     )
 
 
-def handle_mproc_logs(queue: LogQueue, config: Dict[str, Any]):
+def _handle_mproc_logs(queue: LogQueue, config: Dict[str, Any]):
     dict_logging_config(config=config)
     curr_process_name = current_process().name
 
@@ -104,7 +104,7 @@ class YaliLog(metaclass=YaliSingleton):
 
             self._log_worker = self._mproc_context.Process(
                 name=f"{current_process().name}-{self._log_name}",
-                target=handle_mproc_logs,
+                target=_handle_mproc_logs,
                 kwargs={"queue": self._mproc_queue, "config": log_config},
             )
 

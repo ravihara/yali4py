@@ -1,16 +1,19 @@
 import hashlib
+from asyncio import AbstractEventLoop
+from functools import partial
 
 from abc import ABC, abstractmethod
 import logging
 from concurrent.futures import ThreadPoolExecutor
-from typing import Literal, Union, Annotated, Tuple, List
+from typing import Literal, Union, Annotated, Tuple, List, Callable
 from yali.core.typings import FlexiTypesModel, NonEmptyStr
 from pydantic import SecretStr, field_serializer, Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
-## NOTE: BulkObjectEntry is used for `put_objects`
+
+## NOTE: BulkPutEntry is used for `put_objects`
 # It is a tuple of (key, data, overwrite)
-BulkObjectEntry = Tuple[str, bytes, bool]
+BulkPutEntry = Tuple[str, bytes, bool]
 
 
 class StorageSettings(BaseSettings):
@@ -39,9 +42,21 @@ def storage_settings():
     return __storage_settings
 
 
-class FsMountStoreConfig(FlexiTypesModel):
-    stype: Literal["fs-mount"] = "fs-mount"
-    mount_point: NonEmptyStr
+class UnixFsStoreConfig(FlexiTypesModel):
+    stype: Literal["unix-fs"] = "unix-fs"
+    sroot: NonEmptyStr
+    is_readonly: bool = False
+
+    @field_serializer("sroot", when_used="unless-none")
+    @staticmethod
+    def sroot_serializer(sroot: NonEmptyStr):
+        if not sroot.startswith("/"):
+            raise ValueError(f"Store's root folder path must be absolute: {sroot}")
+
+        if sroot.endswith("/"):
+            raise ValueError(f"Store's root folder path must not end with a slash: {sroot}")
+
+        return sroot
 
 
 class AwsS3StoreConfig(FlexiTypesModel):
@@ -70,7 +85,7 @@ class AzureBlobStoreConfig(FlexiTypesModel):
 
 
 StoreConfig = Annotated[
-    Union[FsMountStoreConfig, AwsS3StoreConfig, AzureBlobStoreConfig], Field(discriminator="stype")
+    Union[UnixFsStoreConfig, AwsS3StoreConfig, AzureBlobStoreConfig], Field(discriminator="stype")
 ]
 
 
@@ -78,13 +93,20 @@ class AbstractStore(ABC):
     _logger = logging.getLogger(__name__)
 
     @abstractmethod
-    def __init__(self, config: StoreConfig):
+    def __init__(self, *, config: StoreConfig, aio_loop: AbstractEventLoop):
+        self.__aio_loop = aio_loop
+
         self._config = config
         self._settings = storage_settings()
         self._store_id = self._gen_store_id()
         self._thread_executor = ThreadPoolExecutor(
-            max_workers=self._settings.max_storage_concurrancy
+            max_workers=self._settings.max_storage_concurrancy,
+            thread_name_prefix=f"store-{self._store_id}",
         )
+
+    @property
+    def store_id(self):
+        return self._store_id
 
     def _gen_store_id(self):
         config_str = self._config.model_dump_json(exclude_none=True)
@@ -96,50 +118,53 @@ class AbstractStore(ABC):
     def object_dirname(self, key: str) -> str:
         return "/".join(key.split("/")[:-1])
 
-    @property
-    def store_id(self):
-        return self._store_id
+    def add_thread_pool_task(self, func: Callable, *fargs, **fkwargs):
+        wrapped_fn = partial(func, *fargs, **fkwargs)
+        aio_future = self.__aio_loop.run_in_executor(self._thread_executor, wrapped_fn)
+
+        return aio_future
 
     @abstractmethod
-    def is_ready(self) -> bool:
+    def object_store_path(self, key: str) -> str:
         raise NotImplementedError()
 
     @abstractmethod
-    def get_object(self, key: str):
+    def is_accessible(self) -> bool:
         raise NotImplementedError()
 
     @abstractmethod
-    def put_object(self, key: str, data: bytes, overwrite: bool = False):
+    async def close(self):
+        self._thread_executor.shutdown(wait=True)
+        self._thread_executor = None
+
+    @abstractmethod
+    async def get_object(self, key: str):
         raise NotImplementedError()
 
     @abstractmethod
-    def delete_object(self, key: str):
+    async def put_object(self, key: str, data: bytes, overwrite: bool = False):
         raise NotImplementedError()
 
     @abstractmethod
-    def get_objects(self, keys: List[str]):
+    async def delete_object(self, key: str):
         raise NotImplementedError()
 
     @abstractmethod
-    def put_objects(self, entries: List[BulkObjectEntry]):
+    async def get_objects(self, keys: List[str]):
         raise NotImplementedError()
 
     @abstractmethod
-    def delete_objects(self, keys: List[str]):
+    async def put_objects(self, entries: List[BulkPutEntry]):
         raise NotImplementedError()
 
     @abstractmethod
-    def object_exists(self, key: str) -> bool:
+    async def delete_objects(self, keys: List[str]):
         raise NotImplementedError()
 
     @abstractmethod
-    def get_objects_by_pattern(self, pattern: str):
+    async def object_exists(self, key: str) -> bool:
         raise NotImplementedError()
 
     @abstractmethod
-    def delete_objects_by_pattern(self, pattern: str):
-        raise NotImplementedError()
-
-    @abstractmethod
-    def total_objects(self) -> int:
+    async def total_objects(self) -> int:
         raise NotImplementedError()
