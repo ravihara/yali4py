@@ -1,15 +1,14 @@
-import hashlib
 import asyncio
-from functools import partial
-
-from abc import ABC, abstractmethod
+import hashlib
 import logging
+from abc import ABC, abstractmethod
 from concurrent.futures import ThreadPoolExecutor
-from typing import Literal, Union, Annotated, Tuple, List, Callable
-from yali.core.typings import FlexiTypesModel, NonEmptyStr
-from pydantic import SecretStr, field_serializer, Field
-from pydantic_settings import BaseSettings, SettingsConfigDict
+from functools import partial
+from typing import Annotated, Callable, List, Literal, Tuple, Union
 
+from pydantic import Field, SecretStr, field_serializer
+from pydantic_settings import BaseSettings, SettingsConfigDict
+from yali.core.typings import FlexiTypesModel, NonEmptyStr
 
 ## NOTE: BulkPutEntry is used for `put_objects`
 # It is a tuple of (key, data, overwrite)
@@ -93,10 +92,9 @@ class AbstractStore(ABC):
     _logger = logging.getLogger(__name__)
 
     @abstractmethod
-    def __init__(self, *, config: StoreConfig, aio_loop: asyncio.AbstractEventLoop):
-        self._aio_loop = aio_loop
-
+    def __init__(self, config: StoreConfig):
         self._config = config
+        self._aio_loop = asyncio.get_running_loop()
         self._settings = storage_settings()
         self._store_id = self._gen_store_id()
         self._thread_executor = ThreadPoolExecutor(

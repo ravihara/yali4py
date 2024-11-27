@@ -1,13 +1,14 @@
-from typing import List
 import asyncio
-from .abc_store import AbstractStore, UnixFsStoreConfig, BulkPutEntry
-from asyncio import AbstractEventLoop
+from typing import List
+
 from yali.core.utils.osfiles import FilesConv
+
+from .abc_store import AbstractStore, BulkPutEntry, UnixFsStoreConfig
 
 
 class UnixFsStore(AbstractStore):
-    def __init__(self, *, config: UnixFsStoreConfig, aio_loop: AbstractEventLoop):
-        super().__init__(config=config, aio_loop=aio_loop)
+    def __init__(self, config: UnixFsStoreConfig):
+        super().__init__(config=config)
 
     def object_store_path(self, key: str):
         if key.startswith(f"{self._config.sroot}/"):
