@@ -1,4 +1,5 @@
 from typing import List
+import asyncio
 from .abc_store import AbstractStore, UnixFsStoreConfig, BulkPutEntry
 from asyncio import AbstractEventLoop
 from yali.core.utils.osfiles import FilesConv
@@ -35,30 +36,116 @@ class UnixFsStore(AbstractStore):
 
     async def get_object(self, key: str):
         opath = self.object_store_path(key=key)
+        aio_future = self.add_thread_pool_task(FilesConv.read_bytes, opath)
 
-        if not FilesConv.is_file_readable(file_path=opath):
-            self._logger.warning(f"File '{opath}' is not readable")
+        try:
+            result = await aio_future
+            assert isinstance(result, bytes)
+            return result
+        except Exception as ex:
+            self._logger.error(
+                f"Failed to read object: {key} from {self._config.stype} store: {self._store_id}",
+                exc_info=ex,
+            )
             return None
 
     async def put_object(self, key: str, data: bytes, overwrite: bool = False):
         opath = self.object_store_path(key=key)
-        FilesConv.write_file(file_path=opath, data=data, overwrite=overwrite)
+        aio_future = self.add_thread_pool_task(
+            FilesConv.write_bytes, opath, data, overwrite=overwrite
+        )
+
+        try:
+            result = await aio_future
+            assert isinstance(result, int)
+
+            if result == -1:
+                self._logger.warning(f"Object: {key} already exists in store: {self._store_id}")
+        except Exception as ex:
+            self._logger.error(
+                f"Failed to write object: {key} to {self._config.stype} store: {self._store_id}",
+                exc_info=ex,
+            )
 
     async def delete_object(self, key: str):
         opath = self.object_store_path(key=key)
-        FilesConv.delete_file(file_path=opath)
+        aio_future = self.add_thread_pool_task(FilesConv.delete_file, opath)
+
+        try:
+            await aio_future
+        except Exception as ex:
+            self._logger.error(
+                f"Failed to delete object: {key} from {self._config.stype} store: {self._store_id}",
+                exc_info=ex,
+            )
 
     async def get_objects(self, keys: List[str]):
-        raise NotImplementedError()
+        aio_futures = []
+
+        for okey in keys:
+            opath = self.object_store_path(key=okey)
+            aio_futures.append(self.add_thread_pool_task(FilesConv.read_bytes, opath))
+
+        results = await asyncio.gather(*aio_futures, return_exceptions=True)
+        files_data: List[bytes] = []
+
+        for okey, result in zip(keys, results):
+            if isinstance(result, Exception):
+                self._logger.error(
+                    f"Failed to read object: {okey} from {self._config.stype} store: {self._store_id}",
+                    exc_info=result,
+                )
+                results[keys.index(okey)] = None
+            else:
+                files_data.append(result)
+
+        results.clear()
+        return files_data
 
     async def put_objects(self, entries: List[BulkPutEntry]):
-        raise NotImplementedError()
+        aio_futures = []
+
+        for okey, data, overwrite in entries:
+            opath = self.object_store_path(key=okey)
+            aio_futures.append(
+                self.add_thread_pool_task(FilesConv.write_bytes, opath, data, overwrite=overwrite)
+            )
+
+        results = await asyncio.gather(*aio_futures, return_exceptions=True)
+
+        for okey, result in zip(entries, results):
+            if isinstance(result, Exception):
+                self._logger.error(
+                    f"Failed to write object: {okey} to {self._config.stype} store: {self._store_id}",
+                    exc_info=result,
+                )
+            elif result == -1:
+                self._logger.warning(f"Object: {okey} already exists in store: {self._store_id}")
+
+        results.clear()
 
     async def delete_objects(self, keys: List[str]):
-        raise NotImplementedError()
+        aio_futures = []
+
+        for okey in keys:
+            opath = self.object_store_path(key=okey)
+            aio_futures.append(self.add_thread_pool_task(FilesConv.delete_file, opath))
+
+        results = await asyncio.gather(*aio_futures, return_exceptions=True)
+
+        for okey, result in zip(keys, results):
+            if isinstance(result, Exception):
+                self._logger.error(
+                    f"Failed to delete object: {okey} from {self._config.stype} store: {self._store_id}",
+                    exc_info=result,
+                )
+
+        results.clear()
 
     async def object_exists(self, key: str) -> bool:
+        await asyncio.sleep(0)
         return FilesConv.file_exists(f"{self._config.sroot}/{key}")
 
     async def total_objects(self) -> int:
+        await asyncio.sleep(0)
         return FilesConv.total_files_in_dir(base_dir=self._config.sroot)

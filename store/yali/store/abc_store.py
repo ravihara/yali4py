@@ -1,5 +1,5 @@
 import hashlib
-from asyncio import AbstractEventLoop
+import asyncio
 from functools import partial
 
 from abc import ABC, abstractmethod
@@ -93,8 +93,8 @@ class AbstractStore(ABC):
     _logger = logging.getLogger(__name__)
 
     @abstractmethod
-    def __init__(self, *, config: StoreConfig, aio_loop: AbstractEventLoop):
-        self.__aio_loop = aio_loop
+    def __init__(self, *, config: StoreConfig, aio_loop: asyncio.AbstractEventLoop):
+        self._aio_loop = aio_loop
 
         self._config = config
         self._settings = storage_settings()
@@ -120,9 +120,7 @@ class AbstractStore(ABC):
 
     def add_thread_pool_task(self, func: Callable, *fargs, **fkwargs):
         wrapped_fn = partial(func, *fargs, **fkwargs)
-        aio_future = self.__aio_loop.run_in_executor(self._thread_executor, wrapped_fn)
-
-        return aio_future
+        return self._aio_loop.run_in_executor(self._thread_executor, wrapped_fn)
 
     @abstractmethod
     def object_store_path(self, key: str) -> str:
@@ -134,6 +132,7 @@ class AbstractStore(ABC):
 
     @abstractmethod
     async def close(self):
+        await asyncio.sleep(0)
         self._thread_executor.shutdown(wait=True)
         self._thread_executor = None
 

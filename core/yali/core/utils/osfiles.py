@@ -2,12 +2,11 @@ import os
 import re
 import json
 import yaml
+import tomllib
 from re import Pattern as RegExPattern
-from typing import List, Literal
+from typing import List, Dict
 
 from ..typings import YaliError
-
-FileFormat = Literal["bytes", "text", "json", "yaml"]
 
 
 # Internal function to select a file-path with matching extensions. Here
@@ -321,51 +320,89 @@ class FilesConv:
         )
 
     @staticmethod
-    def read_file(
-        file_path: str,
-        read_out: FileFormat = "bytes",
-        json_decoder_cls: json.decoder.JSONDecoder | None = None,
-    ):
+    def read_bytes(file_path: str):
         if not FilesConv.is_file_readable(file_path):
             raise YaliError(f"File '{file_path}' is not readable")
 
-        if read_out == "bytes":
-            with open(file_path, "rb") as f:
-                return f.read()
-
-        with open(file_path, "r") as f:
-            if read_out == "json":
-                return json.load(f, cls=json_decoder_cls)
-
-            if read_out == "yaml":
-                return yaml.safe_load(f)
-
+        with open(file_path, "rb") as f:
             return f.read()
 
     @staticmethod
-    def write_file(
-        file_path: str, data: bytes, *, write_out: FileFormat = "bytes", overwrite: bool = False
-    ):
+    def read_text(file_path: str):
+        if not FilesConv.is_file_readable(file_path):
+            raise YaliError(f"Text file '{file_path}' is not readable")
+
+        with open(file_path, "r") as f:
+            return f.read()
+
+    @staticmethod
+    def read_json(file_path: str, decorder_cls: json.JSONDecoder | None = None) -> Dict:
+        if not FilesConv.is_file_readable(file_path):
+            raise YaliError(f"Json file '{file_path}' is not readable")
+
+        with open(file_path, "r") as f:
+            return json.load(f, cls=decorder_cls)
+
+    @staticmethod
+    def read_yaml(file_path: str) -> Dict:
+        if not FilesConv.is_file_readable(file_path):
+            raise YaliError(f"Yaml file '{file_path}' is not readable")
+
+        with open(file_path, "r") as f:
+            return yaml.safe_load(f)
+
+    @staticmethod
+    def read_toml(file_path: str) -> Dict:
+        if not FilesConv.is_file_readable(file_path):
+            raise YaliError(f"Toml file '{file_path}' is not readable")
+
+        with open(file_path, "rb") as f:
+            return tomllib.load(f)
+
+    @staticmethod
+    def write_bytes(file_path: str, data: bytes, *, overwrite: bool = False):
         if not FilesConv.is_file_writable(file_path, check_creatable=True):
             raise YaliError(f"File '{file_path}' is not writable")
+
+        if not overwrite and FilesConv.file_exists(file_path):
+            return -1
+
+        os.makedirs(os.path.dirname(file_path), exist_ok=True)
+
+        with open(file_path, "wb") as f:
+            return f.write(data)
+
+    @staticmethod
+    def write_text(file_path: str, data: str, *, overwrite: bool = False):
+        if not FilesConv.is_file_writable(file_path, check_creatable=True):
+            raise YaliError(f"Text file '{file_path}' is not writable")
+
+        if not overwrite and FilesConv.file_exists(file_path):
+            return -1
+
+        os.makedirs(os.path.dirname(file_path), exist_ok=True)
+
+        with open(file_path, "w") as f:
+            return f.write(data)
+
+    @staticmethod
+    def write_json(
+        file_path: str,
+        data: Dict,
+        *,
+        overwrite: bool = False,
+        encoder_cls: json.JSONEncoder | None = None,
+    ):
+        if not FilesConv.is_file_writable(file_path, check_creatable=True):
+            raise YaliError(f"Json file '{file_path}' is not writable")
 
         if not overwrite and FilesConv.file_exists(file_path):
             return
 
         os.makedirs(os.path.dirname(file_path), exist_ok=True)
 
-        if write_out == "bytes":
-            with open(file_path, "wb") as f:
-                return f.write(data)
-
         with open(file_path, "w") as f:
-            if write_out == "json":
-                return json.dump(data, f)
-
-            if write_out == "yaml":
-                return yaml.safe_dump(data, f)
-
-            return f.write(data)
+            json.dump(data, f, cls=encoder_cls)
 
     @staticmethod
     def delete_file(file_path: str):
