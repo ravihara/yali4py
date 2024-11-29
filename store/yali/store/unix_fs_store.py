@@ -8,7 +8,8 @@ from .abc_store import AbstractStore, BulkPutEntry, UnixFsStoreConfig
 
 class UnixFsStore(AbstractStore):
     def __init__(self, config: UnixFsStoreConfig):
-        super().__init__(config=config)
+        self._config = config
+        super().__init__(config)
 
     def object_store_path(self, key: str):
         if key.startswith(f"{self._config.sroot}/"):
@@ -101,6 +102,8 @@ class UnixFsStore(AbstractStore):
                 files_data.append(result)
 
         results.clear()
+        aio_futures.clear()
+
         return files_data
 
     async def put_objects(self, entries: List[BulkPutEntry]):
@@ -124,6 +127,7 @@ class UnixFsStore(AbstractStore):
                 self._logger.warning(f"Object: {okey} already exists in store: {self._store_id}")
 
         results.clear()
+        aio_futures.clear()
 
     async def delete_objects(self, keys: List[str]):
         aio_futures = []
@@ -142,6 +146,7 @@ class UnixFsStore(AbstractStore):
                 )
 
         results.clear()
+        aio_futures.clear()
 
     async def object_exists(self, key: str) -> bool:
         await asyncio.sleep(0)

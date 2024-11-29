@@ -6,6 +6,8 @@ from concurrent.futures import ThreadPoolExecutor
 from functools import partial
 from typing import Annotated, Callable, List, Literal, Tuple, Union
 
+import urllib3
+from minio.credentials.providers import Provider as CredentialsProvider
 from pydantic import Field, SecretStr, field_serializer
 from pydantic_settings import BaseSettings, SettingsConfigDict
 from yali.core.typings import FlexiTypesModel, NonEmptyStr
@@ -62,6 +64,11 @@ class AwsS3StoreConfig(FlexiTypesModel):
     stype: Literal["aws-s3"] = "aws-s3"
     endpoint: NonEmptyStr = "s3.amazonaws.com"
     tls_enabled: bool = True
+    check_certs: bool = True
+    region: str | None = None
+    session_token: str | None = None
+    pooled_http: urllib3.PoolManager | None = None
+    creds_provider: CredentialsProvider | None = None
     bucket_name: NonEmptyStr
     access_key: NonEmptyStr
     secret_key: SecretStr
@@ -93,10 +100,9 @@ class AbstractStore(ABC):
 
     @abstractmethod
     def __init__(self, config: StoreConfig):
-        self._config = config
         self._aio_loop = asyncio.get_running_loop()
         self._settings = storage_settings()
-        self._store_id = self._gen_store_id()
+        self._store_id = self._gen_store_id(config=config)
         self._thread_executor = ThreadPoolExecutor(
             max_workers=self._settings.max_storage_concurrancy,
             thread_name_prefix=f"store-{self._store_id}",
@@ -106,8 +112,8 @@ class AbstractStore(ABC):
     def store_id(self):
         return self._store_id
 
-    def _gen_store_id(self):
-        config_str = self._config.model_dump_json(exclude_none=True)
+    def _gen_store_id(self, config: StoreConfig):
+        config_str = config.model_dump_json(exclude_none=True)
         return hashlib.md5(config_str.encode("utf-8")).hexdigest()
 
     def object_basename(self, key: str) -> str:
