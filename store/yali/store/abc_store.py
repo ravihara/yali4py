@@ -4,17 +4,23 @@ import logging
 from abc import ABC, abstractmethod
 from concurrent.futures import ThreadPoolExecutor
 from functools import partial
-from typing import Annotated, Callable, List, Literal, Tuple, Union
+from typing import Annotated, Any, AsyncGenerator, Callable, List, Literal, Tuple, Union
 
 import urllib3
 from minio.credentials.providers import Provider as CredentialsProvider
 from pydantic import Field, SecretStr, field_serializer
 from pydantic_settings import BaseSettings, SettingsConfigDict
-from yali.core.typings import FlexiTypesModel, NonEmptyStr
+from yali.core.typings import (
+    BytesIO,
+    ErrorOrBytesIO,
+    ErrorOrStr,
+    FlexiTypesModel,
+    NonEmptyStr,
+)
 
 ## NOTE: BulkPutEntry is used for `put_objects`
 # It is a tuple of (key, data, overwrite)
-BulkPutEntry = Tuple[str, bytes, bool]
+BulkPutEntry = Tuple[str, BytesIO, bool]
 
 
 class StorageSettings(BaseSettings):
@@ -131,37 +137,33 @@ class AbstractStore(ABC):
         raise NotImplementedError()
 
     @abstractmethod
-    def is_accessible(self) -> bool:
-        raise NotImplementedError()
-
-    @abstractmethod
     async def close(self):
         await asyncio.sleep(0)
         self._thread_executor.shutdown(wait=True)
         self._thread_executor = None
 
     @abstractmethod
-    async def get_object(self, key: str):
+    async def get_object(self, key: str) -> ErrorOrBytesIO:
         raise NotImplementedError()
 
     @abstractmethod
-    async def put_object(self, key: str, data: bytes, overwrite: bool = False):
+    async def put_object(self, key: str, data: BytesIO, overwrite: bool = False) -> ErrorOrStr:
         raise NotImplementedError()
 
     @abstractmethod
-    async def delete_object(self, key: str):
+    async def delete_object(self, key: str) -> ErrorOrStr:
         raise NotImplementedError()
 
     @abstractmethod
-    async def get_objects(self, keys: List[str]):
+    async def get_objects(self, keys: List[str]) -> AsyncGenerator[ErrorOrBytesIO, Any]:
         raise NotImplementedError()
 
     @abstractmethod
-    async def put_objects(self, entries: List[BulkPutEntry]):
+    async def put_objects(self, entries: List[BulkPutEntry]) -> AsyncGenerator[ErrorOrStr, Any]:
         raise NotImplementedError()
 
     @abstractmethod
-    async def delete_objects(self, keys: List[str]):
+    async def delete_objects(self, keys: List[str]) -> AsyncGenerator[ErrorOrStr, Any]:
         raise NotImplementedError()
 
     @abstractmethod

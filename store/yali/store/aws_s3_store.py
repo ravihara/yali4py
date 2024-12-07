@@ -1,10 +1,18 @@
 import asyncio
-from typing import List
+from typing import Any, AsyncGenerator, List
 
 from minio import Minio
 from minio.error import S3Error
+from yali.core.typings import YaliError
 
-from .abc_store import AbstractStore, AwsS3StoreConfig, BulkPutEntry
+from .abc_store import (
+    AbstractStore,
+    AwsS3StoreConfig,
+    BulkPutEntry,
+    BytesIO,
+    ErrorOrBytesIO,
+    ErrorOrStr,
+)
 
 
 class AwsS3Store(AbstractStore):
@@ -31,17 +39,6 @@ class AwsS3Store(AbstractStore):
     def object_store_path(self, key: str):
         return f"{self._config.bucket_name}/{key}"
 
-    def is_accessible(self):
-        try:
-            if self._client.bucket_exists(bucket_name=self._config.bucket_name):
-                self._logger.debug(f"Bucket: {self._config.bucket_name} exists")
-                return True
-
-            return False
-        except Exception as ex:
-            self._logger.error(f"Failed to access bucket: {self._config.bucket_name}", exc_info=ex)
-            return False
-
     async def close(self):
         self._logger.info(f"Closing {self._config.stype} store: {self._store_id}")
         self._client._http.clear()
@@ -55,28 +52,25 @@ class AwsS3Store(AbstractStore):
         odata = http_response.read()
         http_response.close()
 
-        return odata
+        return BytesIO(odata)
 
-    async def get_object(self, key: str):
+    async def get_object(self, key: str) -> ErrorOrBytesIO:
         try:
-            aio_future = self.add_thread_pool_task(self.__get_object, key)
-            odata = await aio_future
+            odata = await self.add_thread_pool_task(self.__get_object, key)
 
-            assert isinstance(odata, bytes)
+            assert isinstance(odata, BytesIO)
             return odata
         except Exception as ex:
-            self._logger.error(
-                f"Failed to read object: {key} from {self._config.stype} store: {self._store_id} for bucket: {self._config.bucket_name}",
-                exc_info=ex,
-            )
+            error_mesg = f"Failed to read object: {key} from {self._config.stype} store: {self._store_id} for bucket: {self._config.bucket_name}"
 
-        return None
+            self._logger.error(error_mesg, exc_info=ex)
+            return YaliError(error_mesg, exc_cause=ex)
 
-    def __put_object(self, key: str, data: bytes, overwrite: bool = False):
+    def __put_object(self, key: str, data: BytesIO, overwrite: bool = False):
         if not overwrite and self.object_exists(key):
             return -1
 
-        data_len = len(data)
+        data_len = data.getbuffer().nbytes
 
         self._client.put_object(
             bucket_name=self._config.bucket_name,
@@ -88,93 +82,58 @@ class AwsS3Store(AbstractStore):
 
         return data_len
 
-    async def put_object(self, key: str, data: bytes, overwrite: bool = False):
+    async def put_object(self, key: str, data: BytesIO, overwrite: bool = False) -> ErrorOrStr:
         try:
-            aio_future = self.add_thread_pool_task(self.__put_object, key, data, overwrite)
-            result = await aio_future
+            result = await self.add_thread_pool_task(self.__put_object, key, data, overwrite)
+            assert isinstance(result, int)
 
             if result == -1:
-                self._logger.warning(f"Object: {key} already exists in store: {self._store_id}")
+                return YaliError(f"Object: {key} already exists in store: {self._store_id}")
+
+            return f"Written {result} bytes for object: {key}"
         except Exception as ex:
-            self._logger.error(
-                f"Failed to write object: {key} to {self._config.stype} store: {self._store_id} for bucket: {self._config.bucket_name}",
-                exc_info=ex,
-            )
+            error_mesg = f"Failed to write object: {key} to {self._config.stype} store: {self._store_id} for bucket: {self._config.bucket_name}"
+
+            self._logger.error(error_mesg, exc_info=ex)
+            return YaliError(error_mesg, exc_cause=ex)
 
     def __delete_object(self, key: str):
         self._client.remove_object(bucket_name=self._config.bucket_name, object_name=key)
 
-    async def delete_object(self, key: str):
+    async def delete_object(self, key: str) -> ErrorOrStr:
         try:
-            aio_future = self.add_thread_pool_task(self.__delete_object, key)
-            await aio_future
-        except Exception as ex:
-            self._logger.error(
-                f"Failed to delete object: {key} from {self._config.stype} store: {self._store_id} for bucket: {self._config.bucket_name}",
-                exc_info=ex,
-            )
+            await self.add_thread_pool_task(self.__delete_object, key)
 
-    async def get_objects(self, keys: List[str]):
-        aio_futures = []
+            return f"Deleted object: {key}"
+        except Exception as ex:
+            error_mesg = f"Failed to delete object: {key} from {self._config.stype} store: {self._store_id} for bucket: {self._config.bucket_name}"
+
+            self._logger.error(error_mesg, exc_info=ex)
+            return YaliError(error_mesg, exc_cause=ex)
+
+    async def get_objects(self, keys: List[str]) -> AsyncGenerator[ErrorOrBytesIO, Any]:
+        if not keys:
+            return YaliError("Keys list is empty")
 
         for okey in keys:
-            aio_futures.append(self.add_thread_pool_task(self.__get_object, okey))
+            result = await self.get_object(key=okey)
+            yield result
 
-        results = await asyncio.gather(*aio_futures, return_exceptions=True)
-        files_data: List[bytes] = []
-
-        for okey, result in zip(keys, results):
-            if isinstance(result, Exception):
-                self._logger.error(
-                    f"Failed to read object: {okey} from {self._config.stype} store: {self._store_id} for bucket: {self._config.bucket_name}",
-                    exc_info=result,
-                )
-                results[keys.index(okey)] = None
-            else:
-                files_data.append(result)
-
-        results.clear()
-        aio_futures.clear()
-
-        return files_data
-
-    async def put_objects(self, entries: List[BulkPutEntry]):
-        aio_futures = []
+    async def put_objects(self, entries: List[BulkPutEntry]) -> AsyncGenerator[ErrorOrStr, Any]:
+        if not entries:
+            return YaliError("Entries list is empty")
 
         for okey, data, overwrite in entries:
-            aio_futures.append(self.add_thread_pool_task(self.__put_object, okey, data, overwrite))
+            result = await self.put_object(key=okey, data=data, overwrite=overwrite)
+            yield result
 
-        results = await asyncio.gather(*aio_futures, return_exceptions=True)
-
-        for okey, result in zip(entries, results):
-            if isinstance(result, Exception):
-                self._logger.error(
-                    f"Failed to write object: {okey} to {self._config.stype} store: {self._store_id} for bucket: {self._config.bucket_name}",
-                    exc_info=result,
-                )
-            elif result == -1:
-                self._logger.warning(f"Object: {okey} already exists in store: {self._store_id}")
-
-        results.clear()
-        aio_futures.clear()
-
-    async def delete_objects(self, keys: List[str]):
-        aio_futures = []
+    async def delete_objects(self, keys: List[str]) -> AsyncGenerator[ErrorOrStr, Any]:
+        if not keys:
+            return YaliError("Keys list is empty")
 
         for okey in keys:
-            aio_futures.append(self.add_thread_pool_task(self.__delete_object, okey))
-
-        results = await asyncio.gather(*aio_futures, return_exceptions=True)
-
-        for okey, result in zip(keys, results):
-            if isinstance(result, Exception):
-                self._logger.error(
-                    f"Failed to delete object: {okey} from {self._config.stype} store: {self._store_id} for bucket: {self._config.bucket_name}",
-                    exc_info=result,
-                )
-
-        results.clear()
-        aio_futures.clear()
+            result = await self.delete_object(key=okey)
+            yield result
 
     async def object_exists(self, key: str) -> bool:
         await asyncio.sleep(0)

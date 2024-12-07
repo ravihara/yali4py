@@ -2,8 +2,10 @@ import asyncio
 import datetime as dt
 from concurrent.futures import ProcessPoolExecutor, ThreadPoolExecutor
 from enum import StrEnum
+from io import BytesIO
 from multiprocessing.context import ForkContext, ForkServerContext, SpawnContext
 from typing import Annotated, Any, Coroutine, Dict, List, Literal, Union
+
 from pydantic import BaseModel, ConfigDict, Field, StringConstraints, model_validator
 
 PASS_MESSAGE = "success"
@@ -17,6 +19,23 @@ ResultCode = int | str
 
 EmptyStr = Annotated[str, StringConstraints(strip_whitespace=True, max_length=0)]
 NonEmptyStr = Annotated[str, StringConstraints(strip_whitespace=True, min_length=1)]
+
+
+class YaliError(Exception):
+    def __init__(self, error: NonEmptyStr, exc_cause: BaseException | None = None):
+        super().__init__(error)
+        self.exc_cause = exc_cause
+
+    def __str__(self):
+        if self.exc_cause:
+            exc_str = super().__str__()
+            return f"{exc_str} (caused by {repr(self.exc_cause)})"
+
+        return super().__str__()
+
+
+ErrorOrBytesIO = YaliError | BytesIO
+ErrorOrStr = YaliError | str
 
 
 class StrictTypesModel(BaseModel):
@@ -85,12 +104,12 @@ class DateTimeRange(StrictTypesModel):
         return self
 
 
-class ErrorBase(FlexiTypesModel):
+class FailBase(FlexiTypesModel):
     error: NonEmptyStr
     extra: Dict = {}
 
 
-class Failure(ErrorBase):
+class Failure(FailBase):
     tid: Literal["fl"] = "fl"
 
 
@@ -104,18 +123,5 @@ Result = Annotated[Union[Success, Failure], Field(discriminator="tid")]
 
 class MultiResult(FlexiTypesModel):
     passed: List[Dict] = []
-    failed: List[ErrorBase] = []
+    failed: List[FailBase] = []
     summary: str | None = None
-
-
-class YaliError(Exception):
-    def __init__(self, error: NonEmptyStr):
-        self.error = error
-
-        super().__init__(self.error)
-
-    def __str__(self):
-        return f"YaliError: {self.error}"
-
-    def __reduce__(self):
-        return (self.__class__, (self.error))

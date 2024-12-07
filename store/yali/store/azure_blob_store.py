@@ -1,12 +1,17 @@
-import asyncio
-from typing import List
+from typing import Any, AsyncGenerator, List
 
 from azure.core.exceptions import ResourceExistsError, ResourceNotFoundError
-from azure.storage.blob.aio import (BlobClient, BlobServiceClient,
-                                    ContainerClient)
+from azure.storage.blob.aio import BlobClient, BlobServiceClient, ContainerClient
 from yali.core.typings import YaliError
 
-from .abc_store import AbstractStore, AzureBlobStoreConfig, BulkPutEntry
+from .abc_store import (
+    AbstractStore,
+    AzureBlobStoreConfig,
+    BulkPutEntry,
+    BytesIO,
+    ErrorOrBytesIO,
+    ErrorOrStr,
+)
 
 
 class AzureBlobStore(AbstractStore):
@@ -54,18 +59,6 @@ class AzureBlobStore(AbstractStore):
     def object_store_path(self, key: str):
         return f"{self._config.container_name}/{key}"
 
-    def is_accessible(self):
-        try:
-            _ = self._aio_loop.run_until_complete(self._container_client.get_container_properties())
-            return True
-        except Exception as ex:
-            self._logger.error(
-                f"Failed to access container: {self._config.container_name} in store: {self._store_id}",
-                exc_info=ex,
-            )
-
-        return False
-
     async def close(self):
         self._logger.info(f"Closing {self._config.stype} store: {self._store_id}")
 
@@ -75,7 +68,7 @@ class AzureBlobStore(AbstractStore):
         await self._service_client.close()
         await super().close()
 
-    async def get_object(self, key: str):
+    async def get_object(self, key: str) -> ErrorOrBytesIO:
         try:
             blob_client = self._container_client.get_blob_client(blob=key)
             stream_dl = await blob_client.download_blob()
@@ -83,111 +76,74 @@ class AzureBlobStore(AbstractStore):
 
             await blob_client.close()
 
-            return odata
+            return BytesIO(odata)
         except Exception as ex:
-            self._logger.error(
-                f"Failed to read object: {key} from {self._config.stype} store: {self._store_id} for container: {self._config.container_name}",
-                exc_info=ex,
-            )
+            error_mesg = f"Failed to read object: {key} from {self._config.stype} store: {self._store_id} for container: {self._config.container_name}"
 
-        return None
+            self._logger.error(error_mesg, exc_info=ex)
+            return YaliError(error_mesg, exc_cause=ex)
 
-    async def put_object(self, key: str, data: bytes, overwrite: bool = False):
+    async def put_object(self, key: str, data: BytesIO, overwrite: bool = False) -> ErrorOrStr:
         blob_client: BlobClient = None
-        result = 0
 
         try:
             blob_client = self._container_client.get_blob_client(blob=key)
-            ul_result = await blob_client.upload_blob(data, overwrite=overwrite)
-            result = len(data)
+            ul_result = await blob_client.upload_blob(data.getvalue(), overwrite=overwrite)
 
             self._logger.debug(ul_result)
+            return f"Written {data.getbuffer().nbytes} bytes for object: {key}"
         except ResourceExistsError:
-            self._logger.warning(f"Object: {key} already exists in store: {self._store_id}")
-            result = -1
+            return YaliError(f"Object: {key} already exists in store: {self._store_id}")
         except Exception as ex:
-            self._logger.error(
-                f"Failed to write object: {key} to {self._config.stype} store: {self._store_id} for container: {self._config.container_name}",
-                exc_info=ex,
-            )
+            error_mesg = f"Failed to write object: {key} to {self._config.stype} store: {self._store_id} for container: {self._config.container_name}"
+
+            self._logger.error(error_mesg, exc_info=ex)
+            return YaliError(error_mesg, exc_cause=ex)
         finally:
             if blob_client:
                 await blob_client.close()
 
-        return result
+    async def delete_object(self, key: str) -> ErrorOrStr:
+        blob_client: BlobClient = None
 
-    async def delete_object(self, key: str):
         try:
             blob_client = self._container_client.get_blob_client(blob=key)
             await blob_client.delete_blob()
             await blob_client.close()
-        except Exception as ex:
-            self._logger.error(
-                f"Failed to delete object: {key} from {self._config.stype} store: {self._store_id} for container: {self._config.container_name}",
-                exc_info=ex,
-            )
 
-    async def get_objects(self, keys: List[str]):
-        aio_futures = []
+            return f"Deleted object: {key}"
+        except Exception as ex:
+            error_mesg = f"Failed to delete object: {key} from {self._config.stype} store: {self._store_id} for container: {self._config.container_name}"
+
+            self._logger.error(error_mesg, exc_info=ex)
+            return YaliError(error_mesg, exc_cause=ex)
+        finally:
+            if blob_client:
+                await blob_client.close()
+
+    async def get_objects(self, keys: List[str]) -> AsyncGenerator[ErrorOrBytesIO, Any]:
+        if not keys:
+            return YaliError("Keys list is empty")
 
         for okey in keys:
-            aio_futures.append(self.get_object(key=okey))
+            result = await self.get_object(key=okey)
+            yield result
 
-        results = await asyncio.gather(*aio_futures, return_exceptions=True)
-        files_data: List[bytes] = []
-
-        for okey, result in zip(keys, results):
-            if isinstance(result, Exception):
-                self._logger.error(
-                    f"Failed to read object: {okey} from {self._config.stype} store: {self._store_id} for container: {self._config.container_name}",
-                    exc_info=result,
-                )
-                results[keys.index(okey)] = None
-            else:
-                files_data.append(result)
-
-        results.clear()
-        aio_futures.clear()
-
-        return files_data
-
-    async def put_objects(self, entries: List[BulkPutEntry]):
-        aio_futures = []
+    async def put_objects(self, entries: List[BulkPutEntry]) -> AsyncGenerator[ErrorOrStr, Any]:
+        if not entries:
+            return YaliError("Entries list is empty")
 
         for okey, data, overwrite in entries:
-            aio_futures.append(self.put_object(key=okey, data=data, overwrite=overwrite))
+            result = await self.put_object(key=okey, data=data, overwrite=overwrite)
+            yield result
 
-        results = await asyncio.gather(*aio_futures, return_exceptions=True)
-
-        for okey, result in zip(entries, results):
-            if isinstance(result, Exception):
-                self._logger.error(
-                    f"Failed to write object: {okey} to {self._config.stype} store: {self._store_id} for container: {self._config.container_name}",
-                    exc_info=result,
-                )
-            elif result == -1:
-                self._logger.warning(f"Object: {okey} already exists in store: {self._store_id}")
-
-        results.clear()
-        aio_futures.clear()
-
-    async def delete_objects(self, keys: List[str]):
-        aio_futures = []
+    async def delete_objects(self, keys: List[str]) -> AsyncGenerator[ErrorOrStr, Any]:
+        if not keys:
+            return YaliError("Keys list is empty")
 
         for okey in keys:
-            aio_futures.append(self.delete_object(key=okey))
-
-        results = await asyncio.gather(*aio_futures, return_exceptions=True)
-
-        for okey, result in zip(keys, results):
-            if isinstance(result, Exception):
-                self._logger.error(
-                    f"Failed to delete object: {okey} from {self._config.stype} store: {self._store_id} for container: {self._config.container_name}",
-                    exc_info=result,
-                )
-
-        results.clear()
-        aio_futures.clear()
+            result = await self.delete_object(key=okey)
+            yield result
 
     async def object_exists(self, key: str):
         try:

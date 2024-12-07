@@ -9,5 +9,6 @@
       "source.unusedImports": "explicit",
       "source.fixAll.pylance": "explicit"
     }
-  }
+  },
+  "isort.args": ["--profile", "black"]
 }
