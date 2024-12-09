@@ -105,8 +105,8 @@ class AbstractStore(ABC):
     _logger = logging.getLogger(__name__)
 
     @abstractmethod
-    def __init__(self, config: StoreConfig):
-        self._aio_loop = asyncio.get_running_loop()
+    def __init__(self, config: StoreConfig, aio_loop: asyncio.AbstractEventLoop):
+        self._aio_loop = aio_loop
         self._settings = storage_settings()
         self._store_id = self._gen_store_id(config=config)
         self._thread_executor = ThreadPoolExecutor(

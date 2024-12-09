@@ -15,6 +15,9 @@ packages = [{ include = "yali" }]
 [tool.poetry.dependencies]
 python = "^3.11"
 yali-core = { path = "../core", develop = true }
+nats-py = "^2.9.0"
+websockets = "^14.1"
+pyjwt = {extras = ["crypto"], version = "^2.10.1"}
 
 [tool.poetry.group.dev.dependencies]
 black = "^24.8.0"

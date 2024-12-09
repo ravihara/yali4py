@@ -16,9 +16,9 @@ from .abc_store import (
 
 
 class AwsS3Store(AbstractStore):
-    def __init__(self, config: AwsS3StoreConfig):
+    def __init__(self, *, config: AwsS3StoreConfig, aio_loop: asyncio.AbstractEventLoop):
         self._config = config
-        super().__init__(config)
+        super().__init__(config, aio_loop)
 
         self._client = Minio(
             endpoint=config.endpoint,

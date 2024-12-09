@@ -15,7 +15,7 @@ from .abc_store import (
 
 
 class UnixFsStore(AbstractStore):
-    def __init__(self, config: UnixFsStoreConfig):
+    def __init__(self, *, config: UnixFsStoreConfig, aio_loop: asyncio.AbstractEventLoop):
         self._config = config
 
         if self._config.is_readonly:
@@ -24,7 +24,7 @@ class UnixFsStore(AbstractStore):
         elif not FilesConv.is_dir_writable(self._config.sroot, check_creatable=True):
             raise YaliError(f"Store's root folder is not writable: {self._config.sroot}")
 
-        super().__init__(config)
+        super().__init__(config, aio_loop)
 
     def object_store_path(self, key: str):
         if key.startswith(f"{self._config.sroot}/"):

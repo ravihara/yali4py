@@ -1,3 +1,4 @@
+import asyncio
 from typing import Any, AsyncGenerator, List
 
 from azure.core.exceptions import ResourceExistsError, ResourceNotFoundError
@@ -15,9 +16,9 @@ from .abc_store import (
 
 
 class AzureBlobStore(AbstractStore):
-    def __init__(self, config: AzureBlobStoreConfig):
+    def __init__(self, *, config: AzureBlobStoreConfig, aio_loop: asyncio.AbstractEventLoop):
         self._config = config
-        super().__init__(config)
+        super().__init__(config, aio_loop)
 
         try:
             self._service_client = BlobServiceClient.from_connection_string(
