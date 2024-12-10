@@ -1,12 +1,16 @@
-import json
-import re
-import sys
-from typing import Iterable, Any
 import hashlib
+import json
 import os
+import re
 import socket
+import sys
+from typing import Any, Iterable
+
 import netifaces
 from cachetools.func import ttl_cache
+from pydantic import ValidationError
+
+from ..typings import Failure, Result, Success
 
 
 @staticmethod
@@ -142,3 +146,14 @@ def filename_by_sysinfo(basename: str, extension: str = ".out"):
     suffix = hashlib.md5(suffix.encode()).hexdigest()
 
     return f"{basename}_{suffix}{extension}"
+
+
+@staticmethod
+def dict_to_result(data: dict) -> Result:
+    """This method will raise exception if data is not valid."""
+    try:
+        res = Success(**data)
+        return res
+    except ValidationError:
+        res = Failure(**data)
+        return res

@@ -24,7 +24,8 @@ class JWTPayload(FlexiTypesModel):
     iss: NonEmptyStr
     aud: NonEmptyStr
     sub: NonEmptyStr
-    exp: int = Field(..., gt=600)
+    iat: int = Field(..., gt=0)
+    exp: int = Field(..., ge=300)
 
 
 JWTValidator = Callable[[JWTPayload], Awaitable[bool]]

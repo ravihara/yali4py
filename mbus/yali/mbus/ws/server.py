@@ -12,7 +12,7 @@ from websockets.exceptions import ConnectionClosedOK as WsConnectionClosedOK
 from websockets.frames import CloseCode
 from yali.core.typings import Failure, Field, FlexiTypesModel, Result
 
-from .protodef import (
+from .common import (
     AioWsServerConnection,
     JWTValidator,
     ensure_ws_client,
@@ -50,11 +50,14 @@ WsServerExcludeArgs = [
 
 
 class YaliWebSocketServer:
-    def __init__(self, config: YaliWsServerConfig, **kwargs):
+    def __init__(self, *, config: YaliWsServerConfig, **kwargs):
         self.__instance: AioWsServer | None = None
 
         self._config = config
         self._logger = logging.getLogger(config.service)
+
+        if not kwargs:
+            kwargs = {}
 
         ## Ensure to remove internally handled args
         for k in WsServerExcludeArgs:
