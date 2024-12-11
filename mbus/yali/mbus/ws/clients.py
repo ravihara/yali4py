@@ -9,10 +9,9 @@ from websockets import exceptions as ws_exc
 from websockets.asyncio.client import ClientConnection as AioWsClientConnection
 from websockets.asyncio.client import connect as aio_ws_connect
 from websockets.frames import CloseCode
+from yali.auth import JWTPayload, client_ssl_context, generate_jwt
 from yali.core.typings import Failure, FlexiTypesModel, Result, Success
 from yali.core.utils.common import dict_to_result, safe_load_json
-
-from .common import JWTPayload, client_ssl_context, generate_jwt
 
 WsClientExcludeArgs = ["ws_url", "jwt_payload", "on_message", "retry_timeout_sec", "ssl", "logger"]
 

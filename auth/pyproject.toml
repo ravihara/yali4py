@@ -3,9 +3,9 @@ requires = ["poetry-core>=1.0.0"]
 build-backend = "poetry.core.masonry.api"
 
 [tool.poetry]
-name = "yali-mbus"
+name = "yali-auth"
 version = "0.1.0"
-description = "Messaging related modules for Yali toolkit"
+description = "Authentication and authorization modules for Yali toolkit"
 license = "Apache-2.0"
 authors = ["Ravishankar Haranath <ravikh@gmail.com>"]
 readme = "README.md"
@@ -15,9 +15,7 @@ packages = [{ include = "yali" }]
 [tool.poetry.dependencies]
 python = "^3.11"
 yali-core = { path = "../core", develop = true }
-yali-auth = { path = "../auth", develop = true }
-nats-py = "^2.9.0"
-websockets = "^14.1"
+pyjwt = { extras = ["crypto"], version = "^2.10.1" }
 
 [tool.poetry.group.dev.dependencies]
 black = "^24.8.0"
