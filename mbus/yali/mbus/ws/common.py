@@ -5,7 +5,12 @@ from typing import List, Literal
 from websockets.asyncio.server import Request as AioWsRequest
 from websockets.asyncio.server import Response as AioWsResponse
 from websockets.asyncio.server import ServerConnection as AioWsServerConnection
-from yali.auth import JWTFailure, JWTReference, verify_jwt_reference
+from yali.auth import (
+    JWTFailure,
+    JWTPayloadValidator,
+    JWTReference,
+    verify_jwt_reference,
+)
 
 YaliWsClientType = Literal["UNI_TXN_WS_CLIENT", "LOOPED_WS_CLIENT"]
 YaliWsClients: List[YaliWsClientType] = [
@@ -24,7 +29,10 @@ def validate_ws_client(client_id: str):
 
 
 def ensure_ws_client(
-    logger: Logger, with_jwt_auth: bool = False, jwt_reference: JWTReference | None = None
+    logger: Logger,
+    with_jwt_auth: bool = False,
+    jwt_reference: JWTReference | None = None,
+    jwt_validator: JWTPayloadValidator | None = None,
 ):
     async def process_request(
         connection: AioWsServerConnection,
@@ -72,7 +80,11 @@ def ensure_ws_client(
                 return response
 
             jwt_token = auth_header[7:]
-            response = verify_jwt_reference(jwt_token, jwt_reference)
+            response = verify_jwt_reference(
+                jwt_token=jwt_token,
+                jwt_reference=jwt_reference,
+                jwt_validator=jwt_validator,
+            )
 
             if isinstance(response, JWTFailure):
                 response = connection.respond(

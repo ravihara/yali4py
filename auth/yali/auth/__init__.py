@@ -1,7 +1,7 @@
 import os
 import ssl
 from http import HTTPStatus
-from typing import List
+from typing import Any, Callable, Dict, List
 
 import jwt
 from pydantic import ValidationError
@@ -25,11 +25,16 @@ class JWTPayload(FlexiTypesModel):
     sub: str
     iat: float  ## IssuedAt Datetime in unix timestamp
     exp: float  ## Expiry Datetime in unix timestamp
+    nbf: float | None = None  ## NotBefore Datetime in unix timestamp
+    custom: Dict[str, Any] = {}
 
 
 class JWTFailure(FlexiTypesModel):
     status: HTTPStatus
     reason: str
+
+
+JWTPayloadValidator = Callable[[JWTPayload], JWTFailure | None]
 
 
 def server_ssl_context():
@@ -99,7 +104,9 @@ def generate_jwt(payload: JWTPayload) -> str:
     return ws_jwt
 
 
-def verify_jwt_reference(jwt_token: str, jwt_reference: JWTReference):
+def verify_jwt_reference(
+    *, jwt_token: str, jwt_reference: JWTReference, jwt_validator: JWTPayloadValidator | None = None
+):
     signing_key = jwt_signing_key_from_env()
     verify_opts = {
         "verify_signature": True,
@@ -154,6 +161,12 @@ def verify_jwt_reference(jwt_token: str, jwt_reference: JWTReference):
                 status=HTTPStatus.UNAUTHORIZED,
                 reason="JWT payload is not yet valid\n",
             )
+
+        if jwt_validator:
+            failure = jwt_validator(jwt_payload)
+
+            if failure:
+                return failure
 
         return jwt_payload
     except ValidationError:

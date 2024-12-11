@@ -10,7 +10,7 @@ from websockets.exceptions import ConnectionClosed as WsConnectionClosed
 from websockets.exceptions import ConnectionClosedError as WsConnectionClosedError
 from websockets.exceptions import ConnectionClosedOK as WsConnectionClosedOK
 from websockets.frames import CloseCode
-from yali.auth import JWTReference, server_ssl_context
+from yali.auth import JWTPayloadValidator, JWTReference, server_ssl_context
 from yali.core.typings import Failure, Field, FlexiTypesModel, Result
 
 from .common import AioWsServerConnection, ensure_ws_client
@@ -23,6 +23,7 @@ class YaliWsServerConfig(FlexiTypesModel):
     with_ssl: bool = False
     with_jwt_auth: bool = False
     jwt_reference: JWTReference | None = None
+    jwt_validator: JWTPayloadValidator | None = None
     on_connect: Callable[[AioWsServerConnection, str], Coroutine[Any, Any, Result]]
     on_message: Callable[[str, str, Dict], Coroutine[Any, Any, None]]
     on_disconnect: Callable[[AioWsServerConnection, str], Coroutine[Any, Any, None]]
@@ -147,6 +148,7 @@ class YaliWebSocketServer:
             logger=self._logger,
             with_jwt_auth=self._config.with_jwt_auth,
             jwt_reference=self._config.jwt_reference,
+            jwt_validator=self._config.jwt_validator,
         )
 
         self.__instance = await aio_ws_serve(
