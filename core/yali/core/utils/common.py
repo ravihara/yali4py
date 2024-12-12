@@ -15,17 +15,20 @@ from ..typings import Failure, Result, Success
 
 @staticmethod
 def os_uname_str():
+    """Get the OS name, release, version, and machine."""
     uname_info = os.uname()
     return f"{uname_info.nodename}|{uname_info.sysname}|{uname_info.release}|{uname_info.version}|{uname_info.machine}"
 
 
 @staticmethod
 def is_json_data(data: Any):
+    """Check if the data is a valid JSON."""
     return isinstance(data, (dict, list))
 
 
 @staticmethod
 def safe_load_json(data: str, **kwargs):
+    """Load JSON data safely."""
     try:
         payload = json.loads(data, **kwargs)
         assert isinstance(payload, (dict, list))
@@ -36,6 +39,7 @@ def safe_load_json(data: str, **kwargs):
 
 @staticmethod
 def alphanum_sorted(data: Iterable):
+    """Sort a list of strings in the way that humans expect."""
     convert = lambda text: int(text) if text.isdigit() else text.lower()
     alphanum_key = lambda key: [convert(c) for c in re.split(r"(\d+)", key)]
     return sorted(data, key=alphanum_key)
@@ -67,10 +71,13 @@ def sizeof_object(obj, seen=None):
 
 @staticmethod
 def get_sys_ipaddrs():
-    """Get all IP addresses of the machine.
+    """
+    Get all IP addresses of the machine.
 
-    Returns:
-        A list of IP addresses.
+    Returns
+    -------
+    list
+        List of IP addresses
     """
 
     ip_addresses = []
@@ -91,15 +98,22 @@ def get_sys_ipaddrs():
 @staticmethod
 @ttl_cache(maxsize=128, ttl=600)
 def id_by_sysinfo(suffix: str = "", use_pid: bool = False, hash_algo: str = "md5"):
-    """Generate an identifier combined with pid and ip-addresses.
+    """
+    Generate an identifier combined with pid and ip-addresses.
 
-    Args:
-        suffix: The suffix to add to the ID. Default is "".
-        use_pid: Whether to include the process ID. Default is False.
-        hash_algo: The hashing algorithm to use. Default is "md5".
+    Parameters
+    ----------
+    suffix: str
+        The suffix to be added to the identifier. Default is "".
+    use_pid: bool
+        True to include pid in the identifier, False otherwise. Default is False.
+    hash_algo: str
+        The hash algorithm to be used. Default is "md5".
 
-    Returns:
-        A unique ID.
+    Returns
+    -------
+    str
+        The generated identifier
     """
 
     ip_addresses = get_sys_ipaddrs()
@@ -125,14 +139,20 @@ def id_by_sysinfo(suffix: str = "", use_pid: bool = False, hash_algo: str = "md5
 @staticmethod
 @ttl_cache(maxsize=128, ttl=600)
 def filename_by_sysinfo(basename: str, extension: str = ".out"):
-    """Get filename suffixed with hashed system info.
+    """
+    Get filename suffixed with hashed system info.
 
-    Args:
-        basename: The name of the file.
-        extension: The extension of the file. Default is ".out".
+    Parameters
+    ----------
+    basename: str
+        The base name of the filename
+    extension: str
+        The extension of the filename. Default is ".out"
 
-    Returns:
-        The suffixed filename.
+    Returns
+    -------
+    str
+        The generated filename
     """
 
     ip_addresses = get_sys_ipaddrs()
@@ -150,7 +170,20 @@ def filename_by_sysinfo(basename: str, extension: str = ".out"):
 
 @staticmethod
 def dict_to_result(data: dict) -> Result:
-    """This method will raise exception if data is not valid."""
+    """
+    Convert a dictionary to a Result instance. This method will raise
+    ValidationError if, the data does not match Success or Failure model
+
+    Parameters
+    ----------
+    data : dict
+        The dictionary to be converted
+
+    Returns
+    -------
+    Result
+        The Result instance
+    """
     try:
         res = Success(**data)
         return res

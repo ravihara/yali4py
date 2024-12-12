@@ -20,6 +20,19 @@ YaliWsClients: List[YaliWsClientType] = [
 
 
 def validate_ws_client(client_id: str):
+    """
+    Check if a client is a valid Yali defined Websocket client based on the client id
+
+    Parameters
+    ----------
+    client_id : str
+        The client id to be checked
+
+    Returns
+    -------
+    bool
+        True if the client is a valid Yali defined Websocket client, False otherwise
+    """
     id_parts = client_id.split("|")
 
     if len(id_parts) != 2:
@@ -28,12 +41,16 @@ def validate_ws_client(client_id: str):
     return id_parts[0] in YaliWsClients
 
 
-def ensure_ws_client(
+def wrap_server_process_request(
     logger: Logger,
     with_jwt_auth: bool = False,
     jwt_reference: JWTReference | None = None,
     jwt_validator: JWTPayloadValidator | None = None,
 ):
+    """
+    The ws-server process request wrapper, providing JWT and other goodies.
+    """
+
     async def process_request(
         connection: AioWsServerConnection,
         request: AioWsRequest,

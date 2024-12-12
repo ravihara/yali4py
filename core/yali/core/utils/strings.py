@@ -11,10 +11,16 @@ ALLCHARS_REGEX = r"[{}]+"
 
 
 def lower_with_underscores(in_str: str):
+    """
+    Convert a string to lowercase and replace all delimiters with underscores.
+    """
     return re.sub(ALLCHARS_REGEX.format(re.escape(DEFAULT_DELIMITERS)), "_", in_str).lower()
 
 
 def lower_with_hyphens(in_str: str):
+    """
+    Convert a string to lowercase and replace all delimiters with hyphens.
+    """
     return re.sub(ALLCHARS_REGEX.format(re.escape(DEFAULT_DELIMITERS)), "-", in_str).lower()
 
 
@@ -192,6 +198,23 @@ class StringConv:
         delimiters: str = DEFAULT_DELIMITERS,
         clear_punctuation: bool = True,
     ) -> str:
+        """
+        Convert a string to kebab-case.
+
+        Parameters
+        ----------
+        in_str: str
+            The string to be converted to kebab-case
+        delimiters: str
+            The delimiters to be used to separate words
+        clear_punctuation: bool
+            True to remove non-delimiter punctuation, False otherwise
+
+        Returns
+        -------
+        str
+            The kebab-case string
+        """
         out_str = StringConv._prepared_string(
             in_str=in_str, delimiters=delimiters, clear_punctuation=clear_punctuation
         )
@@ -222,6 +245,23 @@ class StringConv:
         delimiters: str = DEFAULT_DELIMITERS,
         clear_punctuation: bool = True,
     ) -> str:
+        """
+        Convert a string to camelCase.
+
+        Parameters
+        ----------
+        in_str: str
+            The string to be converted to camelCase
+        delimiters: str
+            The delimiters to be used to separate words
+        clear_punctuation: bool
+            True to remove non-delimiter punctuation, False otherwise
+
+        Returns
+        -------
+        str
+            The camelCase string
+        """
         out_str = StringConv._prepared_string(
             in_str=in_str, delimiters=delimiters, clear_punctuation=clear_punctuation
         )
@@ -247,6 +287,23 @@ class StringConv:
         delimiters: str = DEFAULT_DELIMITERS,
         clear_punctuation: bool = True,
     ) -> str:
+        """
+        Convert a string to PascalCase.
+
+        Parameters
+        ----------
+        in_str: str
+            The string to be converted to PascalCase
+        delimiters: str
+            The delimiters to be used to separate words
+        clear_punctuation: bool
+            True to remove non-delimiter punctuation, False otherwise
+
+        Returns
+        -------
+        str
+            The PascalCase string
+        """
         out_str = StringConv._prepared_string(
             in_str=in_str, delimiters=delimiters, clear_punctuation=clear_punctuation
         )
@@ -274,6 +331,23 @@ class StringConv:
         delimiters: str = DEFAULT_DELIMITERS,
         clear_punctuation: bool = True,
     ) -> str:
+        """
+        Convert a string to snake_case.
+
+        Parameters
+        ----------
+        in_str: str
+            The string to be converted to snake_case
+        delimiters: str
+            The delimiters to be used to separate words
+        clear_punctuation: bool
+            True to remove non-delimiter punctuation, False otherwise
+
+        Returns
+        -------
+        str
+            The snake_case string
+        """
         out_str = StringConv._prepared_string(
             in_str=in_str, delimiters=delimiters, clear_punctuation=clear_punctuation
         )
@@ -304,6 +378,23 @@ class StringConv:
         delimiters: str = DEFAULT_DELIMITERS,
         clear_punctuation: bool = True,
     ) -> str:
+        """
+        Convert a string to COBOLCase.
+
+        Parameters
+        ----------
+        in_str: str
+            The string to be converted to COBOLCase
+        delimiters: str
+            The delimiters to be used to separate words
+        clear_punctuation: bool
+            True to remove non-delimiter punctuation, False otherwise
+
+        Returns
+        -------
+        str
+            The COBOLCase string
+        """
         join_ch = "-"
 
         if in_str.isupper():
@@ -342,6 +433,23 @@ class StringConv:
         delimiters: str = DEFAULT_DELIMITERS,
         clear_punctuation: bool = True,
     ) -> str:
+        """
+        Convert a string to MACRO_CASE.
+
+        Parameters
+        ----------
+        in_str: str
+            The string to be converted to MACRO_CASE
+        delimiters: str
+            The delimiters to be used to separate words
+        clear_punctuation: bool
+            True to remove non-delimiter punctuation, False otherwise
+
+        Returns
+        -------
+        str
+            The MACRO_CASE string
+        """
         join_ch = "_"
 
         if in_str.isupper():
@@ -381,6 +489,23 @@ class StringConv:
         delimiters: str = DEFAULT_DELIMITERS,
         clear_punctuation: bool = True,
     ) -> str:
+        """
+        Convert a string to flatlower (i.e., removing all delimiters and converting to lowercase).
+
+        Parameters
+        ----------
+        in_str: str
+            The string to be converted to flatlower
+        delimiters: str
+            The delimiters to be used to separate words
+        clear_punctuation: bool
+            True to remove non-delimiter punctuation, False otherwise
+
+        Returns
+        -------
+        str
+            The flatlower string
+        """
         out_str = StringConv._prepared_string(
             in_str=in_str, delimiters=delimiters, clear_punctuation=clear_punctuation
         )
@@ -406,6 +531,23 @@ class StringConv:
         delimiters: str = DEFAULT_DELIMITERS,
         clear_punctuation: bool = True,
     ) -> str:
+        """
+        Convert a string to FLATUPPER (i.e., removing all delimiters and converting to uppercase).
+
+        Parameters
+        ----------
+        in_str: str
+            The string to be converted to FLATUPPER
+        delimiters: str
+            The delimiters to be used to separate words
+        clear_punctuation: bool
+            True to remove non-delimiter punctuation, False otherwise
+
+        Returns
+        -------
+        str
+            The FLATUPPER string
+        """
         out_str = StringConv._prepared_string(
             in_str=in_str, delimiters=delimiters, clear_punctuation=clear_punctuation
         )

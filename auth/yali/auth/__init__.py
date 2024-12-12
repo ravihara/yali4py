@@ -38,6 +38,15 @@ JWTPayloadValidator = Callable[[JWTPayload], JWTFailure | None]
 
 
 def server_ssl_context():
+    """
+    Get the SSL context for the server using environment variables
+    YALI_SERVER_PEM_CERT_FILE and YALI_SERVER_PEM_KEY_FILE.
+
+    Returns
+    -------
+    ssl.SSLContext
+        SSL context
+    """
     ssl_cert_file = os.getenv("YALI_SERVER_PEM_CERT_FILE")
     ssl_key_file = os.getenv("YALI_SERVER_PEM_KEY_FILE")
 
@@ -58,6 +67,15 @@ def server_ssl_context():
 
 
 def client_ssl_context():
+    """
+    Get the SSL context for the client using environment variables
+    YALI_CLIENT_PEM_CERT_FILE and YALI_CLIENT_PEM_KEY_FILE.
+
+    Returns
+    -------
+    ssl.SSLContext
+        SSL context
+    """
     ssl_cert_file = os.getenv("YALI_CLIENT_PEM_CERT_FILE")
     ssl_key_file = os.getenv("YALI_CLIENT_PEM_KEY_FILE")
 
@@ -78,6 +96,14 @@ def client_ssl_context():
 
 
 def jwt_signing_key_from_env():
+    """
+    Get the PEM formatted signing key from the environment variable YALI_JWT_SIGNING_KEY_FILE.
+
+    Returns
+    -------
+    str
+        PEM formatted signing key
+    """
     global _yali_jwt_signing_key
 
     if _yali_jwt_signing_key:
@@ -98,6 +124,20 @@ def jwt_signing_key_from_env():
 
 
 def generate_jwt(payload: JWTPayload) -> str:
+    """
+    Generate a JWT token from the provided JWTPayload. This uses HS256 algorithm
+    and PEM formatted signing key.
+
+    Parameters
+    ----------
+    payload: JWTPayload
+        JWTPayload to be used for generating JWT token
+
+    Returns
+    -------
+    str
+        JWT token
+    """
     signing_key = jwt_signing_key_from_env()
     ws_jwt = jwt.encode(payload.model_dump(), signing_key, algorithm="HS256")
 
@@ -107,6 +147,25 @@ def generate_jwt(payload: JWTPayload) -> str:
 def verify_jwt_reference(
     *, jwt_token: str, jwt_reference: JWTReference, jwt_validator: JWTPayloadValidator | None = None
 ):
+    """
+    Verify expected claims in the JWT token using the JWT Reference, provided.
+    An optional, custom validator can be provided to further validate the JWT payload.
+    This facilitates extending the JWT payload with custom claims.
+
+    Parameters
+    ----------
+    jwt_token: str
+        JWT token to be verified
+    jwt_reference: JWTReference
+        JWT Reference to be used for verification
+    jwt_validator: JWTPayloadValidator | None
+        Optional, custom validator to be applied to the JWT payload
+
+    Returns
+    -------
+    JWTPayload | JWTFailure
+        JWTPayload if the JWT token is valid, JWTFailure otherwise
+    """
     signing_key = jwt_signing_key_from_env()
     verify_opts = {
         "verify_signature": True,

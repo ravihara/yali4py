@@ -134,42 +134,88 @@ class AbstractStore(ABC):
 
     @abstractmethod
     def object_store_path(self, key: str) -> str:
+        """Compute the path of the object in the store."""
         raise NotImplementedError()
 
     @abstractmethod
     async def close(self):
+        """Close the store."""
         await asyncio.sleep(0)
         self._thread_executor.shutdown(wait=True)
         self._thread_executor = None
 
     @abstractmethod
     async def get_object(self, key: str) -> ErrorOrBytesIO:
+        """Read the object from the store."""
         raise NotImplementedError()
 
     @abstractmethod
     async def put_object(self, key: str, data: BytesIO, overwrite: bool = False) -> ErrorOrStr:
+        """Write the object to the store."""
         raise NotImplementedError()
 
     @abstractmethod
     async def delete_object(self, key: str) -> ErrorOrStr:
+        """Delete the object from the store."""
         raise NotImplementedError()
 
     @abstractmethod
     async def get_objects(self, keys: List[str]) -> AsyncGenerator[ErrorOrBytesIO, Any]:
+        """
+        Read the objects from the store.
+
+        Parameters
+        ----------
+        keys : List[str]
+            The keys of the objects to read.
+
+        Returns
+        -------
+        AsyncGenerator[ErrorOrBytesIO, Any]
+            The objects read from the store.
+        """
         raise NotImplementedError()
 
     @abstractmethod
     async def put_objects(self, entries: List[BulkPutEntry]) -> AsyncGenerator[ErrorOrStr, Any]:
+        """
+        Write the objects to the store.
+
+        Parameters
+        ----------
+        entries : List[BulkPutEntry]
+            The objects to write.
+
+        Returns
+        -------
+        AsyncGenerator[ErrorOrStr, Any]
+            The results of the writes.
+        """
         raise NotImplementedError()
 
     @abstractmethod
     async def delete_objects(self, keys: List[str]) -> AsyncGenerator[ErrorOrStr, Any]:
+        """
+        Delete the objects from the store.
+
+        Parameters
+        ----------
+        keys : List[str]
+            The keys of the objects to delete.
+
+        Returns
+        -------
+        AsyncGenerator[ErrorOrStr, Any]
+            The results of the deletes.
+        """
         raise NotImplementedError()
 
     @abstractmethod
     async def object_exists(self, key: str) -> bool:
+        """Check if the object exists in the store."""
         raise NotImplementedError()
 
     @abstractmethod
     async def total_objects(self) -> int:
+        """Get the total number of objects in the store."""
         raise NotImplementedError()

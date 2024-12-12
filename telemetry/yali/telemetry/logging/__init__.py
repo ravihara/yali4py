@@ -3,21 +3,38 @@ from logging import LogRecord, getLogger
 from logging.config import dictConfig as dict_logging_config
 from multiprocessing import Queue as LogQueue
 from multiprocessing import current_process
-from typing import Any, Dict, Callable
-from yali.core.metatypes import YaliSingleton
+from typing import Any, Callable, Dict
 
-from yali.core.utils.osfiles import FilesConv
+from yali.core.constants import YALI_BREAK_EVENT, YALI_LOG_QUEUE_SIZE
+from yali.core.metatypes import YaliSingleton
+from yali.core.typings import (
+    Field,
+    FlexiTypesModel,
+    MultiProcContext,
+    NonEmptyStr,
+    model_validator,
+)
 from yali.core.utils.common import filename_by_sysinfo
-from yali.core.typings import FlexiTypesModel, Field, MultiProcContext, model_validator, NonEmptyStr
-from yali.core.constants import YALI_LOG_QUEUE_SIZE, YALI_BREAK_EVENT
+from yali.core.utils.osfiles import FilesConv
 from yali.core.utils.strings import lower_with_hyphens
+
 from .filters import get_filter_class_for_level
-from .formatters import YaliJsonLogFormatter, log_settings, effective_log_level
+from .formatters import YaliJsonLogFormatter, effective_log_level, log_settings
 
 _log_level = effective_log_level()
 
 
 def init_mproc_logging(queue: LogQueue, is_main: bool = True):
+    """
+    Initialize multiprocessing logging for a given parent or child process
+
+    Parameters
+    ----------
+    queue: LogQueue
+        The multiprocessing queue to use
+    is_main: bool, optional
+        Is the current process the main process
+    """
     dict_logging_config(
         config={
             "version": 1,
@@ -183,6 +200,7 @@ class YaliLog(metaclass=YaliSingleton):
         return self._app
 
     def get_logger(self, name: str = ""):
+        """Get a logger by name, or the app logger if no name is provided"""
         name = name.strip() if name else self._log_name
 
         if name:
@@ -191,6 +209,7 @@ class YaliLog(metaclass=YaliSingleton):
         return self._app
 
     def close(self):
+        """Close the logger"""
         if self._log_worker and self._log_worker.is_alive():
             self._mproc_queue.put(YALI_BREAK_EVENT)
             self._log_worker.join()

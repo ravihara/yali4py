@@ -1,5 +1,6 @@
 import datetime as dt
 from typing import List
+
 from ..typings import StrictTypesModel
 
 ALLOWED_DATETIME_FORMATS: List[str] = [
@@ -23,7 +24,9 @@ class DateTimeConv:
 
     @staticmethod
     def get_current_utc_time(strip_tzinfo=False) -> dt.datetime:
-        """Get current UTC time
+        """
+        Get current UTC time with optionally stripped timezone info.
+        Timezone info will be included by default.
 
         Parameters
         ----------
@@ -44,7 +47,9 @@ class DateTimeConv:
 
     @staticmethod
     def get_current_local_time(strip_tzinfo=False) -> dt.datetime:
-        """Get current local time
+        """
+        Get current local time with optionally stripped timezone info.
+        Timezone info will be included by default.
 
         Parameters
         ----------
@@ -65,7 +70,8 @@ class DateTimeConv:
 
     @staticmethod
     def str_to_datetime(dt_str: str):
-        """Create datetime object from supported date-time formatted string
+        """
+        Create datetime object from supported date-time formatted string
 
         Parameters
         ----------
@@ -87,7 +93,8 @@ class DateTimeConv:
 
     @staticmethod
     def exponential_backoff(base_delay: int, max_retries: int, max_delay: int):
-        """Create datetime object from supported date-time formatted string.
+        """
+        Get a generator function for exponential backoff
 
         Parameters
         ----------
@@ -113,7 +120,8 @@ class DateTimeConv:
 
     @staticmethod
     def time_as_parts(seconds: int):
-        """Splits the time in seconds to days, hours, minutes, seconds and returns
+        """
+        Splits the time in seconds to days, hours, minutes, seconds and returns
 
         Parameters
         ----------
@@ -145,7 +153,8 @@ class DateTimeConv:
 
     @staticmethod
     def time_diff_seconds(start_dt: dt.datetime, end_dt: dt.datetime):
-        """Finds the difference between start and end date-time values, in seconds and returns it.
+        """
+        Finds the difference between start and end date-time values, in seconds and returns it.
 
         Parameters
         ----------

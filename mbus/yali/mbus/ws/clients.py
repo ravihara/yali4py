@@ -16,7 +16,7 @@ from yali.core.utils.common import dict_to_result, safe_load_json
 WsClientExcludeArgs = ["ws_url", "jwt_payload", "on_message", "retry_timeout_sec", "ssl", "logger"]
 
 
-def _update_headers(kwargs: Dict[str, Any], client_id: str, jwt_payload: JWTPayload = None):
+def _update_headers(kwargs: Dict[str, Any], client_id: str, jwt_payload: JWTPayload | None = None):
     if "additional_headers" in kwargs:
         if isinstance(kwargs["additional_headers"], list):
             kwargs["additional_headers"].append(("X-Client-Id", client_id))
@@ -44,7 +44,9 @@ class LoopedWsClientConfig(FlexiTypesModel):
 class YaliUniTxnWsClient:
     _logger = logging.getLogger(__name__)
 
-    def __init__(self, *, ws_url: WebsocketUrl, jwt_payload: JWTPayload = None, **kwargs) -> None:
+    def __init__(
+        self, *, ws_url: WebsocketUrl, jwt_payload: JWTPayload | None = None, **kwargs
+    ) -> None:
         self._url = str(ws_url)
         self._cid = f"UNI_TXN_WS_CLIENT|{uuid4()}"
         self._jwt_payload = jwt_payload

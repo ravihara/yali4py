@@ -1,5 +1,6 @@
 from logging import Filter as LogFilter
 from typing import Dict
+
 from yali.core.settings import LogLevelName, LogLevelNumber
 
 
@@ -38,6 +39,19 @@ FilterForLogLevel: Dict[LogLevelName, type[LogFilter]] = {
 
 
 def get_filter_class_for_level(log_level: str):
+    """
+    Returns the filter class for a given log level
+
+    Parameters
+    ----------
+    log_level: str
+        The log level
+
+    Returns
+    -------
+    type[LogFilter]
+        The filter class
+    """
     _level = log_level
 
     if _level == "WARN":

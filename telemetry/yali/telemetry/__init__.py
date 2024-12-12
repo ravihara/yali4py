@@ -1,19 +1,17 @@
-from opentelemetry import trace as otel_trace
-from opentelemetry.sdk.trace import TracerProvider, Tracer
-from opentelemetry.sdk.trace.export import BatchSpanProcessor
-from opentelemetry.exporter.otlp.proto.grpc.trace_exporter import OTLPSpanExporter
-from opentelemetry.sdk.resources import Resource
+from typing import Dict
 
+import grpc
+from opentelemetry import metrics as otel_metrics
+from opentelemetry import trace as otel_trace
+from opentelemetry.exporter.otlp.proto.grpc.metric_exporter import OTLPMetricExporter
+from opentelemetry.exporter.otlp.proto.grpc.trace_exporter import OTLPSpanExporter
+from opentelemetry.sdk.metrics import Meter, MeterProvider
+from opentelemetry.sdk.metrics.export import PeriodicExportingMetricReader
+from opentelemetry.sdk.resources import Resource
+from opentelemetry.sdk.trace import Tracer, TracerProvider
+from opentelemetry.sdk.trace.export import BatchSpanProcessor
 from yali.core.metatypes import YaliSingleton
 from yali.core.settings import TelemetrySettings
-from opentelemetry import metrics as otel_metrics
-from opentelemetry.sdk.metrics import MeterProvider, Meter
-from opentelemetry.sdk.metrics.export import PeriodicExportingMetricReader
-from opentelemetry.exporter.otlp.proto.grpc.metric_exporter import OTLPMetricExporter
-from opentelemetry.sdk.resources import Resource
-
-from typing import Dict
-import grpc
 
 
 class YaliTelemetry(metaclass=YaliSingleton):
@@ -72,6 +70,21 @@ class YaliTelemetry(metaclass=YaliSingleton):
         self._meters: Dict[str, Meter] = {}
 
     def get_tracer(self, *, mod_name: str, lib_version: str | None = None):
+        """
+        Returns an OpenTelemetry tracer for a given module.
+
+        Parameters
+        ----------
+        mod_name: str
+            The name of the module.
+        lib_version: str | None, optional
+            The version of the library.
+
+        Returns
+        -------
+        Tracer
+            An OpenTelemetry tracer.
+        """
         tracer_name = f"{mod_name}|{lib_version}" if lib_version else mod_name
 
         if tracer_name not in self._tracers:
@@ -82,6 +95,21 @@ class YaliTelemetry(metaclass=YaliSingleton):
         return self._tracers[tracer_name]
 
     def get_meter(self, *, name: str, version: str = ""):
+        """
+        Returns an OpenTelemetry meter for a given name and version.
+
+        Parameters
+        ----------
+        name: str
+            The name of the meter.
+        version: str, optional
+            The version of the meter.
+
+        Returns
+        -------
+        Meter
+            An OpenTelemetry meter.
+        """
         meter_name = f"{name}|{version}" if version else name
 
         if meter_name not in self._meters:

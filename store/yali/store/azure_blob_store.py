@@ -36,7 +36,7 @@ class AzureBlobStore(AbstractStore):
             raise YaliError(f"Failed to initialize store: {self._store_id}")
 
     async def __ensure_container(self):
-        container_client: ContainerClient = None
+        container_client: ContainerClient | None = None
 
         try:
             container_client = self._service_client.get_container_client(
@@ -85,7 +85,7 @@ class AzureBlobStore(AbstractStore):
             return YaliError(error_mesg, exc_cause=ex)
 
     async def put_object(self, key: str, data: BytesIO, overwrite: bool = False) -> ErrorOrStr:
-        blob_client: BlobClient = None
+        blob_client: BlobClient | None = None
 
         try:
             blob_client = self._container_client.get_blob_client(blob=key)
@@ -105,7 +105,7 @@ class AzureBlobStore(AbstractStore):
                 await blob_client.close()
 
     async def delete_object(self, key: str) -> ErrorOrStr:
-        blob_client: BlobClient = None
+        blob_client: BlobClient | None = None
 
         try:
             blob_client = self._container_client.get_blob_client(blob=key)

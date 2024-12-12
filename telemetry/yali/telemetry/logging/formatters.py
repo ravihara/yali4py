@@ -1,12 +1,12 @@
-import logging
 import json
+import logging
+from decimal import Decimal
+from typing import Dict
+
 from opentelemetry import trace
 from opentelemetry.trace.span import INVALID_SPAN
-
-from yali.core.settings import CommonSettings, LogLevelName
-from typing import Dict
-from decimal import Decimal
 from yali.core.constants import YALI_LOG_DATETIME_FORMAT
+from yali.core.settings import CommonSettings, LogLevelName
 from yali.core.utils.datetimes import DateTimeConv
 
 _YALI_RECORD_ATTRS = {
@@ -47,6 +47,7 @@ def _json_serializable(obj):
 
 
 def effective_log_level():
+    """Return the effective log level based on debug mode and log level setting"""
     log_level: LogLevelName = "DEBUG" if log_settings.debug_enabled else log_settings.log_level
 
     return log_level
@@ -79,7 +80,6 @@ class YaliJsonLogFormatter(logging.Formatter):
         e.g., due to circular reference.
 
         Override this method to change the way dict is converted to JSON.
-
         """
         try:
             return json.dumps(record, default=_json_serializable)
@@ -94,7 +94,6 @@ class YaliJsonLogFormatter(logging.Formatter):
 
         The `extra` keyword argument is used to populate the `__dict__` of
         the `LogRecord`.
-
         """
         return {
             attr_name: record.__dict__[attr_name]
@@ -103,16 +102,24 @@ class YaliJsonLogFormatter(logging.Formatter):
         }
 
     def json_record(self, message: str, extra: Dict, record: logging.LogRecord):
-        """Prepares a JSON payload which will be logged.
-
+        """
+        Prepares a JSON payload which will be logged.
         Override this method to change JSON log format.
 
-        :param message: Log message, e.g., `logger.info(msg='Sign up')`.
-        :param extra: Dictionary that was passed as `extra` param
+        Parameters
+        ----------
+        message: str
+            Log message, e.g., `logger.info(msg='Sign up')`.
+        extra: Dict
+            Dictionary that was passed as `extra` param
             `logger.info('Sign up', extra={'referral_code': '52d6ce'})`.
-        :param record: `LogRecord` we got from `JSONFormatter.format()`.
-        :return: Dictionary which will be passed to JSON lib.
+        record: LogRecord
+            `LogRecord` we got from `JSONFormatter.format()`.
 
+        Returns
+        -------
+        Dict
+            Dictionary which will be passed to JSON lib
         """
         extra["message"] = message
         extra["levelname"] = record.levelname

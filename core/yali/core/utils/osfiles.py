@@ -1,16 +1,15 @@
+import json
 import os
 import re
-import json
-import yaml
 import tomllib
 from re import Pattern as RegExPattern
-from typing import List, Dict
+from typing import Dict, List
+
+import yaml
 
 from ..typings import YaliError
 
 
-# Internal function to select a file-path with matching extensions. Here
-# extensions are assumed to be in lowercase if ignore_extn_case is True.
 def _select_matching_file(
     fentry: os.DirEntry[str], extensions: List[str], ignore_extn_case: bool = True
 ):
@@ -29,7 +28,6 @@ def _select_matching_file(
     return None
 
 
-# Internal generator function to recursively scan a directory and collect list of file paths.
 def _file_paths_from_dir(
     *,
     base_dir: str,
@@ -61,7 +59,6 @@ def _file_paths_from_dir(
             yield fpath
 
 
-# Internal generator function to recursively scan a directory and collect list of directory paths.
 def _dir_paths_from_dir(
     *,
     base_dir: str,
@@ -105,7 +102,6 @@ def _total_files_in_dir(
     return count
 
 
-# Internal function to recursively scan a directory and collect its content.
 def _recursive_dir_content(
     *, base_dir: str, extensions: List[str], ignore_extn_case: bool, follow_symlinks: bool
 ):
@@ -139,17 +135,17 @@ def _recursive_dir_content(
 class FilesConv:
     @staticmethod
     def file_exists(file_path: str) -> bool:
+        """Check if the given file path refers to an existing file"""
         return os.path.exists(file_path) and os.path.isfile(file_path)
 
     @staticmethod
     def dir_exists(dir_path: str) -> bool:
+        """Check if the given directory path refers to an existing directory"""
         return os.path.exists(dir_path) and os.path.isdir(dir_path)
 
     @staticmethod
     def is_file_readable(file_path: str) -> bool:
-        """
-        Check if the given file path refers to a readable file
-        """
+        """Check if the given file path refers to a readable file"""
         if not file_path:
             return False
 
@@ -162,8 +158,18 @@ class FilesConv:
     def is_file_writable(file_path: str, check_creatable: bool = False) -> bool:
         """
         Check if the given file path refers to a writable file.
-        If 'check_creatable' is True (Default = False), it will check if the file
-        can be created under its parent folder, if not already exists.
+
+        Parameters
+        ----------
+        file_path: str
+            The file path to be checked
+        check_creatable: bool
+            True to check if the file can be created, False otherwise
+
+        Returns
+        -------
+        bool
+            True if the file is writable, False otherwise
         """
         if not file_path:
             return False
@@ -188,9 +194,7 @@ class FilesConv:
 
     @staticmethod
     def is_dir_readable(dir_path: str) -> bool:
-        """
-        Check if the given directory path refers to a readable folder
-        """
+        """Check if the given directory path refers to a readable folder"""
         if not dir_path:
             return False
 
@@ -203,8 +207,18 @@ class FilesConv:
     def is_dir_writable(dir_path: str, check_creatable: bool = False) -> bool:
         """
         Check if the given directory path refers to a writable folder.
-        If 'check_creatable' is True (Default = False), it will check if the folder
-        can be created under its parent folder, if not already exists.
+
+        Parameters
+        ----------
+        dir_path: str
+            The directory path to be checked
+        check_creatable: bool
+            True to check if the directory can be created, False otherwise
+
+        Returns
+        -------
+        bool
+            True if the directory is writable, False otherwise
         """
         if not dir_path:
             return False
@@ -235,6 +249,25 @@ class FilesConv:
         ignore_extn_case: bool = True,
         follow_symlinks: bool = True,
     ):
+        """
+        Recursively scan a directory and collect list of file and directory paths.
+
+        Parameters
+        ----------
+        base_dir: str
+            The base directory to be scanned
+        extensions: List[str]
+            List of extensions to be matched
+        ignore_extn_case: bool
+            True to ignore the case of extensions, False otherwise
+        follow_symlinks: bool
+            True to follow symlinks, False otherwise
+
+        Returns
+        -------
+        Tuple[List[str], List[str]]
+            List of directory paths, List of file paths
+        """
         if ignore_extn_case:
             extns = [extn.lower() for extn in extensions]
         else:
@@ -255,6 +288,25 @@ class FilesConv:
         follow_symlinks: bool = True,
         ignore_extn_case: bool = True,
     ):
+        """
+        Recursively scan a directory and count its files.
+
+        Parameters
+        ----------
+        base_dir: str
+            The base directory to be scanned
+        extensions: List[str]
+            List of extensions to be matched
+        follow_symlinks: bool
+            True to follow symlinks, False otherwise
+        ignore_extn_case: bool
+            True to ignore the case of extensions, False otherwise
+
+        Returns
+        -------
+        int
+            The number of files
+        """
         if not FilesConv.is_dir_readable(base_dir):
             return -1
 
@@ -279,6 +331,27 @@ class FilesConv:
         follow_symlinks: bool = True,
         ignore_extn_case: bool = True,
     ):
+        """
+        Get a generator function to recursively scan a directory and collect list of file paths.
+
+        Parameters
+        ----------
+        base_dir: str
+            The base directory to be scanned
+        extensions: List[str]
+            List of extensions to be matched
+        file_pattern: str | None
+            Regular expression pattern to match file paths
+        follow_symlinks: bool
+            True to follow symlinks, False otherwise
+        ignore_extn_case: bool
+            True to ignore the case of extensions, False otherwise
+
+        Returns
+        -------
+        Generator
+            Generator function to yield file paths
+        """
         if not FilesConv.is_dir_readable(base_dir):
             return ""
 
@@ -306,6 +379,25 @@ class FilesConv:
         follow_symlinks: bool = True,
         ignore_extn_case: bool = True,
     ):
+        """
+        Generator function to recursively scan a directory and collect list of directory paths.
+
+        Parameters
+        ----------
+        base_dir: str
+            The base directory to be scanned
+        dir_pattern: str | None
+            Regular expression pattern to match directory paths
+        follow_symlinks: bool
+            True to follow symlinks, False otherwise
+        ignore_extn_case: bool
+            True to ignore the case of extensions, False otherwise
+
+        Returns
+        -------
+        Generator
+            Generator function to yield directory paths
+        """
         if not FilesConv.is_dir_readable(base_dir):
             return ""
 
@@ -321,6 +413,19 @@ class FilesConv:
 
     @staticmethod
     def read_bytes(file_path: str):
+        """
+        Read bytes from a file
+
+        Parameters
+        ----------
+        file_path: str
+            The file path
+
+        Returns
+        -------
+        bytes
+            The bytes read from the file
+        """
         if not FilesConv.is_file_readable(file_path):
             raise YaliError(f"File '{file_path}' is not readable")
 
@@ -329,6 +434,19 @@ class FilesConv:
 
     @staticmethod
     def read_text(file_path: str):
+        """
+        Read text from a file
+
+        Parameters
+        ----------
+        file_path: str
+            The file path
+
+        Returns
+        -------
+        str
+            The text read from the file
+        """
         if not FilesConv.is_file_readable(file_path):
             raise YaliError(f"Text file '{file_path}' is not readable")
 
@@ -337,6 +455,21 @@ class FilesConv:
 
     @staticmethod
     def read_json(file_path: str, decorder_cls: json.JSONDecoder | None = None) -> Dict:
+        """
+        Read json from a file
+
+        Parameters
+        ----------
+        file_path: str
+            The file path
+        decorder_cls: json.JSONDecoder
+            The json decoder class
+
+        Returns
+        -------
+        Dict
+            The json read from the file
+        """
         if not FilesConv.is_file_readable(file_path):
             raise YaliError(f"Json file '{file_path}' is not readable")
 
@@ -345,6 +478,19 @@ class FilesConv:
 
     @staticmethod
     def read_yaml(file_path: str) -> Dict:
+        """
+        Read yaml from a file
+
+        Parameters
+        ----------
+        file_path: str
+            The file path
+
+        Returns
+        -------
+        Dict
+            The yaml read from the file
+        """
         if not FilesConv.is_file_readable(file_path):
             raise YaliError(f"Yaml file '{file_path}' is not readable")
 
@@ -353,6 +499,19 @@ class FilesConv:
 
     @staticmethod
     def read_toml(file_path: str) -> Dict:
+        """
+        Read toml from a file
+
+        Parameters
+        ----------
+        file_path: str
+            The file path
+
+        Returns
+        -------
+        Dict
+            The toml read from the file
+        """
         if not FilesConv.is_file_readable(file_path):
             raise YaliError(f"Toml file '{file_path}' is not readable")
 
@@ -361,6 +520,23 @@ class FilesConv:
 
     @staticmethod
     def write_bytes(file_path: str, data: bytes, *, overwrite: bool = False):
+        """
+        Write bytes to a file
+
+        Parameters
+        ----------
+        file_path: str
+            The file path
+        data: bytes
+            The bytes to be written
+        overwrite: bool
+            True to overwrite the file, False otherwise
+
+        Returns
+        -------
+        int
+            The number of bytes written
+        """
         if not FilesConv.is_file_writable(file_path, check_creatable=True):
             raise YaliError(f"File '{file_path}' is not writable")
 
@@ -374,6 +550,23 @@ class FilesConv:
 
     @staticmethod
     def write_text(file_path: str, data: str, *, overwrite: bool = False):
+        """
+        Write text to a file
+
+        Parameters
+        ----------
+        file_path: str
+            The file path
+        data: str
+            The text to be written
+        overwrite: bool
+            True to overwrite the file, False otherwise
+
+        Returns
+        -------
+        int
+            The number of bytes written
+        """
         if not FilesConv.is_file_writable(file_path, check_creatable=True):
             raise YaliError(f"Text file '{file_path}' is not writable")
 
@@ -393,6 +586,24 @@ class FilesConv:
         overwrite: bool = False,
         encoder_cls: json.JSONEncoder | None = None,
     ):
+        """
+        Write json to a file
+
+        Parameters
+        ----------
+        file_path: str
+            The file path
+        data: Dict
+            The json to be written
+        overwrite: bool
+            True to overwrite the file, False otherwise
+        encoder_cls: json.JSONEncoder
+            The json encoder class
+
+        Returns
+        -------
+        None
+        """
         if not FilesConv.is_file_writable(file_path, check_creatable=True):
             raise YaliError(f"Json file '{file_path}' is not writable")
 
@@ -406,6 +617,18 @@ class FilesConv:
 
     @staticmethod
     def delete_file(file_path: str):
+        """
+        Delete a file
+
+        Parameters
+        ----------
+        file_path: str
+            The file path
+
+        Returns
+        -------
+        None
+        """
         if not FilesConv.is_file_writable(file_path):
             raise YaliError(f"File '{file_path}' is not writable")
 
@@ -413,6 +636,18 @@ class FilesConv:
 
     @staticmethod
     def delete_dir(dir_path: str):
+        """
+        Delete a directory
+
+        Parameters
+        ----------
+        dir_path: str
+            The directory path
+
+        Returns
+        -------
+        None
+        """
         if not FilesConv.is_dir_writable(dir_path):
             raise YaliError(f"Directory '{dir_path}' is not writable")
 

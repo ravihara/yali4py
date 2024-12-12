@@ -1,17 +1,15 @@
 import base64
 import gzip
 import io
-from sys import getsizeof
 import json
-
-from typing import Literal, Annotated, Union
+from sys import getsizeof
+from typing import Annotated, Literal, Union
 
 import lz4.block as lz4b
 import lz4.frame as lz4f
 import zstandard as zstd
 
-from ..typings import Field, StrictTypesModel, JsonType
-
+from ..typings import Field, JsonType, StrictTypesModel
 
 DEFAULT_COMPRESS_LEVEL = 6
 
@@ -51,6 +49,19 @@ class DecompressionConfig(StrictTypesModel):
 class Archiver:
     @staticmethod
     def lz4b_decompress(data: bytes):
+        """
+        Decompress data using lz4b
+
+        Parameters
+        ----------
+        data : bytes
+            Data to decompress
+
+        Returns
+        -------
+        bytes
+            Decompressed data
+        """
         res_data = bytes()
         comp_size = getsizeof(data)
         max_decomp_size = comp_size * 100
@@ -70,6 +81,19 @@ class Archiver:
 
     @staticmethod
     def compress_bytes(*, data: bytes, config: CompressionConfig):
+        """
+        Compress data using gzip, lz4 or zstd based on the configuration
+
+        Parameters
+        ----------
+        data : bytes
+            Data to compress
+
+        Returns
+        -------
+        bytes or base64 encoded string
+            Compressed data
+        """
         res_data = bytes()
 
         ## Default is zstd compression
@@ -101,6 +125,19 @@ class Archiver:
 
     @staticmethod
     def decompress_bytes(*, data: bytes, config: DecompressionConfig):
+        """
+        Decompress data using gzip, lz4 or zstd based on the configuration
+
+        Parameters
+        ----------
+        data : bytes
+            Data to decompress
+
+        Returns
+        -------
+        bytes or string or json object
+            Decompressed data
+        """
         res_data = bytes()
 
         if config.archive.algo == "gzip":
@@ -133,11 +170,37 @@ class Archiver:
 
     @staticmethod
     def compress_string(*, data: str, config: CompressionConfig):
+        """
+        Compress string using gzip, lz4 or zstd based on the configuration
+
+        Parameters
+        ----------
+        data : str
+            Data to compress
+
+        Returns
+        -------
+        bytes or base64 encoded string
+            Compressed data
+        """
         in_data = bytes(data, encoding=config.encoding)
         return Archiver.compress_bytes(data=in_data, config=config)
 
     @staticmethod
     def decompress_string(*, data: str, config: DecompressionConfig):
+        """
+        Decompress string using gzip, lz4 or zstd based on the configuration
+
+        Parameters
+        ----------
+        data : str
+            Data to decompress
+
+        Returns
+        -------
+        bytes or string or json object
+            Decompressed data
+        """
         try:
             in_data = base64.b64decode(data)
         except Exception:
@@ -147,5 +210,18 @@ class Archiver:
 
     @staticmethod
     def compress_json(*, data: JsonType, config: CompressionConfig):
+        """
+        Compress json using gzip, lz4 or zstd based on the configuration
+
+        Parameters
+        ----------
+        data : JsonType
+            Data to compress
+
+        Returns
+        -------
+        bytes or base64 encoded string
+            Compressed data
+        """
         in_data = json.dumps(data).encode(encoding=config.encoding)
         return Archiver.compress_bytes(data=in_data, config=config)

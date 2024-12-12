@@ -13,7 +13,7 @@ from websockets.frames import CloseCode
 from yali.auth import JWTPayloadValidator, JWTReference, server_ssl_context
 from yali.core.typings import Failure, Field, FlexiTypesModel, Result
 
-from .common import AioWsServerConnection, ensure_ws_client
+from .common import AioWsServerConnection, wrap_server_process_request
 
 
 class YaliWsServerConfig(FlexiTypesModel):
@@ -144,7 +144,7 @@ class YaliWebSocketServer:
                 self._logger.error(ex, exc_info=True)
                 return
 
-        process_request = ensure_ws_client(
+        process_request = wrap_server_process_request(
             logger=self._logger,
             with_jwt_auth=self._config.with_jwt_auth,
             jwt_reference=self._config.jwt_reference,
