@@ -16,7 +16,7 @@ from yali.core.utils.datetimes import DateTimeConv
 from .common import PublisherConfig, _binding_key_regex
 
 
-class YaliPublisher:
+class RMQPublisher:
     def __init__(self, config: PublisherConfig):
         self._config = config
         self._logger = getLogger(config.service)

@@ -41,7 +41,7 @@ class LoopedWsClientConfig(FlexiTypesModel):
     retry_timeout_sec: float = Field(10.0, ge=10.0)
 
 
-class YaliUniTxnWsClient:
+class UniTxnWsClient:
     _logger = logging.getLogger(__name__)
 
     def __init__(
@@ -116,7 +116,7 @@ class YaliUniTxnWsClient:
             return Failure(error=f"Internal error for ws-client {self._cid} to {self._url}")
 
 
-class YaliLoopedWsClient:
+class LoopedWsClient:
     _logger = logging.getLogger(__name__)
 
     def __init__(self, *, config: LoopedWsClientConfig, **kwargs) -> None:

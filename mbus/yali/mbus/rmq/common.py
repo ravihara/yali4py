@@ -28,19 +28,18 @@ class PublisherConfig(FlexiTypesModel):
 class PubSubConfig(PublisherConfig):
     prefetch_count: int = Field(default=1, ge=1)
     binding_keys: List[str] = []
-    batch_mode: bool = False
-    batch_interval: float = Field(10.0, ge=1.0)
-    max_batch_entries: int = Field(10, gt=1)
-    max_batch_size: int = Field(52428800, ge=10240)
     data_processor: RMQDataProcessor
     data_preprocessor: RMQDataPreprocessor | None = None
 
+    ## Only used for batch based pubsub
+    batch_interval: float = Field(10.0, ge=1.0)
+    max_batch_entries: int = Field(10, gt=1)
+    max_batch_size: int = Field(52428800, ge=10240)
+
     @model_validator(mode="after")
     def ensure_max_batch_size(self):
-        if self.batch_mode and (self.max_batch_size <= self.max_message_size):
-            raise ValueError(
-                "If 'batch_mode' is set, 'max_batch_size' must be greater than 'max_message_size'"
-            )
+        if self.max_batch_size <= self.max_message_size:
+            raise ValueError("'max_batch_size' must be greater than 'max_message_size'")
 
         return self
 
@@ -60,7 +59,7 @@ class PubSubConfig(PublisherConfig):
 class RMQBatchBuffer:
     _logger = getLogger(__name__)
 
-    def __init__(self, max_entries: int, max_size: int):
+    def __init__(self, *, max_entries: int, max_size: int):
         self._max_entries = max_entries
         self._max_size = max_size
 
@@ -70,19 +69,19 @@ class RMQBatchBuffer:
         self._size = 0
 
     def reset(self):
-        self._entries = []
+        self._entries.clear()
         self._last_message = None
         self._size = 0
 
     def append(self, *, data: Dict, message: AbstractIncomingMessage):
         data_size = sizeof_object(data)
 
-        if (self._size + data_size) > self._max_size:
-            self._logger.info("Dropping message due to size limit")
+        if len(self._entries) >= self._max_entries:
+            self._logger.error(f"Dropping message due to entry limit of {self._max_entries}")
             return -1
 
-        if len(self._entries) >= self._max_entries:
-            self._logger.info("Dropping message due to entry limit")
+        if (self._size + data_size) > self._max_size:
+            self._logger.error(f"Dropping message due to size limit of {self._max_size}")
             return -1
 
         self._entries.append((message.delivery_tag, data))
@@ -95,7 +94,7 @@ class RMQBatchBuffer:
         return len(self._entries)
 
     def is_full(self):
-        return (self._size >= self._max_size) or (len(self._entries) >= self._max_entries)
+        return (len(self._entries) >= self._max_entries) or (self._size >= self._max_size)
 
     def is_empty(self):
         return len(self._entries) == 0

@@ -16,7 +16,7 @@ from yali.core.typings import Failure, Field, FlexiTypesModel, Result
 from .common import AioWsServerConnection, wrap_server_process_request
 
 
-class YaliWsServerConfig(FlexiTypesModel):
+class WsServerConfig(FlexiTypesModel):
     service: str = Field(min_length=3)
     host: str = Field(min_length=3)
     port: int
@@ -46,8 +46,8 @@ WsServerExcludeArgs = [
 ]
 
 
-class YaliWebSocketServer:
-    def __init__(self, *, config: YaliWsServerConfig, **kwargs):
+class WebSocketServer:
+    def __init__(self, *, config: WsServerConfig, **kwargs):
         self.__instance: AioWsServer | None = None
 
         self._config = config

@@ -13,10 +13,10 @@ from yali.core.threadasync import ThreadPoolAsyncExecutor
 from yali.core.utils.strings import StringConv
 
 from .common import PubSubConfig
-from .publisher import YaliPublisher
+from .publisher import RMQPublisher
 
 
-class YaliPubSub(YaliPublisher):
+class RMQPubSub(RMQPublisher):
     def __init__(self, config: PubSubConfig):
         super().__init__(config)
 

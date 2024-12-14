@@ -12,8 +12,8 @@ from yali.auth import (
     verify_jwt_reference,
 )
 
-YaliWsClientType = Literal["UNI_TXN_WS_CLIENT", "LOOPED_WS_CLIENT"]
-YaliWsClients: List[YaliWsClientType] = [
+WsClientType = Literal["UNI_TXN_WS_CLIENT", "LOOPED_WS_CLIENT"]
+WsClients: List[WsClientType] = [
     "UNI_TXN_WS_CLIENT",
     "LOOPED_WS_CLIENT",
 ]
@@ -38,7 +38,7 @@ def validate_ws_client(client_id: str):
     if len(id_parts) != 2:
         return False
 
-    return id_parts[0] in YaliWsClients
+    return id_parts[0] in WsClients
 
 
 def wrap_server_process_request(

@@ -6,10 +6,10 @@ from typing import Dict
 from aio_pika.abc import AbstractIncomingMessage
 
 from .common import PubSubConfig, RMQBatchBuffer
-from .pubsub import YaliPubSub
+from .pubsub import RMQPubSub
 
 
-class YaliBatchPubSub(YaliPubSub):
+class RMQBatchPubSub(RMQPubSub):
     def __init__(self, config: PubSubConfig):
         super().__init__(config)
 
@@ -35,12 +35,11 @@ class YaliBatchPubSub(YaliPubSub):
             await last_message.ack(multiple=True)
 
             self._logger.info(f"Processed batch with {len(buffer)} messages")
-            self.__buffer.reset()
         except Exception as ex:
             self._logger.error("Unhandled error while processing batch", exc_info=ex)
             await last_message.nack(multiple=True, requeue=False)
-            self.__buffer.reset()
 
+        self.__buffer.reset()
         self.__last_processed_time = time.time()
         self.__periodic_wait = self.__batch_interval
 
