@@ -19,6 +19,9 @@ ResultCode = int | str
 
 EmptyStr = Annotated[str, StringConstraints(strip_whitespace=True, max_length=0)]
 NonEmptyStr = Annotated[str, StringConstraints(strip_whitespace=True, min_length=1)]
+SnakeCaseStr = Annotated[
+    str, StringConstraints(strip_whitespace=True, to_lower=True, pattern=r"^[a-z0-9_]+$")
+]
 
 
 class YaliError(Exception):

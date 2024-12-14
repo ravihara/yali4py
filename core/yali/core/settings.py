@@ -1,17 +1,19 @@
 import os
-from pydantic_settings import BaseSettings, SettingsConfigDict
+from enum import IntEnum, StrEnum
+from typing import Annotated, Literal
+
 from pydantic import (
-    MongoDsn,
-    Field,
     AliasChoices,
+    Field,
+    MongoDsn,
     SecretStr,
+    StringConstraints,
     computed_field,
     model_validator,
-    StringConstraints,
 )
-from typing import Annotated, Literal
+from pydantic_settings import BaseSettings, SettingsConfigDict
+
 from .utils.common import id_by_sysinfo
-from enum import StrEnum, IntEnum
 
 _SERVICE_INST_ID_KEY = "service.instance.id"
 
