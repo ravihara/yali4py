@@ -52,11 +52,17 @@ class LogSettings(BaseSettings):
     log_level: LogLevelName = Field(
         "INFO", validation_alias=AliasChoices("YALI_LOG_LEVEL", "LOG_LEVEL")
     )
+    enable_mproc_logging: bool = Field(
+        True, validation_alias=AliasChoices("YALI_ENABLE_MPROC_LOGGING", "ENABLE_MPROC_LOGGING")
+    )
+    log_queue_size: int = Field(
+        1_000_000, validation_alias=AliasChoices("YALI_LOG_QUEUE_SIZE", "LOG_QUEUE_SIZE", ge=1000)
+    )
     log_to_file: bool = Field(
         False, validation_alias=AliasChoices("YALI_LOG_TO_FILE", "LOG_TO_FILE")
     )
     max_log_file_bytes: int = Field(
-        10485760, validation_alias=AliasChoices("YALI_MAX_LOG_FILE_BYTES", "MAX_LOG_FILE_BYTES")
+        10_485_760, validation_alias=AliasChoices("YALI_MAX_LOG_FILE_BYTES", "MAX_LOG_FILE_BYTES")
     )
     max_log_rotations: int = Field(
         10, validation_alias=AliasChoices("YALI_MAX_LOG_ROTATIONS", "MAX_LOG_ROTATIONS")
@@ -137,3 +143,25 @@ class TelemetrySettings(BaseSettings):
             )
 
         return self
+
+
+__log_settings: LogSettings | None = None
+__telemetry_settings: TelemetrySettings | None = None
+
+
+def log_settings():
+    global __log_settings
+
+    if not __log_settings:
+        __log_settings = LogSettings()
+
+    return __log_settings
+
+
+def telemetry_settings():
+    global __telemetry_settings
+
+    if not __telemetry_settings:
+        __telemetry_settings = TelemetrySettings()
+
+    return __telemetry_settings

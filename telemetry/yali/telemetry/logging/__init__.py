@@ -2,23 +2,20 @@ from logging import LogRecord, getLogger
 from logging.config import dictConfig as dict_logging_config
 from multiprocessing import Queue as LogQueue
 from multiprocessing import current_process
+from multiprocessing import get_context as mproc_get_context
 from typing import Any, Callable, Dict
 
-from yali.core.constants import YALI_BREAK_EVENT, YALI_LOG_QUEUE_SIZE
+from yali.core.constants import YALI_BREAK_EVENT
 from yali.core.metatypes import SingletonMeta
-from yali.core.typings import (
-    Field,
-    FlexiTypesModel,
-    MultiProcContext,
-    NonEmptyStr,
-    model_validator,
-)
+from yali.core.typings import FlexiTypesModel, NonEmptyStr
 from yali.core.utils.strings import lower_with_hyphens
 
+from ..settings import log_settings
 from .configs import default_log_config
 from .formatters import effective_log_level
 
 _log_level = effective_log_level()
+_log_settings = log_settings()
 
 
 def init_mproc_logging(queue: LogQueue, is_main: bool = True):
@@ -87,32 +84,20 @@ def _handle_mproc_logs(queue: LogQueue, config: Dict[str, Any]):
 class LogOptions(FlexiTypesModel):
     name: NonEmptyStr = "yali_app"
     config: Dict[str, Any] | None = None
-    mproc_enabled: bool = False
-    mproc_queue_size: int = Field(YALI_LOG_QUEUE_SIZE, ge=1000)
-    mproc_context: MultiProcContext | None = None
     post_hook: Callable[[], None] | None = None
-
-    @model_validator(mode="after")
-    def ensure_mproc_context(self):
-        if self.mproc_enabled and self.mproc_context is None:
-            raise ValueError("If 'mproc_enabled' is set, 'mproc_context' must be set as well")
-
-        return self
 
 
 class YaliLog(metaclass=SingletonMeta):
     def __init__(self, *, options: LogOptions):
         self._log_name = lower_with_hyphens(options.name)
-        self._mproc_enabled = options.mproc_enabled
+        self._mproc_enabled = _log_settings.enable_mproc_logging
 
         log_config = options.config or default_log_config(log_name=self._log_name)
 
         if self._mproc_enabled:
-            assert options.mproc_context
-
-            self._mproc_context = options.mproc_context
+            self._mproc_context = mproc_get_context("spawn")
             self._mproc_manager = self._mproc_context.Manager()
-            self._mproc_queue = self._mproc_manager.Queue(maxsize=options.mproc_queue_size)
+            self._mproc_queue = self._mproc_manager.Queue(maxsize=_log_settings.log_queue_size)
 
             init_mproc_logging(queue=self._mproc_queue, is_main=True)
 
@@ -126,12 +111,12 @@ class YaliLog(metaclass=SingletonMeta):
         else:
             dict_logging_config(config=log_config)
 
-        if options.post_hook:
-            options.post_hook()
-
         self._root = getLogger()
         self._app = getLogger(name=self._log_name)
         self._root.propagate = False
+
+        if options.post_hook:
+            options.post_hook()
 
     @property
     def name(self):
@@ -148,6 +133,14 @@ class YaliLog(metaclass=SingletonMeta):
     @property
     def app_logger(self):
         return self._app
+
+    @property
+    def mproc_enabled(self):
+        return self._mproc_enabled
+
+    @property
+    def mproc_queue(self):
+        return self._mproc_queue
 
     def get_logger(self, name: str = ""):
         """Get a logger by name, or the app logger if no name is provided"""

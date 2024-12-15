@@ -3,8 +3,7 @@ import datetime as dt
 from concurrent.futures import ProcessPoolExecutor, ThreadPoolExecutor
 from enum import StrEnum
 from io import BytesIO
-from multiprocessing.context import ForkContext, ForkServerContext, SpawnContext
-from typing import Annotated, Any, Coroutine, Dict, List, Literal, Union
+from typing import Annotated, Any, Callable, Coroutine, Dict, List, Literal, Union
 
 from pydantic import BaseModel, ConfigDict, Field, StringConstraints, model_validator
 
@@ -12,7 +11,6 @@ PASS_MESSAGE = "success"
 FAIL_MESSAGE = "failure"
 
 JsonType = Dict | List
-MultiProcContext = ForkContext | ForkServerContext | SpawnContext
 Awaitable = Coroutine | asyncio.Future | asyncio.Task
 PoolExecutor = ProcessPoolExecutor | ThreadPoolExecutor
 ResultCode = int | str
@@ -22,6 +20,9 @@ NonEmptyStr = Annotated[str, StringConstraints(strip_whitespace=True, min_length
 SnakeCaseStr = Annotated[
     str, StringConstraints(strip_whitespace=True, to_lower=True, pattern=r"^[a-z0-9_]+$")
 ]
+
+AwaitableDoneHandler = Callable[[asyncio.Future], None]
+PoolExecutorInitFunc = Callable[[Any], object]
 
 
 class YaliError(Exception):
@@ -87,7 +88,7 @@ class AwaitCondition(StrEnum):
 
 class AioExceptValue(FlexiTypesModel):
     name: str
-    exc: BaseException
+    exc_info: BaseException
 
 
 class DateTimeRange(StrictTypesModel):

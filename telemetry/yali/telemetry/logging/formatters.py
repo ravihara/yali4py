@@ -6,12 +6,12 @@ from typing import Dict
 
 from opentelemetry import trace
 from opentelemetry.trace.span import INVALID_SPAN
-from yali.core.constants import YALI_LOG_DATETIME_FORMAT
 from yali.core.utils.datetimes import DateTimeConv
 
 from ..settings import LogLevelName, LogSettings
 
-_YALI_RECORD_ATTRS = {
+_LOG_DATETIME_FORMAT = "%Y-%m-%d %H:%M:%S.%f"
+_LOG_RECORD_ATTRS = {
     "args",
     "asctime",
     "created",
@@ -103,8 +103,8 @@ class DefaultLogFormatter(logging.Formatter):
         """
         return {
             attr_name: record.__dict__[attr_name]
-            for attr_name in record.__dict__
-            if attr_name not in _YALI_RECORD_ATTRS
+            for attr_name in record.__dict_
+            if attr_name not in _LOG_RECORD_ATTRS
         }
 
     def json_record(self, message: str, extra: Dict, record: logging.LogRecord):
@@ -180,7 +180,7 @@ class DefaultLogFormatter(logging.Formatter):
             attr = json_record[attr_name]
 
             if isinstance(attr, DateTimeConv.mod.datetime):
-                attr_str = attr.strftime(YALI_LOG_DATETIME_FORMAT)[:-3]
+                attr_str = attr.strftime(_LOG_DATETIME_FORMAT)[:-3]
                 json_record[attr_name] = attr_str + attr.strftime("%z")
 
         return json_record

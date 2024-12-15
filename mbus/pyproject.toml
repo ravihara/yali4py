@@ -16,7 +16,6 @@ packages = [{ include = "yali" }]
 python = "^3.11"
 yali-core = { path = "../core", develop = true }
 yali-auth = { path = "../auth", develop = true }
-nats-py = "^2.9.0"
 websockets = "^14.1"
 aio-pika = "^9.5.3"
 
