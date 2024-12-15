@@ -1,4 +1,3 @@
-import os
 from logging import LogRecord, getLogger
 from logging.config import dictConfig as dict_logging_config
 from multiprocessing import Queue as LogQueue
@@ -6,7 +5,7 @@ from multiprocessing import current_process
 from typing import Any, Callable, Dict
 
 from yali.core.constants import YALI_BREAK_EVENT, YALI_LOG_QUEUE_SIZE
-from yali.core.metatypes import YaliSingleton
+from yali.core.metatypes import SingletonMeta
 from yali.core.typings import (
     Field,
     FlexiTypesModel,
@@ -14,12 +13,10 @@ from yali.core.typings import (
     NonEmptyStr,
     model_validator,
 )
-from yali.core.utils.common import filename_by_sysinfo
-from yali.core.utils.osfiles import FilesConv
 from yali.core.utils.strings import lower_with_hyphens
 
-from .filters import get_filter_class_for_level
-from .formatters import YaliJsonLogFormatter, effective_log_level, log_settings
+from .configs import default_log_config
+from .formatters import effective_log_level
 
 _log_level = effective_log_level()
 
@@ -87,7 +84,7 @@ def _handle_mproc_logs(queue: LogQueue, config: Dict[str, Any]):
             traceback.print_exc(file=sys.stderr)
 
 
-class YaliLogOptions(FlexiTypesModel):
+class LogOptions(FlexiTypesModel):
     name: NonEmptyStr = "yali_app"
     config: Dict[str, Any] | None = None
     mproc_enabled: bool = False
@@ -103,12 +100,12 @@ class YaliLogOptions(FlexiTypesModel):
         return self
 
 
-class YaliLog(metaclass=YaliSingleton):
-    def __init__(self, *, options: YaliLogOptions):
+class YaliLog(metaclass=SingletonMeta):
+    def __init__(self, *, options: LogOptions):
         self._log_name = lower_with_hyphens(options.name)
         self._mproc_enabled = options.mproc_enabled
 
-        log_config = options.config or self._default_config()
+        log_config = options.config or default_log_config(log_name=self._log_name)
 
         if self._mproc_enabled:
             assert options.mproc_context
@@ -135,53 +132,6 @@ class YaliLog(metaclass=YaliSingleton):
         self._root = getLogger()
         self._app = getLogger(name=self._log_name)
         self._root.propagate = False
-
-    def _default_config(self):
-        log_filter_class = get_filter_class_for_level(_log_level)
-
-        log_config = {
-            "version": 1,
-            "disable_existing_loggers": True,
-            "filters": {"yali_default": {"()": log_filter_class}},
-            "formatters": {"yali_default": {"()": YaliJsonLogFormatter}},
-            "handlers": {
-                "console": {
-                    "formatter": "yali_default",
-                    "filters": ["yali_default"],
-                    "class": "logging.StreamHandler",
-                    "level": _log_level,
-                },
-            },
-            "root": {"handlers": ["console"], "level": _log_level},
-        }
-
-        if log_settings.log_to_file:
-            log_config["handlers"]["rotating_file"] = {
-                "formatter": "yali_default",
-                "filters": ["yali_default"],
-                "class": "logging.handlers.RotatingFileHandler",
-                "level": _log_level,
-                "filename": self._get_logfile_path(),
-                "encoding": "utf-8",
-                "maxBytes": log_settings.max_log_file_bytes,
-                "backupCount": log_settings.max_log_rotations,
-                "mode": "a",
-            }
-            log_config["root"]["handlers"].append("rotating_file")
-
-        return log_config
-
-    def _get_logfile_path(self):
-        logs_root = log_settings.logs_root_dir
-        log_filename = filename_by_sysinfo(basename=self._log_name, extension=".log")
-
-        if FilesConv.is_dir_writable(dir_path=logs_root, check_creatable=True):
-            os.makedirs(logs_root, exist_ok=True)
-            logfile_path = os.path.join(logs_root, log_filename)
-
-            return logfile_path
-
-        return os.path.join(os.getcwd(), log_filename)
 
     @property
     def name(self):

@@ -37,6 +37,30 @@ class JWTFailure(FlexiTypesModel):
 JWTPayloadValidator = Callable[[JWTPayload], JWTFailure | None]
 
 
+def create_ssl_context(
+    certfile: str | os.PathLike[str],
+    keyfile: str | os.PathLike[str] | None,
+    password: str | None,
+    ssl_version: int,
+    cert_reqs: int,
+    ca_certs: str | os.PathLike[str] | None,
+    ciphers: str | None,
+) -> ssl.SSLContext:
+    ctx = ssl.SSLContext(ssl_version)
+    get_password = (lambda: password) if password else None
+
+    ctx.load_cert_chain(certfile, keyfile, get_password)
+    ctx.verify_mode = ssl.VerifyMode(cert_reqs)
+
+    if ca_certs:
+        ctx.load_verify_locations(ca_certs)
+
+    if ciphers:
+        ctx.set_ciphers(ciphers)
+
+    return ctx
+
+
 def server_ssl_context():
     """
     Get the SSL context for the server using environment variables

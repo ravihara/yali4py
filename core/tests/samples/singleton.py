@@ -1,7 +1,7 @@
-from yali.core.metatypes import YaliSingleton
+from yali.core.metatypes import SingletonMeta
 
 
-class ParentClass(metaclass=YaliSingleton):
+class ParentClass(metaclass=SingletonMeta):
     _base_value = "Parent Value"
 
     def __init__(self, value) -> None:

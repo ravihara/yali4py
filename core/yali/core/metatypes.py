@@ -2,9 +2,9 @@ from threading import Lock
 from typing import Any
 
 
-class YaliSingleton(type):
+class SingletonMeta(type):
     """
-    YaliSingleton meta-type used to create singleton classes
+    SingletonMeta meta-type used to create singleton classes
     """
 
     __instances = {}
@@ -29,9 +29,9 @@ class YaliSingleton(type):
         return cls.__instances[cls]
 
 
-class YaliRiSingleton(type):
+class RiSingletonMeta(type):
     """
-    YaliRiSingleton meta-type used to create singleton classes with
+    RiSingletonMeta meta-type used to create singleton classes with
     the ability to reinitialize the instance
     """
 

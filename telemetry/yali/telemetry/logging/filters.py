@@ -1,7 +1,7 @@
 from logging import Filter as LogFilter
 from typing import Dict
 
-from yali.core.settings import LogLevelName, LogLevelNumber
+from ..settings import LogLevelName, LogLevelNumber
 
 
 class CriticalLogFilter(LogFilter):
@@ -29,12 +29,18 @@ class DebugLogFilter(LogFilter):
         return record.levelno >= LogLevelNumber.DEBUG
 
 
+class TraceLogFilter(LogFilter):
+    def filter(self, record):
+        return record.levelno >= LogLevelNumber.TRACE
+
+
 FilterForLogLevel: Dict[LogLevelName, type[LogFilter]] = {
     LogLevelName.CRITICAL: CriticalLogFilter,
     LogLevelName.ERROR: ErrorLogFilter,
     LogLevelName.WARNING: WarningLogFilter,
     LogLevelName.INFO: InfoLogFilter,
     LogLevelName.DEBUG: DebugLogFilter,
+    LogLevelName.TRACE: TraceLogFilter,
 }
 
 

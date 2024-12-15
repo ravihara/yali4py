@@ -1,13 +1,15 @@
 import json
 import logging
 from decimal import Decimal
+from http import HTTPStatus
 from typing import Dict
 
 from opentelemetry import trace
 from opentelemetry.trace.span import INVALID_SPAN
 from yali.core.constants import YALI_LOG_DATETIME_FORMAT
-from yali.core.settings import CommonSettings, LogLevelName
 from yali.core.utils.datetimes import DateTimeConv
+
+from ..settings import LogLevelName, LogSettings
 
 _YALI_RECORD_ATTRS = {
     "args",
@@ -36,7 +38,7 @@ _YALI_RECORD_ATTRS = {
     "otelSpanID",
 }
 
-log_settings = CommonSettings()
+log_settings = LogSettings()
 
 
 def _json_serializable(obj):
@@ -48,12 +50,16 @@ def _json_serializable(obj):
 
 def effective_log_level():
     """Return the effective log level based on debug mode and log level setting"""
-    log_level: LogLevelName = "DEBUG" if log_settings.debug_enabled else log_settings.log_level
+    if log_settings.log_level in [LogLevelName.DEBUG, LogLevelName.TRACE]:
+        return log_settings.log_level
 
-    return log_level
+    if log_settings.debug_enabled:
+        return LogLevelName.DEBUG
+
+    return log_settings.log_level
 
 
-class YaliJsonLogFormatter(logging.Formatter):
+class DefaultLogFormatter(logging.Formatter):
     _keep_attr_types = (bool, int, float, Decimal, complex, str, DateTimeConv.mod.datetime)
 
     def format(self, record):
@@ -126,7 +132,9 @@ class YaliJsonLogFormatter(logging.Formatter):
         extra["name"] = record.name
         extra["processName"] = record.processName
 
-        if effective_log_level() == "DEBUG":
+        effective_level = effective_log_level()
+
+        if effective_level in [LogLevelName.DEBUG, LogLevelName.TRACE]:
             extra["module"] = record.module
             extra["pathname"] = record.pathname
             extra["filename"] = record.filename
@@ -176,3 +184,36 @@ class YaliJsonLogFormatter(logging.Formatter):
                 json_record[attr_name] = attr_str + attr.strftime("%z")
 
         return json_record
+
+
+class AccessLogFormatter(DefaultLogFormatter):
+    def get_status_code(self, status_code: int) -> str:
+        try:
+            status_phrase = HTTPStatus(status_code).phrase
+        except ValueError:
+            status_phrase = ""
+
+        return f"{status_code} {status_phrase}"
+
+    def extra_from_record(self, record: logging.LogRecord):
+        extra_dict = super().extra_from_record(record)
+
+        (
+            client_addr,
+            method,
+            full_path,
+            http_version,
+            status_code,
+        ) = record.args
+
+        status_code = self.get_status_code(int(status_code))
+        request_line = f"{method} {full_path} HTTP/{http_version}"
+        extra_dict.update(
+            {
+                "client_addr": client_addr,
+                "request_line": request_line,
+                "status_code": status_code,
+            }
+        )
+
+        return extra_dict
