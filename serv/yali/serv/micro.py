@@ -21,14 +21,14 @@ from .settings import micro_service_settings
 _mserv_settings = micro_service_settings()
 
 
-def subprocess_handler(log_queue: LogQueue, proc_fn: Callable, *fnargs, **fnkwargs):
+def subprocess_handler(log_queue: LogQueue, proc_func: Callable, *fnargs, **fnkwargs):
     if log_queue:
         init_mproc_logging(queue=log_queue, is_main=False)
 
-    proc_logger = logging.getLogger(proc_fn.__name__)
+    proc_logger = logging.getLogger(proc_func.__name__)
 
     try:
-        return proc_fn(*fnargs, **fnkwargs)
+        return proc_func(*fnargs, **fnkwargs)
     except Exception as ex:
         proc_logger.error(ex, exc_info=True)
 
@@ -39,9 +39,9 @@ class YaliMicro(ABC):
         *,
         service_name: str,
         log_config: Dict[str, Any] | None = None,
-        thread_init_fn: PoolExecutorInitFunc | None = None,
+        thread_init_func: PoolExecutorInitFunc | None = None,
         thread_init_args: Tuple = (),
-        process_init_fn: PoolExecutorInitFunc | None = None,
+        process_init_func: PoolExecutorInitFunc | None = None,
         process_init_args: Tuple = (),
     ):
         self._service_name = service_name
@@ -59,14 +59,14 @@ class YaliMicro(ABC):
         self.__thread_pool_executor = ThreadPoolExecutor(
             max_workers=_mserv_settings.max_thread_workers,
             thread_name_prefix=f"{self._service_name}_thrd:",
-            initializer=thread_init_fn,
+            initializer=thread_init_func,
             initargs=thread_init_args,
         )
 
         self.__process_pool_executor = ThreadPoolExecutor(
             max_workers=_mserv_settings.max_process_workers,
             thread_name_prefix=f"{self._service_name}_proc:",
-            initializer=process_init_fn,
+            initializer=process_init_func,
             initargs=process_init_args,
         )
 

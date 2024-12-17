@@ -140,7 +140,9 @@ class ThreadPoolAsyncExecutor(BaseExecutor):
     # Used to assign unique thread names when thread_name_prefix is not supplied.
     _counter = itertools.count().__next__
 
-    def __init__(self, max_workers=None, thread_name_prefix="", initializer=None, initargs=()):
+    def __init__(
+        self, max_workers=None, thread_name_prefix="", initializer=None, initargs=()
+    ):
         """Initializes a new ThreadPoolExecutor instance.
 
         Args:
@@ -190,7 +192,9 @@ class ThreadPoolAsyncExecutor(BaseExecutor):
                 raise RuntimeError("cannot schedule new futures after shutdown")
 
             if _shutdown:
-                raise RuntimeError("cannot schedule new futures after interpreter shutdown")
+                raise RuntimeError(
+                    "cannot schedule new futures after interpreter shutdown"
+                )
 
             fut = BaseFuture()
             witem = _WorkItem(future=fut, coro=coro)
@@ -234,7 +238,9 @@ class ThreadPoolAsyncExecutor(BaseExecutor):
 
     def _initializer_failed(self):
         with self._shutdown_lock:
-            self._broken = "A thread initializer failed, the thread pool is not usable anymore"
+            self._broken = (
+                "A thread initializer failed, the thread pool is not usable anymore"
+            )
 
             # Drain work queue and mark pending futures failed
             while True:

@@ -17,8 +17,7 @@ python = "^3.11"
 yali-core = { path = "../core", develop = true }
 yali-auth = { path = "../auth", develop = true }
 yali-telemetry = { path = "../telemetry", develop = true }
-fastapi = "^0.115.6"
-uvicorn = "^0.34.0"
+robyn = "^0.64.2"
 
 [tool.poetry.group.dev.dependencies]
 black = "^24.8.0"

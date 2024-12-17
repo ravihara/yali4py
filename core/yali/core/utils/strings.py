@@ -14,14 +14,18 @@ def lower_with_underscores(in_str: str):
     """
     Convert a string to lowercase and replace all delimiters with underscores.
     """
-    return re.sub(ALLCHARS_REGEX.format(re.escape(DEFAULT_DELIMITERS)), "_", in_str).lower()
+    return re.sub(
+        ALLCHARS_REGEX.format(re.escape(DEFAULT_DELIMITERS)), "_", in_str
+    ).lower()
 
 
 def lower_with_hyphens(in_str: str):
     """
     Convert a string to lowercase and replace all delimiters with hyphens.
     """
-    return re.sub(ALLCHARS_REGEX.format(re.escape(DEFAULT_DELIMITERS)), "-", in_str).lower()
+    return re.sub(
+        ALLCHARS_REGEX.format(re.escape(DEFAULT_DELIMITERS)), "-", in_str
+    ).lower()
 
 
 class TokenMarkerArgs(FlexiTypesModel):
@@ -77,7 +81,7 @@ class OnLowerUpperAppendUpperMarker(TokenMarker):
 
     def mark(self, curr_char: str, prev_char: str | None = None):
         if (
-            prev_char == None
+            prev_char is None
             or not prev_char.isalpha()
             or not prev_char.islower()
             or not curr_char.isupper()
@@ -96,7 +100,7 @@ class OnLowerUpperAppendLowerMarker(TokenMarker):
 
     def mark(self, curr_char: str, prev_char: str | None = None):
         if (
-            prev_char == None
+            prev_char is None
             or not prev_char.isalpha()
             or not prev_char.islower()
             or not curr_char.isupper()
@@ -115,7 +119,7 @@ class OnUpperUpperAppendJoinMarker(TokenMarker):
 
     def mark(self, curr_char: str, prev_char: str | None = None):
         if (
-            prev_char == None
+            prev_char is None
             or not prev_char.isalpha()
             or not prev_char.isupper()
             or not curr_char.isupper()
@@ -134,7 +138,7 @@ class OnUpperUpperAppendCurrentMarker(TokenMarker):
 
     def mark(self, curr_char: str, prev_char: str | None = None):
         if (
-            prev_char == None
+            prev_char is None
             or not prev_char.isalpha()
             or not prev_char.isupper()
             or not curr_char.isupper()
@@ -161,7 +165,9 @@ class StringConv:
             out_str = re.sub(ALLCHARS_REGEX.format(re.escape(punc)), "", out_str)
 
         ## Step 3: Replace recurring delimiters with a single one
-        out_str = re.sub(ALLCHARS_REGEX.format(re.escape(delimiters)), delimiters[0], out_str)
+        out_str = re.sub(
+            ALLCHARS_REGEX.format(re.escape(delimiters)), delimiters[0], out_str
+        )
 
         ## Step 4: Convert the string to lowercase
         out_str = out_str.lower() if out_str.isupper() else out_str
@@ -269,7 +275,9 @@ class StringConv:
         in_buffer = StringIO(out_str)
         out_buffer = StringIO()
 
-        tmargs = TokenMarkerArgs(in_buffer=in_buffer, out_buffer=out_buffer, delimiters=delimiters)
+        tmargs = TokenMarkerArgs(
+            in_buffer=in_buffer, out_buffer=out_buffer, delimiters=delimiters
+        )
         token_markers: List[TokenMarker] = [
             OnDelimiterNextUpperMarker(tmargs),
             OnLowerUpperAppendUpperMarker(tmargs),
@@ -311,7 +319,9 @@ class StringConv:
         in_buffer = StringIO(out_str)
         out_buffer = StringIO()
 
-        tmargs = TokenMarkerArgs(in_buffer=in_buffer, out_buffer=out_buffer, delimiters=delimiters)
+        tmargs = TokenMarkerArgs(
+            in_buffer=in_buffer, out_buffer=out_buffer, delimiters=delimiters
+        )
         token_markers: List[TokenMarker] = [
             OnDelimiterNextUpperMarker(tmargs),
             OnLowerUpperAppendUpperMarker(tmargs),
@@ -513,7 +523,9 @@ class StringConv:
         in_buffer = StringIO(out_str)
         out_buffer = StringIO()
 
-        tmargs = TokenMarkerArgs(in_buffer=in_buffer, out_buffer=out_buffer, delimiters=delimiters)
+        tmargs = TokenMarkerArgs(
+            in_buffer=in_buffer, out_buffer=out_buffer, delimiters=delimiters
+        )
         token_markers: List[TokenMarker] = [
             OnDelimiterNextLowerMarker(tmargs),
             OnLowerUpperAppendLowerMarker(tmargs),
@@ -555,7 +567,9 @@ class StringConv:
         in_buffer = StringIO(out_str)
         out_buffer = StringIO()
 
-        tmargs = TokenMarkerArgs(in_buffer=in_buffer, out_buffer=out_buffer, delimiters=delimiters)
+        tmargs = TokenMarkerArgs(
+            in_buffer=in_buffer, out_buffer=out_buffer, delimiters=delimiters
+        )
         token_markers: List[TokenMarker] = [
             OnDelimiterNextUpperMarker(tmargs),
             OnLowerUpperAppendUpperMarker(tmargs),

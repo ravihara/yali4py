@@ -1,10 +1,10 @@
 import json
 import os
 import re
-import tomllib
 from re import Pattern as RegExPattern
 from typing import Dict, List
 
+import tomllib
 import yaml
 
 from ..typings import YaliError
@@ -82,7 +82,11 @@ def _dir_paths_from_dir(
 
 
 def _total_files_in_dir(
-    *, base_dir: str, extensions: List[str], follow_symlinks: bool, ignore_extn_case: bool
+    *,
+    base_dir: str,
+    extensions: List[str],
+    follow_symlinks: bool,
+    ignore_extn_case: bool,
 ):
     count: int = 0
 
@@ -103,7 +107,11 @@ def _total_files_in_dir(
 
 
 def _recursive_dir_content(
-    *, base_dir: str, extensions: List[str], ignore_extn_case: bool, follow_symlinks: bool
+    *,
+    base_dir: str,
+    extensions: List[str],
+    ignore_extn_case: bool,
+    follow_symlinks: bool,
 ):
     res_dirs: List[str] = []
     res_files: List[str] = []

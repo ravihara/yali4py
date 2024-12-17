@@ -3,12 +3,11 @@
     "diffEditor.ignoreTrimWhitespace": false,
     "editor.formatOnType": true,
     "editor.wordBasedSuggestions": "off",
-    "editor.defaultFormatter": "ms-python.black-formatter",
+    "editor.defaultFormatter": "charliermarsh.ruff",
     "editor.codeActionsOnSave": {
       "source.organizeImports": "explicit",
       "source.unusedImports": "explicit",
       "source.fixAll.pylance": "explicit"
     }
-  },
-  "isort.args": ["--profile", "black"]
+  }
 }

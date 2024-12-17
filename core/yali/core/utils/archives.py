@@ -69,7 +69,9 @@ class Archiver:
 
         while True:
             try:
-                res_data = lz4b.decompress(data, uncompressed_size=usize, return_bytearray=False)
+                res_data = lz4b.decompress(
+                    data, uncompressed_size=usize, return_bytearray=False
+                )
                 break
             except lz4b.LZ4BlockError:
                 usize *= 2
