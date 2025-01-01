@@ -13,10 +13,19 @@ from yali.auth import JWTPayload, client_ssl_context, generate_jwt
 from yali.core.typings import Failure, FlexiTypesModel, Result, Success
 from yali.core.utils.common import dict_to_result, safe_load_json
 
-WsClientExcludeArgs = ["ws_url", "jwt_payload", "on_message", "retry_timeout_sec", "ssl", "logger"]
+WsClientExcludeArgs = [
+    "ws_url",
+    "jwt_payload",
+    "on_message",
+    "retry_timeout_sec",
+    "ssl",
+    "logger",
+]
 
 
-def _update_headers(kwargs: Dict[str, Any], client_id: str, jwt_payload: JWTPayload | None = None):
+def _update_headers(
+    kwargs: Dict[str, Any], client_id: str, jwt_payload: JWTPayload | None = None
+):
     if "additional_headers" in kwargs:
         if isinstance(kwargs["additional_headers"], list):
             kwargs["additional_headers"].append(("X-Client-Id", client_id))
@@ -70,7 +79,9 @@ class UniTxnWsClient:
                 f"Websocket URL {self._url} is not secure. It is recommended to use 'wss' scheme"
             )
 
-    async def _handle_connection(self, connection: AioWsClientConnection, data: Dict[str, Any]):
+    async def _handle_connection(
+        self, connection: AioWsClientConnection, data: Dict[str, Any]
+    ):
         try:
             await connection.send(json.dumps(data))
 
@@ -83,11 +94,15 @@ class UniTxnWsClient:
             response = dict_to_result(response)
             return response
         except ValidationError as ex:
-            response = Failure(error="Invalid response from server", extra=json.loads(ex.json()))
+            response = Failure(
+                error="Invalid response from server", extra=json.loads(ex.json())
+            )
             return response
         except Exception as ex:
             self._logger.error(ex, exc_info=True)
-            response = Failure(error="Internal error from server", extra={"exc": str(ex)})
+            response = Failure(
+                error="Internal error from server", extra={"exc": str(ex)}
+            )
             return response
 
     async def execute(self, data: Dict[str, Any]) -> Result:
@@ -104,16 +119,23 @@ class UniTxnWsClient:
                 error=f"Connection closed for ws-client {self._cid} to {self._url} with error {ex.reason}"
             )
         except (ConnectionAbortedError, ConnectionRefusedError) as ex:
+            self._logger.error(ex, exc_info=True)
             return Failure(
                 error=f"Connection aborted or refused for ws-client {self._cid} to {self._url}"
             )
         except ws_exc.InvalidURI:
-            return Failure(error=f"Invalid URI for ws-client {self._cid} to {self._url}")
+            return Failure(
+                error=f"Invalid URI for ws-client {self._cid} to {self._url}"
+            )
         except KeyboardInterrupt:
-            return Failure(error=f"KeyboardInterrupt for ws-client {self._cid} to {self._url}")
+            return Failure(
+                error=f"KeyboardInterrupt for ws-client {self._cid} to {self._url}"
+            )
         except Exception as ex:
             self._logger.error(ex, exc_info=True)
-            return Failure(error=f"Internal error for ws-client {self._cid} to {self._url}")
+            return Failure(
+                error=f"Internal error for ws-client {self._cid} to {self._url}"
+            )
 
 
 class LoopedWsClient:
@@ -152,7 +174,9 @@ class LoopedWsClient:
     async def _safe_close(self, reason: str):
         try:
             if self.__connection:
-                await self.__connection.close(code=CloseCode.TRY_AGAIN_LATER, reason=reason)
+                await self.__connection.close(
+                    code=CloseCode.TRY_AGAIN_LATER, reason=reason
+                )
         except Exception:
             pass
 
@@ -178,7 +202,9 @@ class LoopedWsClient:
                 async with aio_ws_connect(
                     ws_url, ssl=self._ssl_context, logger=self._logger, **self._kwargs
                 ) as connection:
-                    self._logger.info(f"The ws-client {self._cid} connected to {ws_url}")
+                    self._logger.info(
+                        f"The ws-client {self._cid} connected to {ws_url}"
+                    )
                     self.__connection = connection
 
                     await self._config.on_message(connection)
@@ -191,7 +217,8 @@ class LoopedWsClient:
             except (ConnectionAbortedError, ConnectionRefusedError) as ex:
                 self.__connection = None
                 self._logger.warning(
-                    f"Connection aborted or refused for ws-client {self._cid} to {ws_url}. Retrying after {retry_sec} seconds"
+                    f"Connection aborted or refused for ws-client {self._cid} to {ws_url}. Retrying after {retry_sec} seconds",
+                    exc_info=ex,
                 )
                 await asyncio.sleep(retry_sec)
             except ws_exc.InvalidURI:
@@ -202,7 +229,9 @@ class LoopedWsClient:
             except KeyboardInterrupt:
                 self.__connection = None
                 closing_code = CloseCode.ABNORMAL_CLOSURE
-                self._logger.warning(f"KeyboardInterrupt for ws-client {self._cid} to {ws_url}")
+                self._logger.warning(
+                    f"KeyboardInterrupt for ws-client {self._cid} to {ws_url}"
+                )
                 break
             except Exception as ex:
                 self._logger.error(ex, exc_info=True)
@@ -219,6 +248,8 @@ class LoopedWsClient:
                 await self.__connection.close(code=code, reason="Stopped")
                 await self.__connection.wait_closed()
             except ws_exc.ConnectionClosed:
-                self._logger.warning(f"Connection already closed for ws-client {self._cid}")
+                self._logger.warning(
+                    f"Connection already closed for ws-client {self._cid}"
+                )
 
         self.__connection = None

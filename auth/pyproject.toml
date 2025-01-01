@@ -18,22 +18,14 @@ yali-core = { path = "../core", develop = true }
 pyjwt = { extras = ["crypto"], version = "^2.10.1" }
 
 [tool.poetry.group.dev.dependencies]
-black = "^24.8.0"
-flake8 = "^7.1.1"
-isort = "^5.13.2"
 pylint = "^3.2.6"
 pyright = "^1.1.376"
+ruff = "^0.8.3"
 
 [tool.poetry.group.test.dependencies]
 pytest = "^8.3.2"
 pytest-asyncio = "^0.23.8"
 pytest-dependency = "^0.6.0"
-
-[tool.poetry-monorepo.deps]
-
-[tool.black]
-line-length = 100
-target-version = ['py311']
 
 [tool.pyright]
 
@@ -47,3 +39,41 @@ enable = [
 ]
 ignore = ["setup.py", "__init__.py"]
 ignore-paths = ["tests"]
+
+[tool.ruff]
+# Exclude a variety of commonly ignored directories.
+exclude = [
+    ".bzr",
+    ".direnv",
+    ".eggs",
+    ".git",
+    ".git-rewrite",
+    ".hg",
+    ".ipynb_checkpoints",
+    ".mypy_cache",
+    ".nox",
+    ".pants.d",
+    ".pyenv",
+    ".pytest_cache",
+    ".pytype",
+    ".ruff_cache",
+    ".svn",
+    ".tox",
+    ".venv",
+    ".vscode",
+    "__pypackages__",
+    "_build",
+    "buck-out",
+    "build",
+    "dist",
+    "node_modules",
+    "site-packages",
+    "venv",
+]
+
+# Same as Black.
+line-length = 88
+indent-width = 4
+
+# Assume Python 3.11
+target-version = "py311"

@@ -51,7 +51,7 @@ def wrap_server_process_request(
     The ws-server process request wrapper, providing JWT and other goodies.
     """
 
-    async def process_request(
+    def process_request(
         connection: AioWsServerConnection,
         request: AioWsRequest,
     ) -> AioWsResponse | None:
@@ -97,7 +97,7 @@ def wrap_server_process_request(
                 return response
 
             jwt_token = auth_header[7:]
-            response = verify_jwt_reference(
+            jwt_result = verify_jwt_reference(
                 jwt_token=jwt_token,
                 jwt_reference=jwt_reference,
                 jwt_validator=jwt_validator,
@@ -105,13 +105,13 @@ def wrap_server_process_request(
 
             if isinstance(response, JWTFailure):
                 response = connection.respond(
-                    response.status,
-                    response.reason,
+                    jwt_result.status,
+                    jwt_result.reason,
                 )
 
                 return response
 
-            logger.debug(f"JWT payload: {response.model_dump_json()}")
+            logger.debug(f"JWT payload: {jwt_result.model_dump_json()}")
         except KeyError:
             response = connection.respond(
                 HTTPStatus.UNAUTHORIZED,
