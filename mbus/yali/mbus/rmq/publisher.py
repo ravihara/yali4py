@@ -2,7 +2,6 @@ import asyncio
 from logging import getLogger
 from typing import Any, Dict
 
-import orjson
 from aio_pika import Message, connect_robust
 from aio_pika.abc import (
     AbstractRobustChannel,
@@ -13,6 +12,7 @@ from aio_pika.abc import (
 
 from yali.core.typings import YaliError
 from yali.core.utils.datetimes import DateTimeConv
+from yali.core.utils.json import JsonConv
 
 from .common import PublisherConfig, _binding_key_regex
 
@@ -111,7 +111,7 @@ class RMQPublisher:
                     f"Exchange {self._config.exchange_name} not initialized yet"
                 )
 
-            mesg_body = orjson.dumps(json_data)
+            mesg_body = JsonConv.dump_to_bytes(json_data)
             message = Message(
                 body=mesg_body, content_type="application/json", headers=headers
             )

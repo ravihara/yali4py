@@ -1,7 +1,6 @@
 import asyncio
 from typing import Dict
 
-import orjson
 from aio_pika import ExchangeType
 from aio_pika.abc import (
     AbstractIncomingMessage,
@@ -11,6 +10,7 @@ from aio_pika.abc import (
 from aio_pika.exceptions import ChannelClosed
 
 from yali.core.threadasync import ThreadPoolAsyncExecutor
+from yali.core.utils.json import JsonConv
 from yali.core.utils.strings import StringConv
 
 from .common import PubSubConfig
@@ -112,7 +112,7 @@ class RMQPubSub(RMQPublisher):
     async def process_message(self, message: AbstractIncomingMessage):
         try:
             mesg_text = message.body.decode("utf-8")
-            mesg_json: Dict = orjson.loads(mesg_text)
+            mesg_json: Dict = JsonConv.load_from_str(mesg_text)
 
             if self._config.data_preprocessor:
                 mesg_json = await self._q_executor.submit(

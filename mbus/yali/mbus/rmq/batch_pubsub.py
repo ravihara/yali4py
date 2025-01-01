@@ -2,8 +2,9 @@ import asyncio
 import time
 from typing import Dict
 
-import orjson
 from aio_pika.abc import AbstractIncomingMessage
+
+from yali.core.utils.json import JsonConv
 
 from .common import PubSubConfig, RMQBatchBuffer
 from .pubsub import RMQPubSub
@@ -83,7 +84,7 @@ class RMQBatchPubSub(RMQPubSub):
                     return
 
                 mesg_text = message.body.decode("utf-8")
-                mesg_json: Dict = orjson.loads(mesg_text)
+                mesg_json: Dict = JsonConv.load_from_str(mesg_text)
 
                 if self._config.data_preprocessor:
                     mesg_json = await self._q_executor.submit(

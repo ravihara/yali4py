@@ -20,11 +20,7 @@ class Hasher:
         return bool(Hasher.__sha256_hash_regex.match(hash_val))
 
     @staticmethod
-    def generate_md5_hash(
-        payload: Dict,
-        *,
-        encoder_fn: Callable | None = None,
-    ) -> str:
+    def generate_md5_hash(payload: Dict, *, encoder_fn: Callable | None = None) -> str:
         """
         Generate a MD5 hash from the given payload
 

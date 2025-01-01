@@ -3,7 +3,6 @@ import logging
 from ssl import SSLContext
 from typing import Any, Callable, Coroutine, Dict
 
-import orjson
 from websockets.asyncio.server import Server as AioWsServer
 from websockets.asyncio.server import serve as aio_ws_serve
 from websockets.exceptions import ConnectionClosed as WsConnectionClosed
@@ -13,6 +12,7 @@ from websockets.frames import CloseCode
 
 from yali.auth import JWTPayloadValidator, JWTReference, server_ssl_context
 from yali.core.typings import Failure, Field, FlexiTypesModel, Result
+from yali.core.utils.json import JsonConv, orjson
 
 from .common import AioWsServerConnection, wrap_server_process_request
 
@@ -86,7 +86,7 @@ class WebSocketServer:
         try:
             async for message in connection:
                 try:
-                    mesg_json: Dict = orjson.loads(message)
+                    mesg_json: Dict = JsonConv.load_from_str(message)
                     await self._config.on_message(client_id, request_path, mesg_json)
                 except orjson.JSONDecodeError as ex:
                     self._logger.error(ex, exc_info=True)

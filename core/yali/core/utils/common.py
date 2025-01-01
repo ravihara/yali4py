@@ -3,10 +3,9 @@ import os
 import re
 import socket
 import sys
-from typing import Any, Iterable
+from typing import Iterable
 
 import netifaces
-import orjson
 from cachetools.func import ttl_cache
 from pydantic import ValidationError
 
@@ -18,23 +17,6 @@ def os_uname_str():
     """Get the OS name, release, version, and machine."""
     uname_info = os.uname()
     return f"{uname_info.nodename}|{uname_info.sysname}|{uname_info.release}|{uname_info.version}|{uname_info.machine}"
-
-
-@staticmethod
-def is_json_data(data: Any):
-    """Check if the data is a valid JSON."""
-    return isinstance(data, (dict, list))
-
-
-@staticmethod
-def safe_load_json(data: str):
-    """Load JSON data safely."""
-    try:
-        payload = orjson.loads(data)
-        assert isinstance(payload, (dict, list))
-        return payload
-    except orjson.JSONDecodeError:
-        return data
 
 
 @staticmethod

@@ -3,11 +3,11 @@ from decimal import Decimal
 from http import HTTPStatus
 from typing import Dict
 
-import orjson
 from opentelemetry import trace
 from opentelemetry.trace.span import INVALID_SPAN
 
 from yali.core.utils.datetimes import DateTimeConv
+from yali.core.utils.json import JsonConv
 
 from ..settings import LogLevelName, LogSettings
 
@@ -97,10 +97,10 @@ class DefaultLogFormatter(logging.Formatter):
         Override this method to change the way dict is converted to JSON.
         """
         try:
-            return orjson.dumps(record, default=_json_serializable).decode("utf-8")
+            return JsonConv.dump_to_str(record, custom_encoder=_json_serializable)
         except (TypeError, ValueError, OverflowError):
             try:
-                return orjson.dumps(record).decode("utf-8")
+                return JsonConv.dump_to_str(record)
             except (TypeError, ValueError, OverflowError):
                 return "{}"
 
