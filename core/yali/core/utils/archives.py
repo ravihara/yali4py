@@ -1,12 +1,12 @@
 import base64
 import gzip
 import io
-import json
 from sys import getsizeof
 from typing import Annotated, Literal, Union
 
 import lz4.block as lz4b
 import lz4.frame as lz4f
+import orjson
 import zstandard as zstd
 
 from ..typings import Field, JsonType, StrictTypesModel
@@ -90,6 +90,8 @@ class Archiver:
         ----------
         data : bytes
             Data to compress
+        config : CompressionConfig
+            Compression configuration
 
         Returns
         -------
@@ -134,6 +136,8 @@ class Archiver:
         ----------
         data : bytes
             Data to decompress
+        config : DecompressionConfig
+            Decompression configuration
 
         Returns
         -------
@@ -164,8 +168,8 @@ class Archiver:
             res_data = bytes.decode(res_data, encoding=config.encoding)
         elif config.output == "json":
             try:
-                res_data = json.loads(res_data)
-            except json.JSONDecodeError:
+                res_data = orjson.loads(res_data)
+            except orjson.JSONDecodeError:
                 pass
 
         return res_data
@@ -179,6 +183,8 @@ class Archiver:
         ----------
         data : str
             Data to compress
+        config : CompressionConfig
+            Compression configuration
 
         Returns
         -------
@@ -197,6 +203,8 @@ class Archiver:
         ----------
         data : str
             Data to decompress
+        config : DecompressionConfig
+            Decompression configuration
 
         Returns
         -------
@@ -219,11 +227,13 @@ class Archiver:
         ----------
         data : JsonType
             Data to compress
+        config : CompressionConfig
+            Compression configuration
 
         Returns
         -------
         bytes or base64 encoded string
             Compressed data
         """
-        in_data = json.dumps(data).encode(encoding=config.encoding)
+        in_data = orjson.dumps(data)
         return Archiver.compress_bytes(data=in_data, config=config)

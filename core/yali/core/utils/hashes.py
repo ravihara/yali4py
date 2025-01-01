@@ -1,8 +1,8 @@
 import hashlib
-import json
 import re
-from json import JSONEncoder
 from typing import Callable, Dict
+
+import orjson
 
 
 class Hasher:
@@ -24,7 +24,6 @@ class Hasher:
         payload: Dict,
         *,
         encoder_fn: Callable | None = None,
-        encoder_cls: type[JSONEncoder] | None = None,
     ) -> str:
         """
         Generate a MD5 hash from the given payload
@@ -35,25 +34,20 @@ class Hasher:
             The payload to be hashed
         encoder_fn : Callable | None, optional
             The encoder function to be used, by default None
-        encoder_cls : type[JSONEncoder] | None, optional
-            The encoder class to be used, by default None
 
         Returns
         -------
         str
             The MD5 hash
         """
-        bytes_val = json.dumps(payload, default=encoder_fn, cls=encoder_cls)
-        hash_val = hashlib.md5(bytes_val.encode()).hexdigest()
+        bytes_val = orjson.dumps(payload, default=encoder_fn)
+        hash_val = hashlib.md5(bytes_val).hexdigest()
 
         return hash_val
 
     @staticmethod
     def generate_sha256_hash(
-        payload: Dict,
-        *,
-        encoder_fn: Callable | None = None,
-        encoder_cls: type[JSONEncoder] | None = None,
+        payload: Dict, *, encoder_fn: Callable | None = None
     ) -> str:
         """
         Generate a SHA256 hash from the given payload
@@ -64,15 +58,13 @@ class Hasher:
             The payload to be hashed
         encoder_fn : Callable | None, optional
             The encoder function to be used, by default None
-        encoder_cls : type[JSONEncoder] | None, optional
-            The encoder class to be used, by default None
 
         Returns
         -------
         str
             The SHA256 hash
         """
-        bytes_val = json.dumps(payload, default=encoder_fn, cls=encoder_cls)
-        hash_val = hashlib.sha256(bytes_val.encode()).hexdigest()
+        bytes_val = orjson.dumps(payload, default=encoder_fn)
+        hash_val = hashlib.sha256(bytes_val).hexdigest()
 
         return hash_val

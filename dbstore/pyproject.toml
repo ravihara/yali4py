@@ -15,6 +15,7 @@ packages = [{ include = "yali" }]
 [tool.poetry.dependencies]
 python = "^3.11"
 yali-core = { path = "../core", develop = true }
+piccolo = {extras = ["all"], version = "^1.22.0"}
 
 [tool.poetry.group.dev.dependencies]
 pylint = "^3.2.6"

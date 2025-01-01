@@ -1,14 +1,15 @@
 import asyncio
-import json
 import logging
 from typing import Any, Callable, Coroutine, Dict
 from uuid import uuid4
 
+import orjson
 from pydantic import Field, ValidationError, WebsocketUrl
 from websockets import exceptions as ws_exc
 from websockets.asyncio.client import ClientConnection as AioWsClientConnection
 from websockets.asyncio.client import connect as aio_ws_connect
 from websockets.frames import CloseCode
+
 from yali.auth import JWTPayload, client_ssl_context, generate_jwt
 from yali.core.typings import Failure, FlexiTypesModel, Result, Success
 from yali.core.utils.common import dict_to_result, safe_load_json
@@ -83,7 +84,7 @@ class UniTxnWsClient:
         self, connection: AioWsClientConnection, data: Dict[str, Any]
     ):
         try:
-            await connection.send(json.dumps(data))
+            await connection.send(orjson.dumps(data).decode("utf-8"))
 
             response = await connection.recv()
             response = safe_load_json(response)
@@ -95,7 +96,7 @@ class UniTxnWsClient:
             return response
         except ValidationError as ex:
             response = Failure(
-                error="Invalid response from server", extra=json.loads(ex.json())
+                error="Invalid response from server", extra=orjson.loads(ex.json())
             )
             return response
         except Exception as ex:

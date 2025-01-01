@@ -1,8 +1,8 @@
 import asyncio
-import json
 from logging import getLogger
 from typing import Any, Dict
 
+import orjson
 from aio_pika import Message, connect_robust
 from aio_pika.abc import (
     AbstractRobustChannel,
@@ -10,6 +10,7 @@ from aio_pika.abc import (
     AbstractRobustExchange,
     HeadersType,
 )
+
 from yali.core.typings import YaliError
 from yali.core.utils.datetimes import DateTimeConv
 
@@ -35,7 +36,9 @@ class RMQPublisher:
                 while True:
                     try:
                         delay = next(backoff)
-                        self._logger.info(f"Waiting for {delay} seconds before reconnecting")
+                        self._logger.info(
+                            f"Waiting for {delay} seconds before reconnecting"
+                        )
                         await asyncio.sleep(delay)
 
                         if not self._connection.reconnecting:
@@ -46,7 +49,9 @@ class RMQPublisher:
                         break
 
                 if not self._connection.is_closed:
-                    self._logger.info(f"RMQ pubsub service: {self._config.service} reconnected")
+                    self._logger.info(
+                        f"RMQ pubsub service: {self._config.service} reconnected"
+                    )
                     return is_fresh
             elif not self._connection.is_closed:
                 self._logger.debug(
@@ -71,7 +76,9 @@ class RMQPublisher:
             robust=True,
         )
 
-        self._logger.info(f"QoS name is {qos.name}, it's sync status is {qos.synchronous}")
+        self._logger.info(
+            f"QoS name is {qos.name}, it's sync status is {qos.synchronous}"
+        )
 
         return is_fresh
 
@@ -90,7 +97,9 @@ class RMQPublisher:
         self._channel = None
         self._connection = None
 
-    async def publish(self, *, routing_key: str, headers: HeadersType, json_data: Dict[str, Any]):
+    async def publish(
+        self, *, routing_key: str, headers: HeadersType, json_data: Dict[str, Any]
+    ):
         if not _binding_key_regex.match(routing_key):
             return YaliError(f"Invalid binding key: {routing_key}")
 
@@ -98,16 +107,20 @@ class RMQPublisher:
 
         try:
             if not self._exchange:
-                return YaliError(f"Exchange {self._config.exchange_name} not initialized yet")
+                return YaliError(
+                    f"Exchange {self._config.exchange_name} not initialized yet"
+                )
 
-            mesg_body = json.dumps(json_data)
+            mesg_body = orjson.dumps(json_data)
             message = Message(
-                body=mesg_body.encode("utf-8"), content_type="application/json", headers=headers
+                body=mesg_body, content_type="application/json", headers=headers
             )
             result = await self._exchange.publish(message, routing_key=routing_key)
 
             if not result:
-                self._logger.info(f"Message published with delivery-tag: {result.delivery_tag}")
+                self._logger.info(
+                    f"Message published with delivery-tag: {result.delivery_tag}"
+                )
         except Exception as ex:
             return YaliError("Failed to publish message", exc_cause=ex)
 

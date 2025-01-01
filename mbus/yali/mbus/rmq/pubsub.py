@@ -1,7 +1,7 @@
 import asyncio
-import json
 from typing import Dict
 
+import orjson
 from aio_pika import ExchangeType
 from aio_pika.abc import (
     AbstractIncomingMessage,
@@ -9,6 +9,7 @@ from aio_pika.abc import (
     AbstractRobustQueue,
 )
 from aio_pika.exceptions import ChannelClosed
+
 from yali.core.threadasync import ThreadPoolAsyncExecutor
 from yali.core.utils.strings import StringConv
 
@@ -25,7 +26,9 @@ class RMQPubSub(RMQPublisher):
         self._qbase = StringConv.to_snakecase(config.service)
         self._queue: AbstractRobustQueue | None = None
         self._q_iter: AbstractQueueIterator | None = None
-        self._q_executor = ThreadPoolAsyncExecutor(thread_name_prefix=f"yalirmq_{self._qbase}")
+        self._q_executor = ThreadPoolAsyncExecutor(
+            thread_name_prefix=f"yalirmq_{self._qbase}"
+        )
 
         if self._config.exchange_type == ExchangeType.FANOUT:
             self.__q_name = f"{self._qbase}_bcast_q"
@@ -89,7 +92,9 @@ class RMQPubSub(RMQPublisher):
         )
 
         for bind_key in self._config.binding_keys:
-            await self._queue.bind(exchange=self._exchange, routing_key=bind_key, robust=True)
+            await self._queue.bind(
+                exchange=self._exchange, routing_key=bind_key, robust=True
+            )
 
         return is_fresh
 
@@ -107,13 +112,17 @@ class RMQPubSub(RMQPublisher):
     async def process_message(self, message: AbstractIncomingMessage):
         try:
             mesg_text = message.body.decode("utf-8")
-            mesg_json: Dict = json.loads(mesg_text)
+            mesg_json: Dict = orjson.loads(mesg_text)
 
             if self._config.data_preprocessor:
-                mesg_json = await self._q_executor.submit(self._config.data_preprocessor(mesg_json))
+                mesg_json = await self._q_executor.submit(
+                    self._config.data_preprocessor(mesg_json)
+                )
 
             await self._q_executor.submit(self._config.data_processor(mesg_json))
-            self._logger.info(f"Processed message with delivery-tag: {message.delivery_tag}")
+            self._logger.info(
+                f"Processed message with delivery-tag: {message.delivery_tag}"
+            )
             await message.ack(multiple=False)
         except Exception as ex:
             self._logger.error("Unhandled error while processing message", exc_info=ex)
@@ -150,5 +159,7 @@ class RMQPubSub(RMQPublisher):
                 self._logger.warning("KeyboardInterrupt received. Stopping consumer")
                 await self.close()
             except Exception as ex:
-                self._logger.error("Unhandled error while consuming message", exc_info=ex)
+                self._logger.error(
+                    "Unhandled error while consuming message", exc_info=ex
+                )
                 await self.close(exc_info=ex)

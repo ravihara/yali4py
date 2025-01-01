@@ -1,10 +1,10 @@
-import json
 import os
 import re
+import tomllib
 from re import Pattern as RegExPattern
 from typing import Dict, List
 
-import tomllib
+import orjson
 import yaml
 
 from ..typings import YaliError
@@ -462,7 +462,7 @@ class FilesConv:
             return f.read()
 
     @staticmethod
-    def read_json(file_path: str, decorder_cls: json.JSONDecoder | None = None) -> Dict:
+    def read_json(file_path: str) -> Dict:
         """
         Read json from a file
 
@@ -470,8 +470,6 @@ class FilesConv:
         ----------
         file_path: str
             The file path
-        decorder_cls: json.JSONDecoder
-            The json decoder class
 
         Returns
         -------
@@ -482,7 +480,7 @@ class FilesConv:
             raise YaliError(f"Json file '{file_path}' is not readable")
 
         with open(file_path, "r") as f:
-            return json.load(f, cls=decorder_cls)
+            return orjson.loads(f.read())
 
     @staticmethod
     def read_yaml(file_path: str) -> Dict:
@@ -587,13 +585,7 @@ class FilesConv:
             return f.write(data)
 
     @staticmethod
-    def write_json(
-        file_path: str,
-        data: Dict,
-        *,
-        overwrite: bool = False,
-        encoder_cls: json.JSONEncoder | None = None,
-    ):
+    def write_json(file_path: str, data: Dict, *, overwrite: bool = False):
         """
         Write json to a file
 
@@ -605,8 +597,6 @@ class FilesConv:
             The json to be written
         overwrite: bool
             True to overwrite the file, False otherwise
-        encoder_cls: json.JSONEncoder
-            The json encoder class
 
         Returns
         -------
@@ -621,7 +611,7 @@ class FilesConv:
         os.makedirs(os.path.dirname(file_path), exist_ok=True)
 
         with open(file_path, "w") as f:
-            json.dump(data, f, cls=encoder_cls)
+            f.write(orjson.dumps(data).decode("utf-8"))
 
     @staticmethod
     def delete_file(file_path: str):

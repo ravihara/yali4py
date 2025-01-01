@@ -1,11 +1,12 @@
-import json
 import logging
 from decimal import Decimal
 from http import HTTPStatus
 from typing import Dict
 
+import orjson
 from opentelemetry import trace
 from opentelemetry.trace.span import INVALID_SPAN
+
 from yali.core.utils.datetimes import DateTimeConv
 
 from ..settings import LogLevelName, LogSettings
@@ -60,7 +61,15 @@ def effective_log_level():
 
 
 class DefaultLogFormatter(logging.Formatter):
-    _keep_attr_types = (bool, int, float, Decimal, complex, str, DateTimeConv.mod.datetime)
+    _keep_attr_types = (
+        bool,
+        int,
+        float,
+        Decimal,
+        complex,
+        str,
+        DateTimeConv.mod.datetime,
+    )
 
     def format(self, record):
         message = record.getMessage()
@@ -88,10 +97,10 @@ class DefaultLogFormatter(logging.Formatter):
         Override this method to change the way dict is converted to JSON.
         """
         try:
-            return json.dumps(record, default=_json_serializable)
+            return orjson.dumps(record, default=_json_serializable).decode("utf-8")
         except (TypeError, ValueError, OverflowError):
             try:
-                return json.dumps(record)
+                return orjson.dumps(record).decode("utf-8")
             except (TypeError, ValueError, OverflowError):
                 return "{}"
 
@@ -103,7 +112,7 @@ class DefaultLogFormatter(logging.Formatter):
         """
         return {
             attr_name: record.__dict__[attr_name]
-            for attr_name in record.__dict_
+            for attr_name in record.__dict__
             if attr_name not in _LOG_RECORD_ATTRS
         }
 

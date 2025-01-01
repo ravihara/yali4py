@@ -1,5 +1,4 @@
 import hashlib
-import json
 import os
 import re
 import socket
@@ -7,6 +6,7 @@ import sys
 from typing import Any, Iterable
 
 import netifaces
+import orjson
 from cachetools.func import ttl_cache
 from pydantic import ValidationError
 
@@ -27,13 +27,13 @@ def is_json_data(data: Any):
 
 
 @staticmethod
-def safe_load_json(data: str, **kwargs):
+def safe_load_json(data: str):
     """Load JSON data safely."""
     try:
-        payload = json.loads(data, **kwargs)
+        payload = orjson.loads(data)
         assert isinstance(payload, (dict, list))
         return payload
-    except json.JSONDecodeError:
+    except orjson.JSONDecodeError:
         return data
 
 

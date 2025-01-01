@@ -1,15 +1,16 @@
 import asyncio
-import json
 import logging
 from ssl import SSLContext
 from typing import Any, Callable, Coroutine, Dict
 
+import orjson
 from websockets.asyncio.server import Server as AioWsServer
 from websockets.asyncio.server import serve as aio_ws_serve
 from websockets.exceptions import ConnectionClosed as WsConnectionClosed
 from websockets.exceptions import ConnectionClosedError as WsConnectionClosedError
 from websockets.exceptions import ConnectionClosedOK as WsConnectionClosedOK
 from websockets.frames import CloseCode
+
 from yali.auth import JWTPayloadValidator, JWTReference, server_ssl_context
 from yali.core.typings import Failure, Field, FlexiTypesModel, Result
 
@@ -72,7 +73,9 @@ class WebSocketServer:
 
         if connect_res.tid == "fl":
             self._logger.error(connect_res.error)
-            await connection.close(code=CloseCode.INTERNAL_ERROR, reason=connect_res.error)
+            await connection.close(
+                code=CloseCode.INTERNAL_ERROR, reason=connect_res.error
+            )
             return
 
         self._logger.debug(connect_res.data)
@@ -83,9 +86,9 @@ class WebSocketServer:
         try:
             async for message in connection:
                 try:
-                    mesg_json: Dict = json.loads(message)
+                    mesg_json: Dict = orjson.loads(message)
                     await self._config.on_message(client_id, request_path, mesg_json)
-                except json.JSONDecodeError as ex:
+                except orjson.JSONDecodeError as ex:
                     self._logger.error(ex, exc_info=True)
                     error_res = Failure(error=str(ex))
                     await connection.send(error_res.model_dump_json())
