@@ -10,6 +10,7 @@ import urllib3
 from minio.credentials.providers import Provider as CredentialsProvider
 from pydantic import Field, SecretStr, field_serializer
 from pydantic_settings import BaseSettings, SettingsConfigDict
+
 from yali.core.typings import (
     BytesIO,
     ErrorOrBytesIO,
@@ -24,10 +25,7 @@ BulkPutEntry = Tuple[str, BytesIO, bool]
 
 
 class StorageSettings(BaseSettings):
-    model_config = SettingsConfigDict(
-        env_file_encoding="utf-8",
-        case_sensitive=True,
-    )
+    model_config = SettingsConfigDict(env_file_encoding="utf-8", case_sensitive=True)
 
     max_object_cache_size: int = Field(128, ge=1)
     max_object_cache_ttl: int = Field(300, ge=10)
@@ -61,7 +59,9 @@ class UnixFsStoreConfig(FlexiTypesModel):
             raise ValueError(f"Store's root folder path must be absolute: {sroot}")
 
         if sroot.endswith("/"):
-            raise ValueError(f"Store's root folder path must not end with a slash: {sroot}")
+            raise ValueError(
+                f"Store's root folder path must not end with a slash: {sroot}"
+            )
 
         return sroot
 
@@ -97,7 +97,8 @@ class AzureBlobStoreConfig(FlexiTypesModel):
 
 
 StoreConfig = Annotated[
-    Union[UnixFsStoreConfig, AwsS3StoreConfig, AzureBlobStoreConfig], Field(discriminator="stype")
+    Union[UnixFsStoreConfig, AwsS3StoreConfig, AzureBlobStoreConfig],
+    Field(discriminator="stype"),
 ]
 
 
@@ -150,7 +151,9 @@ class AbstractStore(ABC):
         raise NotImplementedError()
 
     @abstractmethod
-    async def put_object(self, key: str, data: BytesIO, overwrite: bool = False) -> ErrorOrStr:
+    async def put_object(
+        self, key: str, data: BytesIO, overwrite: bool = False
+    ) -> ErrorOrStr:
         """Write the object to the store."""
         raise NotImplementedError()
 
@@ -177,7 +180,9 @@ class AbstractStore(ABC):
         raise NotImplementedError()
 
     @abstractmethod
-    async def put_objects(self, entries: List[BulkPutEntry]) -> AsyncGenerator[ErrorOrStr, Any]:
+    async def put_objects(
+        self, entries: List[BulkPutEntry]
+    ) -> AsyncGenerator[ErrorOrStr, Any]:
         """
         Write the objects to the store.
 

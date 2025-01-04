@@ -3,9 +3,9 @@ requires = ["poetry-core>=1.0.0"]
 build-backend = "poetry.core.masonry.api"
 
 [tool.poetry]
-name = "yali-auth"
+name = "yali-sqldb"
 version = "0.1.0"
-description = "Authentication and authorization modules for Yali toolkit"
+description = "SQL database modules for Yali toolkit"
 license = "Apache-2.0"
 authors = ["Ravishankar Haranath <ravikh@gmail.com>"]
 readme = "README.md"
@@ -15,7 +15,7 @@ packages = [{ include = "yali" }]
 [tool.poetry.dependencies]
 python = "^3.11"
 yali-core = { path = "../core", develop = true }
-pyjwt = { extras = ["crypto"], version = "^2.10.1" }
+piccolo = {extras = ["all"], version = "^1.22.0"}
 
 [tool.poetry.group.dev.dependencies]
 pylint = "^3.2.6"
