@@ -7,7 +7,7 @@ from typing import Iterable
 
 import netifaces
 from cachetools.func import ttl_cache
-from pydantic import ValidationError
+from msgspec import ValidationError
 
 from ..typings import Failure, Result, Success
 

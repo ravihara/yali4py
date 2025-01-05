@@ -1,8 +1,8 @@
 import hashlib
 import re
-from typing import Callable, Dict
+from typing import Dict
 
-import orjson
+from ..codecs import to_json_data
 
 
 class Hasher:
@@ -20,7 +20,7 @@ class Hasher:
         return bool(Hasher.__sha256_hash_regex.match(hash_val))
 
     @staticmethod
-    def generate_md5_hash(payload: Dict, *, encoder_fn: Callable | None = None) -> str:
+    def generate_md5_hash(payload: Dict) -> str:
         """
         Generate a MD5 hash from the given payload
 
@@ -28,23 +28,19 @@ class Hasher:
         ----------
         payload : Dict
             The payload to be hashed
-        encoder_fn : Callable | None, optional
-            The encoder function to be used, by default None
 
         Returns
         -------
         str
             The MD5 hash
         """
-        bytes_val = orjson.dumps(payload, default=encoder_fn)
+        bytes_val = to_json_data(data=payload, as_string=False)
         hash_val = hashlib.md5(bytes_val).hexdigest()
 
         return hash_val
 
     @staticmethod
-    def generate_sha256_hash(
-        payload: Dict, *, encoder_fn: Callable | None = None
-    ) -> str:
+    def generate_sha256_hash(payload: Dict) -> str:
         """
         Generate a SHA256 hash from the given payload
 
@@ -52,15 +48,13 @@ class Hasher:
         ----------
         payload : Dict
             The payload to be hashed
-        encoder_fn : Callable | None, optional
-            The encoder function to be used, by default None
 
         Returns
         -------
         str
             The SHA256 hash
         """
-        bytes_val = orjson.dumps(payload, default=encoder_fn)
+        bytes_val = to_json_data(data=payload, as_string=False)
         hash_val = hashlib.sha256(bytes_val).hexdigest()
 
         return hash_val

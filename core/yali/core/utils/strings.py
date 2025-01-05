@@ -4,7 +4,7 @@ from abc import ABC, abstractmethod
 from io import StringIO
 from typing import List
 
-from ..typings import FlexiTypesModel, YaliError
+from ..typings import BaseModel, YaliError
 
 DEFAULT_DELIMITERS = " -_"
 ALLCHARS_REGEX = r"[{}]+"
@@ -28,7 +28,7 @@ def lower_with_hyphens(in_str: str):
     ).lower()
 
 
-class TokenMarkerArgs(FlexiTypesModel):
+class TokenMarkerArgs(BaseModel):
     in_buffer: StringIO
     out_buffer: StringIO
     join_char: str = ""

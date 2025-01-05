@@ -4,9 +4,9 @@ import tomllib
 from re import Pattern as RegExPattern
 from typing import Dict, List
 
-import orjson
 import yaml
 
+from ..codecs import from_json_file, to_json_file
 from ..typings import YaliError
 
 
@@ -479,8 +479,7 @@ class FilesConv:
         if not FilesConv.is_file_readable(file_path):
             raise YaliError(f"Json file '{file_path}' is not readable")
 
-        with open(file_path, "r") as f:
-            return orjson.loads(f.read())
+        return from_json_file(file_path)
 
     @staticmethod
     def read_yaml(file_path: str) -> Dict:
@@ -606,12 +605,10 @@ class FilesConv:
             raise YaliError(f"Json file '{file_path}' is not writable")
 
         if not overwrite and FilesConv.file_exists(file_path):
-            return
+            return -1
 
         os.makedirs(os.path.dirname(file_path), exist_ok=True)
-
-        with open(file_path, "w") as f:
-            f.write(orjson.dumps(data).decode("utf-8"))
+        return to_json_file(data=data, file_path=file_path)
 
     @staticmethod
     def delete_file(file_path: str):

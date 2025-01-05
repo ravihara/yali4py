@@ -4,22 +4,23 @@ from http import HTTPStatus
 from typing import Any, Callable, Dict, List
 
 import jwt
-from pydantic import ValidationError
-from yali.core.typings import FlexiTypesModel
+from msgspec import ValidationError
+
+from yali.core.typings import BaseModel
 from yali.core.utils.datetimes import DateTimeConv
 from yali.core.utils.osfiles import FilesConv
 
 _yali_jwt_signing_key: str | None = None
 
 
-class JWTReference(FlexiTypesModel):
+class JWTReference(BaseModel):
     issuers: List[str]
     audience: List[str]
     subject: str
     leeway: float = 0.0
 
 
-class JWTPayload(FlexiTypesModel):
+class JWTPayload(BaseModel):
     iss: str
     aud: str
     sub: str
@@ -29,7 +30,7 @@ class JWTPayload(FlexiTypesModel):
     custom: Dict[str, Any] = {}
 
 
-class JWTFailure(FlexiTypesModel):
+class JWTFailure(BaseModel):
     status: HTTPStatus
     reason: str
 
@@ -75,7 +76,9 @@ def server_ssl_context():
     ssl_key_file = os.getenv("YALI_SERVER_PEM_KEY_FILE")
 
     if not ssl_cert_file or not ssl_key_file:
-        raise ValueError("YALI_SERVER_PEM_CERT_FILE or YALI_SERVER_PEM_KEY_FILE is not set")
+        raise ValueError(
+            "YALI_SERVER_PEM_CERT_FILE or YALI_SERVER_PEM_KEY_FILE is not set"
+        )
 
     if not FilesConv.is_file_readable(ssl_cert_file):
         raise ValueError(f"YALI_SERVER_PEM_CERT_FILE '{ssl_cert_file}' is not readable")
@@ -104,7 +107,9 @@ def client_ssl_context():
     ssl_key_file = os.getenv("YALI_CLIENT_PEM_KEY_FILE")
 
     if not ssl_cert_file or not ssl_key_file:
-        raise ValueError("YALI_CLIENT_PEM_CERT_FILE or YALI_CLIENT_PEM_KEY_FILE is not set")
+        raise ValueError(
+            "YALI_CLIENT_PEM_CERT_FILE or YALI_CLIENT_PEM_KEY_FILE is not set"
+        )
 
     if not FilesConv.is_file_readable(ssl_cert_file):
         raise ValueError(f"YALI_CLIENT_PEM_CERT_FILE '{ssl_cert_file}' is not readable")
@@ -169,7 +174,10 @@ def generate_jwt(payload: JWTPayload) -> str:
 
 
 def verify_jwt_reference(
-    *, jwt_token: str, jwt_reference: JWTReference, jwt_validator: JWTPayloadValidator | None = None
+    *,
+    jwt_token: str,
+    jwt_reference: JWTReference,
+    jwt_validator: JWTPayloadValidator | None = None,
 ):
     """
     Verify expected claims in the JWT token using the JWT Reference, provided.

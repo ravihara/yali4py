@@ -9,38 +9,40 @@ import lz4.frame as lz4f
 import orjson
 import zstandard as zstd
 
-from ..typings import Field, JsonType, StrictTypesModel
+from ..typings import BaseModel, JSONValue, constrain_number
 
 DEFAULT_COMPRESS_LEVEL = 6
 
+GzipLevel = Annotated[int, constrain_number(ge=0, le=9)]
+ZstdLevel = Annotated[int, constrain_number(ge=0, le=22)]
+Lz4Level = Annotated[int, constrain_number(ge=0, le=16)]
 
-class GzipCompression(StrictTypesModel):
+
+class GzipCompression(BaseModel):
     algo: Literal["gzip"] = "gzip"
-    level: int = Field(default=DEFAULT_COMPRESS_LEVEL, ge=0, le=9)
+    level: GzipLevel = DEFAULT_COMPRESS_LEVEL
 
 
-class ZstdCompression(StrictTypesModel):
+class ZstdCompression(BaseModel):
     algo: Literal["zstd"] = "zstd"
-    level: int = Field(default=DEFAULT_COMPRESS_LEVEL, ge=0, le=22)
+    level: ZstdLevel = DEFAULT_COMPRESS_LEVEL
 
 
-class Lz4Compression(StrictTypesModel):
+class Lz4Compression(BaseModel):
     algo: Literal["lz4"] = "lz4"
-    level: int = Field(default=DEFAULT_COMPRESS_LEVEL, ge=0, le=16)
+    level: Lz4Level = DEFAULT_COMPRESS_LEVEL
 
 
-ArcCompression = Annotated[
-    Union[GzipCompression, ZstdCompression, Lz4Compression], Field(discriminator="algo")
-]
+ArcCompression = Union[GzipCompression, ZstdCompression, Lz4Compression]
 
 
-class CompressionConfig(StrictTypesModel):
+class CompressionConfig(BaseModel):
     archive: ArcCompression
     output: Literal["raw_bytes", "b64_string"] = "raw_bytes"
     encoding: str = "utf-8"
 
 
-class DecompressionConfig(StrictTypesModel):
+class DecompressionConfig(BaseModel):
     archive: ArcCompression
     output: Literal["raw_bytes", "raw_string", "json"] = "raw_bytes"
     encoding: str = "utf-8"
@@ -219,13 +221,13 @@ class Archiver:
         return Archiver.decompress_bytes(data=in_data, config=config)
 
     @staticmethod
-    def compress_json(*, data: JsonType, config: CompressionConfig):
+    def compress_json(*, data: JSONValue, config: CompressionConfig):
         """
         Compress json using gzip, lz4 or zstd based on the configuration
 
         Parameters
         ----------
-        data : JsonType
+        data : JSONValue
             Data to compress
         config : CompressionConfig
             Compression configuration
