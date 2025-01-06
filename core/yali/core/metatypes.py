@@ -1,7 +1,110 @@
+import asyncio
+import datetime as dt
+from concurrent.futures import ProcessPoolExecutor, ThreadPoolExecutor
+from enum import StrEnum
 from threading import Lock
-from typing import Any
+from typing import Annotated, Any, Callable, Coroutine
+
+import msgspec
+
+ResultCode = int | str
+JSONValue = dict | list
+Awaitable = Coroutine | asyncio.Future | asyncio.Task
+PoolExecutor = ProcessPoolExecutor | ThreadPoolExecutor
+AwaitableDoneHandler = Callable[[asyncio.Future], None]
+PoolExecutorInitFunc = Callable[[Any], object]
+
+## Common annotated type definitions
+PositiveInt = Annotated[
+    int, msgspec.Meta(title="PositiveInt", description="Non-negative integer", gt=0)
+]
+TZDateTime = Annotated[
+    dt.datetime,
+    msgspec.Meta(
+        title="TZDateTime", description="Datetime with timezone info", tz=True
+    ),
+]
+NonTZDateTime = Annotated[
+    dt.datetime,
+    msgspec.Meta(
+        title="NoTZDateTime", description="Datetime without timezone info", tz=False
+    ),
+]
+TZTime = Annotated[
+    dt.time,
+    msgspec.Meta(title="TZTime", description="Time with timezone info", tz=True),
+]
+NonTZTime = Annotated[
+    dt.time,
+    msgspec.Meta(title="NoTZTime", description="Time without timezone info", tz=False),
+]
+EmptyStr = Annotated[
+    str,
+    msgspec.Meta(
+        title="EmptyStr", description="Empty string", min_length=0, max_length=0
+    ),
+]
+NonEmptyStr = Annotated[
+    str, msgspec.Meta(title="NonEmptyStr", description="Non-empty string", min_length=1)
+]
+SnakeCaseStr = Annotated[
+    str,
+    msgspec.Meta(
+        title="SnakeCaseStr", description="Snake-case string", pattern=r"^[a-z0-9_]+$"
+    ),
+]
+AmqpUrl = Annotated[
+    str,
+    msgspec.Meta(
+        title="AmqpUrl",
+        description="Rabbitmq URL string",
+        pattern=r"^(?:amqp|amqps)://(\w+):(\w+)@(\w+):(\d+)/(\w+)$",
+    ),
+]
+WebsocketUrl = Annotated[
+    str,
+    msgspec.Meta(
+        title="WebsocketUrl",
+        description="Websocket URL string",
+        pattern=r"^(?:ws|wss)://(\w+):(\d+)/(\w+)$",
+    ),
+]
 
 
+class AwaitCondition(StrEnum):
+    ALL_DONE = asyncio.ALL_COMPLETED
+    ANY_DONE = asyncio.FIRST_COMPLETED
+    ANY_FAIL = asyncio.FIRST_EXCEPTION
+
+
+## Secret string type
+class SecretStr(str):
+    def __init__(self, value: str):
+        self._secret_str = value
+
+    def get_secret_value(self):
+        return self._secret_str
+
+    def __eq__(self, other: Any) -> bool:
+        return (
+            isinstance(other, self.__class__)
+            and self.get_secret_value() == other.get_secret_value()
+        )
+
+    def __hash__(self) -> int:
+        return hash(self.get_secret_value())
+
+    def __str__(self) -> str:
+        return str(self._display())
+
+    def __repr__(self) -> str:
+        return f"{self.__class__.__name__}({self._display()!r})"
+
+    def _display(self):
+        return "********" if self._secret_str else ""
+
+
+## Singleton meta-types
 class SingletonMeta(type):
     """
     SingletonMeta meta-type used to create singleton classes

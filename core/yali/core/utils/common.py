@@ -3,23 +3,53 @@ import os
 import re
 import socket
 import sys
-from typing import Iterable
+from collections import ChainMap
+from typing import Iterable, List
 
 import netifaces
 from cachetools.func import ttl_cache
-from msgspec import ValidationError
+from decouple import Config as EnvConfig
+from decouple import RepositoryEnv, RepositoryIni
+from msgspec import DecodeError, ValidationError
 
-from ..typings import Failure, Result, Success
+from ..models import Failure, Result, Success
+
+__env_config: EnvConfig | None = None
 
 
-@staticmethod
+def env_config():
+    global __env_config
+
+    if __env_config:
+        return __env_config
+
+    env_files = os.getenv("ENV_FILES", ".env").split(",")
+    conf_repos: List[RepositoryEnv | RepositoryIni] = []
+
+    for env_file in env_files:
+        env_file = env_file.strip()
+
+        if env_file.endswith(".env"):
+            conf_repos.append(RepositoryEnv(env_file))
+        elif env_file.endswith(".ini"):
+            conf_repos.append(RepositoryIni(env_file))
+
+    if not conf_repos:
+        raise ValueError(
+            "No environment files found. Please set ENV_FILES environment variable with comma separated list of environment files (.env or .ini)"
+        )
+
+    __env_config = EnvConfig(ChainMap(*conf_repos))
+
+    return __env_config
+
+
 def os_uname_str():
     """Get the OS name, release, version, and machine."""
     uname_info = os.uname()
     return f"{uname_info.nodename}|{uname_info.sysname}|{uname_info.release}|{uname_info.version}|{uname_info.machine}"
 
 
-@staticmethod
 def alphanum_sorted(data: Iterable):
     """Sort a list of strings in the way that humans expect."""
 
@@ -32,7 +62,6 @@ def alphanum_sorted(data: Iterable):
     return sorted(data, key=alphanum_key)
 
 
-@staticmethod
 def sizeof_object(obj, seen=None):
     """Recursively find the total size of an object including its contents."""
     size = sys.getsizeof(obj)
@@ -56,7 +85,6 @@ def sizeof_object(obj, seen=None):
     return size
 
 
-@staticmethod
 def get_sys_ipaddrs():
     """
     Get all IP addresses of the machine.
@@ -82,7 +110,6 @@ def get_sys_ipaddrs():
     return ip_addresses
 
 
-@staticmethod
 @ttl_cache(maxsize=128, ttl=600)
 def id_by_sysinfo(suffix: str = "", use_pid: bool = False, hash_algo: str = "md5"):
     """
@@ -123,7 +150,6 @@ def id_by_sysinfo(suffix: str = "", use_pid: bool = False, hash_algo: str = "md5
     return sysid
 
 
-@staticmethod
 @ttl_cache(maxsize=128, ttl=600)
 def filename_by_sysinfo(basename: str, extension: str = ".out"):
     """
@@ -155,11 +181,11 @@ def filename_by_sysinfo(basename: str, extension: str = ".out"):
     return f"{basename}_{suffix}{extension}"
 
 
-@staticmethod
 def dict_to_result(data: dict) -> Result:
     """
     Convert a dictionary to a Result instance. This method will raise
-    ValidationError if, the data does not match Success or Failure model
+    ValidationError or DecodeError if, the data does not match Success
+    or Failure model
 
     Parameters
     ----------
@@ -174,6 +200,6 @@ def dict_to_result(data: dict) -> Result:
     try:
         res = Success(**data)
         return res
-    except ValidationError:
+    except (ValidationError, DecodeError):
         res = Failure(**data)
         return res

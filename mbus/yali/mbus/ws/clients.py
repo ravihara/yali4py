@@ -1,18 +1,20 @@
 import asyncio
 import logging
-from typing import Any, Callable, Coroutine, Dict
+from typing import Annotated, Any, Callable, Coroutine, Dict
 from uuid import uuid4
 
-from pydantic import Field, ValidationError, WebsocketUrl
+from msgspec import DecodeError, ValidationError
 from websockets import exceptions as ws_exc
 from websockets.asyncio.client import ClientConnection as AioWsClientConnection
 from websockets.asyncio.client import connect as aio_ws_connect
 from websockets.frames import CloseCode
 
-from yali.auth import JWTPayload, client_ssl_context, generate_jwt
-from yali.core.typings import Failure, FlexiTypesModel, Result, Success
+from yali.core.codecs import data_to_json, safe_load_json
+from yali.core.hooks import constr_num_hook
+from yali.core.metatypes import WebsocketUrl
+from yali.core.models import BaseModel, Failure, Result, Success, field_specs
 from yali.core.utils.common import dict_to_result
-from yali.core.utils.json import JsonConv
+from yali.secauth import JWTPayload, client_ssl_context, generate_jwt
 
 WsClientExcludeArgs = [
     "ws_url",
@@ -44,11 +46,13 @@ def _update_headers(
             kwargs["additional_headers"]["Authorization"] = f"Bearer {jwt}"
 
 
-class LoopedWsClientConfig(FlexiTypesModel):
+class LoopedWsClientConfig(BaseModel):
     ws_url: WebsocketUrl
     on_message: Callable[[AioWsClientConnection], Coroutine[Any, Any, None]]
     jwt_payload: JWTPayload | None = None
-    retry_timeout_sec: float = Field(10.0, ge=10.0)
+    retry_timeout_sec: Annotated[float, constr_num_hook(ge=10.0)] = field_specs(
+        default=10.0
+    )
 
 
 class UniTxnWsClient:
@@ -72,7 +76,7 @@ class UniTxnWsClient:
 
         _update_headers(self._kwargs, self._cid, self._jwt_payload)
 
-        if ws_url.scheme == "wss":
+        if ws_url.startswith("wss://"):
             self._ssl_context = client_ssl_context()
         else:
             self._ssl_context = None
@@ -84,20 +88,21 @@ class UniTxnWsClient:
         self, connection: AioWsClientConnection, data: Dict[str, Any]
     ):
         try:
-            await connection.send(JsonConv.dump_to_str(data))
+            await connection.send(data_to_json(data=data))
 
             response = await connection.recv()
-            response = JsonConv.safe_load(response)
+            response = safe_load_json(data=response)
 
             if not isinstance(response, dict):
                 return Success(data={"result": response})
 
             response = dict_to_result(response)
             return response
-        except ValidationError as ex:
+        except (ValidationError, DecodeError) as ex:
+            self._logger.error(ex, exc_info=True)
             response = Failure(
                 error="Invalid response from server",
-                extra=JsonConv.load_from_str(ex.json()),
+                extra={"exc": str(ex)},
             )
             return response
         except Exception as ex:
@@ -161,7 +166,7 @@ class LoopedWsClient:
 
         _update_headers(self._kwargs, self._cid, self._config.jwt_payload)
 
-        if config.ws_url.scheme == "wss":
+        if config.ws_url.startswith("wss://"):
             self._ssl_context = client_ssl_context()
         else:
             self._ssl_context = None

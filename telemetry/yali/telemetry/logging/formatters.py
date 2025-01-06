@@ -6,8 +6,8 @@ from typing import Dict
 from opentelemetry import trace
 from opentelemetry.trace.span import INVALID_SPAN
 
+from yali.core.codecs import data_to_json
 from yali.core.utils.datetimes import DateTimeConv
-from yali.core.utils.json import JsonConv
 
 from ..settings import LogLevelName, LogSettings
 
@@ -97,12 +97,9 @@ class DefaultLogFormatter(logging.Formatter):
         Override this method to change the way dict is converted to JSON.
         """
         try:
-            return JsonConv.dump_to_str(record, custom_encoder=_json_serializable)
+            return data_to_json(data=record, as_string=True)
         except (TypeError, ValueError, OverflowError):
-            try:
-                return JsonConv.dump_to_str(record)
-            except (TypeError, ValueError, OverflowError):
-                return "{}"
+            return "{}"
 
     def extra_from_record(self, record: logging.LogRecord):
         """Returns `extra` dict you passed to logger.

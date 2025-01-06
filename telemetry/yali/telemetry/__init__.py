@@ -10,13 +10,14 @@ from opentelemetry.sdk.metrics.export import PeriodicExportingMetricReader
 from opentelemetry.sdk.resources import Resource
 from opentelemetry.sdk.trace import Tracer, TracerProvider
 from opentelemetry.sdk.trace.export import BatchSpanProcessor
+
 from yali.core.metatypes import SingletonMeta
 
-from .settings import TelemetrySettings
+from .settings import telemetry_settings
 
 
 class YaliTelemetry(metaclass=SingletonMeta):
-    __settings = TelemetrySettings()
+    __settings = telemetry_settings()
 
     def __init__(self):
         self._insecure: bool = True
@@ -25,7 +26,9 @@ class YaliTelemetry(metaclass=SingletonMeta):
         if self.__settings.otel_exporter_certificate is not None:
             self._insecure = False
             ssl_credentials = grpc.ssl_channel_credentials(
-                root_certificates=open(self.__settings.otel_exporter_certificate, "rb").read(),
+                root_certificates=open(
+                    self.__settings.otel_exporter_certificate, "rb"
+                ).read(),
                 private_key=(
                     open(self.__settings.otel_exporter_privkey, "rb").read()
                     if self.__settings.otel_exporter_privkey
@@ -90,7 +93,8 @@ class YaliTelemetry(metaclass=SingletonMeta):
 
         if tracer_name not in self._tracers:
             self._tracers[tracer_name] = otel_trace.get_tracer(
-                instrumenting_module_name=mod_name, instrumenting_library_version=lib_version
+                instrumenting_module_name=mod_name,
+                instrumenting_library_version=lib_version,
             )
 
         return self._tracers[tracer_name]
@@ -114,6 +118,8 @@ class YaliTelemetry(metaclass=SingletonMeta):
         meter_name = f"{name}|{version}" if version else name
 
         if meter_name not in self._meters:
-            self._meters[meter_name] = otel_metrics.get_meter(name=name, version=version)
+            self._meters[meter_name] = otel_metrics.get_meter(
+                name=name, version=version
+            )
 
         return self._meters[meter_name]

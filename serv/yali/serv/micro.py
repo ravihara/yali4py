@@ -6,14 +6,14 @@ from functools import partial
 from multiprocessing import Queue as LogQueue
 from typing import Any, Callable, Coroutine, Dict, List, Tuple
 
-from yali.core.typings import (
-    AioExceptValue,
+from yali.core.errors import YaliError
+from yali.core.metatypes import (
     Awaitable,
     AwaitableDoneHandler,
     AwaitCondition,
     PoolExecutorInitFunc,
-    YaliError,
 )
+from yali.core.models import AioExceptValue
 from yali.telemetry.logging import LogOptions, YaliLog, init_mproc_logging
 
 from .settings import micro_service_settings
@@ -72,7 +72,9 @@ class YaliMicro(ABC):
 
     def __shutdown(self):
         if self.__thread_pool_executor:
-            self._logger.info(f"Shutting down thread-pool executor of {self._service_name} service")
+            self._logger.info(
+                f"Shutting down thread-pool executor of {self._service_name} service"
+            )
             self.__thread_pool_executor.shutdown()
 
         if self.__process_pool_executor:
@@ -101,7 +103,9 @@ class YaliMicro(ABC):
             waiter.set_result(None)
 
     @staticmethod
-    def __finalize_awaitables(awaitables: Dict[str, Awaitable], done_cb: AwaitableDoneHandler):
+    def __finalize_awaitables(
+        awaitables: Dict[str, Awaitable], done_cb: AwaitableDoneHandler
+    ):
         results: Dict[str, Any] = dict()
 
         for k, v in awaitables.items():
@@ -159,7 +163,9 @@ class YaliMicro(ABC):
         timeout_hndl = None
 
         if wait_till_sec > 0:
-            timeout_hndl = run_loop.call_later(wait_till_sec, self.__release_waiter, waiter)
+            timeout_hndl = run_loop.call_later(
+                wait_till_sec, self.__release_waiter, waiter
+            )
 
         def completion_cb(f: asyncio.Future):
             nonlocal awt_counter
@@ -208,7 +214,9 @@ class YaliMicro(ABC):
         results: Dict[str, Any] = dict()
 
         if wait_till_sec > 0:
-            done, pending = await asyncio.wait(tasks, timeout=wait_till_sec, return_when=wait_for)
+            done, pending = await asyncio.wait(
+                tasks, timeout=wait_till_sec, return_when=wait_for
+            )
         else:
             done, pending = await asyncio.wait(tasks, return_when=wait_for)
 
@@ -242,19 +250,31 @@ class YaliMicro(ABC):
 
     def run_task_in_thread(self, func: Callable, *fnargs, **fnkwargs) -> asyncio.Future:
         wrapped_fn = partial(func, *fnargs, **fnkwargs)
-        future = self.__aio_loop.run_in_executor(self.__thread_pool_executor, wrapped_fn)
+        future = self.__aio_loop.run_in_executor(
+            self.__thread_pool_executor, wrapped_fn
+        )
 
         return future
 
-    def run_task_in_subprocess(self, func: Callable, *fnargs, **fnkwargs) -> asyncio.Future:
+    def run_task_in_subprocess(
+        self, func: Callable, *fnargs, **fnkwargs
+    ) -> asyncio.Future:
         if self.__app_log.mproc_queue:
             wrapped_fn = partial(
-                subprocess_handler, self.__app_log.mproc_queue, func, *fnargs, **fnkwargs
+                subprocess_handler,
+                self.__app_log.mproc_queue,
+                func,
+                *fnargs,
+                **fnkwargs,
             )
-            future = self.__aio_loop.run_in_executor(self.__process_pool_executor, wrapped_fn)
+            future = self.__aio_loop.run_in_executor(
+                self.__process_pool_executor, wrapped_fn
+            )
         else:
             wrapped_fn = partial(func, *fnargs, **fnkwargs)
-            future = self.__aio_loop.run_in_executor(self.__process_pool_executor, wrapped_fn)
+            future = self.__aio_loop.run_in_executor(
+                self.__process_pool_executor, wrapped_fn
+            )
 
         return future
 

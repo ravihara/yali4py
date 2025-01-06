@@ -3,6 +3,7 @@ import logging
 from ssl import SSLContext
 from typing import Any, Callable, Coroutine, Dict
 
+from msgspec import DecodeError, ValidationError
 from websockets.asyncio.server import Server as AioWsServer
 from websockets.asyncio.server import serve as aio_ws_serve
 from websockets.exceptions import ConnectionClosed as WsConnectionClosed
@@ -10,17 +11,18 @@ from websockets.exceptions import ConnectionClosedError as WsConnectionClosedErr
 from websockets.exceptions import ConnectionClosedOK as WsConnectionClosedOK
 from websockets.frames import CloseCode
 
-from yali.auth import JWTPayloadValidator, JWTReference, server_ssl_context
-from yali.core.typings import Failure, Field, FlexiTypesModel, Result
-from yali.core.utils.json import JsonConv, orjson
+from yali.core.codecs import data_from_json, data_to_json
+from yali.core.metatypes import NonEmptyStr, PositiveInt
+from yali.core.models import BaseModel, Failure, Result
+from yali.secauth import JWTPayloadValidator, JWTReference, server_ssl_context
 
 from .common import AioWsServerConnection, wrap_server_process_request
 
 
-class WsServerConfig(FlexiTypesModel):
-    service: str = Field(min_length=3)
-    host: str = Field(min_length=3)
-    port: int
+class WsServerConfig(BaseModel):
+    service: NonEmptyStr
+    host: NonEmptyStr
+    port: PositiveInt
     with_ssl: bool = False
     with_jwt_auth: bool = False
     jwt_reference: JWTReference | None = None
@@ -86,12 +88,12 @@ class WebSocketServer:
         try:
             async for message in connection:
                 try:
-                    mesg_json: Dict = JsonConv.load_from_str(message)
+                    mesg_json: Dict = data_from_json(data=message)
                     await self._config.on_message(client_id, request_path, mesg_json)
-                except orjson.JSONDecodeError as ex:
+                except (ValidationError, DecodeError) as ex:
                     self._logger.error(ex, exc_info=True)
                     error_res = Failure(error=str(ex))
-                    await connection.send(error_res.model_dump_json())
+                    await connection.send(data_to_json(data=error_res, as_string=True))
                 except WsConnectionClosed:
                     self._logger.warning(
                         f"Cannot use already closed {self._config.service} ws-server connection for client {client_id} at {request_path}"

@@ -5,7 +5,9 @@ from typing import List, Literal
 from websockets.asyncio.server import Request as AioWsRequest
 from websockets.asyncio.server import Response as AioWsResponse
 from websockets.asyncio.server import ServerConnection as AioWsServerConnection
-from yali.auth import (
+
+from yali.core.codecs import data_to_json
+from yali.secauth import (
     JWTFailure,
     JWTPayloadValidator,
     JWTReference,
@@ -111,7 +113,7 @@ def wrap_server_process_request(
 
                 return response
 
-            logger.debug(f"JWT payload: {jwt_result.model_dump_json()}")
+            logger.debug(f"JWT payload: {data_to_json(jwt_result, as_string=True)}")
         except KeyError:
             response = connection.respond(
                 HTTPStatus.UNAUTHORIZED,

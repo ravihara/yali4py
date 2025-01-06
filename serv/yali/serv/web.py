@@ -1,6 +1,6 @@
 from typing import Any, Dict, Tuple
 
-from yali.core.typings import PoolExecutorInitFunc
+from yali.core.metatypes import PoolExecutorInitFunc
 
 from .micro import YaliMicro
 

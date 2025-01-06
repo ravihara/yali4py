@@ -2,7 +2,7 @@ import hashlib
 import re
 from typing import Dict
 
-from ..codecs import to_json_data
+from ..codecs import data_to_json
 
 
 class Hasher:
@@ -34,7 +34,7 @@ class Hasher:
         str
             The MD5 hash
         """
-        bytes_val = to_json_data(data=payload, as_string=False)
+        bytes_val = data_to_json(data=payload, as_string=False)
         hash_val = hashlib.md5(bytes_val).hexdigest()
 
         return hash_val
@@ -54,7 +54,7 @@ class Hasher:
         str
             The SHA256 hash
         """
-        bytes_val = to_json_data(data=payload, as_string=False)
+        bytes_val = data_to_json(data=payload, as_string=False)
         hash_val = hashlib.sha256(bytes_val).hexdigest()
 
         return hash_val

@@ -6,8 +6,8 @@ from typing import Dict, List
 
 import yaml
 
-from ..codecs import from_json_file, to_json_file
-from ..typings import YaliError
+from ..codecs import data_from_json_file, data_to_json_file
+from ..errors import YaliError
 
 
 def _select_matching_file(
@@ -479,7 +479,7 @@ class FilesConv:
         if not FilesConv.is_file_readable(file_path):
             raise YaliError(f"Json file '{file_path}' is not readable")
 
-        return from_json_file(file_path)
+        return data_from_json_file(file_path)
 
     @staticmethod
     def read_yaml(file_path: str) -> Dict:
@@ -608,7 +608,7 @@ class FilesConv:
             return -1
 
         os.makedirs(os.path.dirname(file_path), exist_ok=True)
-        return to_json_file(data=data, file_path=file_path)
+        return data_to_json_file(data=data, file_path=file_path)
 
     @staticmethod
     def delete_file(file_path: str):

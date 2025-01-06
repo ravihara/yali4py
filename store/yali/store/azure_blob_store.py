@@ -1,22 +1,19 @@
 import asyncio
+from io import BytesIO
 from typing import Any, AsyncGenerator, List
 
 from azure.core.exceptions import ResourceExistsError, ResourceNotFoundError
 from azure.storage.blob.aio import BlobClient, BlobServiceClient, ContainerClient
-from yali.core.typings import YaliError
 
-from .abc_store import (
-    AbstractStore,
-    AzureBlobStoreConfig,
-    BulkPutEntry,
-    BytesIO,
-    ErrorOrBytesIO,
-    ErrorOrStr,
-)
+from yali.core.errors import ErrorOrBytesIO, ErrorOrStr, YaliError
+
+from .abc_store import AbstractStore, AzureBlobStoreConfig, BulkPutEntry
 
 
 class AzureBlobStore(AbstractStore):
-    def __init__(self, *, config: AzureBlobStoreConfig, aio_loop: asyncio.AbstractEventLoop):
+    def __init__(
+        self, *, config: AzureBlobStoreConfig, aio_loop: asyncio.AbstractEventLoop
+    ):
         self._config = config
         super().__init__(config, aio_loop)
 
@@ -24,7 +21,9 @@ class AzureBlobStore(AbstractStore):
             self._service_client = BlobServiceClient.from_connection_string(
                 conn_str=self._config.connection_string.get_secret_value()
             )
-            self._container_client = self._aio_loop.run_until_complete(self.__ensure_container())
+            self._container_client = self._aio_loop.run_until_complete(
+                self.__ensure_container()
+            )
         except Exception as ex:
             self._logger.error(
                 f"Failed to initialize store: {self._store_id} for container: {self._config.container_name}",
@@ -84,12 +83,16 @@ class AzureBlobStore(AbstractStore):
             self._logger.error(error_mesg, exc_info=ex)
             return YaliError(error_mesg, exc_cause=ex)
 
-    async def put_object(self, key: str, data: BytesIO, overwrite: bool = False) -> ErrorOrStr:
+    async def put_object(
+        self, key: str, data: BytesIO, overwrite: bool = False
+    ) -> ErrorOrStr:
         blob_client: BlobClient | None = None
 
         try:
             blob_client = self._container_client.get_blob_client(blob=key)
-            ul_result = await blob_client.upload_blob(data.getvalue(), overwrite=overwrite)
+            ul_result = await blob_client.upload_blob(
+                data.getvalue(), overwrite=overwrite
+            )
 
             self._logger.debug(ul_result)
             return f"Written {data.getbuffer().nbytes} bytes for object: {key}"
@@ -130,7 +133,9 @@ class AzureBlobStore(AbstractStore):
             result = await self.get_object(key=okey)
             yield result
 
-    async def put_objects(self, entries: List[BulkPutEntry]) -> AsyncGenerator[ErrorOrStr, Any]:
+    async def put_objects(
+        self, entries: List[BulkPutEntry]
+    ) -> AsyncGenerator[ErrorOrStr, Any]:
         if not entries:
             return YaliError("Entries list is empty")
 

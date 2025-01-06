@@ -2,6 +2,8 @@ from typing import Any, Callable, Type, TypeVar
 
 import msgspec
 
+from .hooks import json_default_dec_hook, json_default_enc_hook
+
 YaliT = TypeVar("YaliT")
 DataType = Type[YaliT]
 
@@ -11,32 +13,12 @@ JSONEncoder = msgspec.json.Encoder
 JSONDecoder = msgspec.json.Decoder
 
 
-## Default encoding hook
-def json_default_enc_hook(obj: Any) -> Any:
-    if isinstance(obj, BaseException):
-        return str(obj.args[0]) if obj.args else obj.__str__()
-    elif isinstance(obj, complex):
-        return (obj.real, obj.imag)
-
-    raise NotImplementedError(f"Objects of type {type(obj)} are not supported")
-
-
-## Default decoding hook
-def json_default_dec_hook(type: Type, obj: Any) -> Any:
-    if issubclass(type, BaseException):
-        return type(obj)
-    elif type is complex:
-        return complex(obj[0], obj[1])
-
-    raise NotImplementedError(f"Objects of type {type} are not supported")
-
-
 def is_valid_json(data: Any):
     return isinstance(data, (dict, list))
 
 
 ## Encoding functions
-def to_json_data(data: Any, *, as_string: bool = False):
+def data_to_json(data: Any, *, as_string: bool = False):
     result = msgspec.json.encode(data, enc_hook=json_default_enc_hook)
 
     if as_string:
@@ -45,7 +27,7 @@ def to_json_data(data: Any, *, as_string: bool = False):
     return result
 
 
-def to_json_file(data: Any, *, file_path: str):
+def data_to_json_file(data: Any, *, file_path: str):
     with open(file_path, "w") as f:
         return f.write(
             msgspec.json.encode(data, enc_hook=json_default_enc_hook).decode("utf-8")
@@ -53,14 +35,14 @@ def to_json_file(data: Any, *, file_path: str):
 
 
 ## Decoding functions
-def from_json_data(data: bytes | str, *, dec_type: DataType | None = None):
+def data_from_json(data: bytes | str, *, dec_type: DataType | None = None):
     if dec_type:
         return msgspec.json.decode(data, type=dec_type, dec_hook=json_default_dec_hook)
 
     return msgspec.json.decode(data, dec_hook=json_default_dec_hook)
 
 
-def from_json_file(file_path: str, *, dec_type: DataType | None = None):
+def data_from_json_file(file_path: str, *, dec_type: DataType | None = None):
     with open(file_path, "rb") as f:
         if dec_type:
             return msgspec.json.decode(
@@ -81,7 +63,7 @@ def safe_load_json(data: bytes | str, *, dec_type: DataType | None = None):
 
         assert isinstance(payload, (dict, list))
         return payload
-    except msgspec.ValidationError:
+    except (msgspec.ValidationError, msgspec.DecodeError):
         ## In case of exception, return the original data
         return data
 

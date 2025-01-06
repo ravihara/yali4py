@@ -2,20 +2,23 @@ import base64
 import gzip
 import io
 from sys import getsizeof
-from typing import Annotated, Literal, Union
+from typing import Annotated, Literal
 
 import lz4.block as lz4b
 import lz4.frame as lz4f
-import orjson
 import zstandard as zstd
+from msgspec import DecodeError, ValidationError
 
-from ..typings import BaseModel, JSONValue, constrain_number
+from ..codecs import data_from_json, data_to_json
+from ..hooks import constr_num_hook
+from ..metatypes import JSONValue
+from ..models import BaseModel
 
 DEFAULT_COMPRESS_LEVEL = 6
 
-GzipLevel = Annotated[int, constrain_number(ge=0, le=9)]
-ZstdLevel = Annotated[int, constrain_number(ge=0, le=22)]
-Lz4Level = Annotated[int, constrain_number(ge=0, le=16)]
+GzipLevel = Annotated[int, constr_num_hook(ge=0, le=9)]
+ZstdLevel = Annotated[int, constr_num_hook(ge=0, le=22)]
+Lz4Level = Annotated[int, constr_num_hook(ge=0, le=16)]
 
 
 class GzipCompression(BaseModel):
@@ -33,7 +36,7 @@ class Lz4Compression(BaseModel):
     level: Lz4Level = DEFAULT_COMPRESS_LEVEL
 
 
-ArcCompression = Union[GzipCompression, ZstdCompression, Lz4Compression]
+ArcCompression = GzipCompression | ZstdCompression | Lz4Compression
 
 
 class CompressionConfig(BaseModel):
@@ -170,8 +173,8 @@ class Archiver:
             res_data = bytes.decode(res_data, encoding=config.encoding)
         elif config.output == "json":
             try:
-                res_data = orjson.loads(res_data)
-            except orjson.JSONDecodeError:
+                res_data = data_from_json(data=res_data)
+            except (ValidationError, DecodeError):
                 pass
 
         return res_data
@@ -237,5 +240,5 @@ class Archiver:
         bytes or base64 encoded string
             Compressed data
         """
-        in_data = orjson.dumps(data)
+        in_data = data_to_json(data=data)
         return Archiver.compress_bytes(data=in_data, config=config)

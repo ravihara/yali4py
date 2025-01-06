@@ -1,7 +1,7 @@
 import datetime as dt
 from typing import List
 
-from ..typings import BaseModel
+from ..models import BaseModel
 
 ALLOWED_DATETIME_FORMATS: List[str] = [
     "%Y-%m-%dT%H:%M:%S.%f%z",

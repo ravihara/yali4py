@@ -6,8 +6,8 @@ from multiprocessing import get_context as mproc_get_context
 from typing import Any, Callable, Dict
 
 from yali.core.constants import YALI_BREAK_EVENT
-from yali.core.metatypes import SingletonMeta
-from yali.core.typings import FlexiTypesModel, NonEmptyStr
+from yali.core.metatypes import NonEmptyStr, SingletonMeta
+from yali.core.models import BaseModel
 from yali.core.utils.strings import lower_with_hyphens
 
 from ..settings import log_settings
@@ -72,7 +72,9 @@ def _handle_mproc_logs(queue: LogQueue, config: Dict[str, Any]):
 
             logger.handle(record=record)
         except KeyboardInterrupt:
-            print("In order to break processing logs, send a 'YALI_BREAK_EVENT' to the queue")
+            print(
+                "In order to break processing logs, send a 'YALI_BREAK_EVENT' to the queue"
+            )
         except Exception:
             import sys
             import traceback
@@ -81,7 +83,7 @@ def _handle_mproc_logs(queue: LogQueue, config: Dict[str, Any]):
             traceback.print_exc(file=sys.stderr)
 
 
-class LogOptions(FlexiTypesModel):
+class LogOptions(BaseModel):
     name: NonEmptyStr = "yali_app"
     config: Dict[str, Any] | None = None
     post_hook: Callable[[], None] | None = None
@@ -97,7 +99,9 @@ class YaliLog(metaclass=SingletonMeta):
         if self._mproc_enabled:
             self._mproc_context = mproc_get_context("spawn")
             self._mproc_manager = self._mproc_context.Manager()
-            self._mproc_queue = self._mproc_manager.Queue(maxsize=_log_settings.log_queue_size)
+            self._mproc_queue = self._mproc_manager.Queue(
+                maxsize=_log_settings.log_queue_size
+            )
 
             init_mproc_logging(queue=self._mproc_queue, is_main=True)
 

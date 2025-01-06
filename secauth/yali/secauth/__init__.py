@@ -4,9 +4,10 @@ from http import HTTPStatus
 from typing import Any, Callable, Dict, List
 
 import jwt
-from msgspec import ValidationError
+from msgspec import DecodeError, ValidationError
+from msgspec.structs import asdict as json_dict
 
-from yali.core.typings import BaseModel
+from yali.core.models import BaseModel
 from yali.core.utils.datetimes import DateTimeConv
 from yali.core.utils.osfiles import FilesConv
 
@@ -168,7 +169,7 @@ def generate_jwt(payload: JWTPayload) -> str:
         JWT token
     """
     signing_key = jwt_signing_key_from_env()
-    ws_jwt = jwt.encode(payload.model_dump(), signing_key, algorithm="HS256")
+    ws_jwt = jwt.encode(json_dict(payload), signing_key, algorithm="HS256")
 
     return ws_jwt
 
@@ -260,7 +261,7 @@ def verify_jwt_reference(
                 return failure
 
         return jwt_payload
-    except ValidationError:
+    except (ValidationError, DecodeError):
         return JWTFailure(
             status=HTTPStatus.UNAUTHORIZED,
             reason="Invalid JWT Payload received\n",

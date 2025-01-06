@@ -4,7 +4,8 @@ from abc import ABC, abstractmethod
 from io import StringIO
 from typing import List
 
-from ..typings import BaseModel, YaliError
+from ..errors import YaliError
+from ..models import BaseModel
 
 DEFAULT_DELIMITERS = " -_"
 ALLCHARS_REGEX = r"[{}]+"

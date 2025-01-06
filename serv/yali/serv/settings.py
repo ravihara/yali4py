@@ -1,20 +1,17 @@
-from pydantic import AliasChoices, Field
-from pydantic_settings import BaseSettings, SettingsConfigDict
 from yali.core.constants import YALI_NUM_PROCESS_WORKERS, YALI_NUM_THREAD_WORKERS
+from yali.core.metatypes import PositiveInt
+from yali.core.models import BaseModel
+from yali.core.utils.common import env_config
+
+_env_config = env_config()
 
 
-class MicroServiceSettings(BaseSettings):
-    model_config = SettingsConfigDict(env_file_encoding="utf-8", case_sensitive=True)
-
-    max_thread_workers: int = Field(
-        YALI_NUM_THREAD_WORKERS,
-        validation_alias=AliasChoices("YALI_MAX_THREAD_WORKERS", "MAX_THREAD_WORKERS"),
-        ge=1,
+class MicroServiceSettings(BaseModel):
+    max_thread_workers: PositiveInt = _env_config(
+        "MAX_THREAD_WORKERS", default=YALI_NUM_THREAD_WORKERS, cast=PositiveInt
     )
-    max_process_workers: int = Field(
-        YALI_NUM_PROCESS_WORKERS,
-        validation_alias=AliasChoices("YALI_MAX_PROCESS_WORKERS", "MAX_PROCESS_WORKERS"),
-        ge=1,
+    max_process_workers: PositiveInt = _env_config(
+        "MAX_PROCESS_WORKERS", default=YALI_NUM_PROCESS_WORKERS, cast=PositiveInt
     )
 
 

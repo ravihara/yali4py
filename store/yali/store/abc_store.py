@@ -4,34 +4,36 @@ import logging
 from abc import ABC, abstractmethod
 from concurrent.futures import ThreadPoolExecutor
 from functools import partial
-from typing import Annotated, Any, AsyncGenerator, Callable, List, Literal, Tuple, Union
+from io import BytesIO
+from typing import Annotated, Any, AsyncGenerator, Callable, List, Literal, Tuple
 
 import urllib3
 from minio.credentials.providers import Provider as CredentialsProvider
-from pydantic import Field, SecretStr, field_serializer
-from pydantic_settings import BaseSettings, SettingsConfigDict
 
-from yali.core.typings import (
-    BytesIO,
-    ErrorOrBytesIO,
-    ErrorOrStr,
-    FlexiTypesModel,
-    NonEmptyStr,
-)
+from yali.core.codecs import data_to_json
+from yali.core.errors import ErrorOrBytesIO, ErrorOrStr
+from yali.core.hooks import constr_num_hook
+from yali.core.metatypes import NonEmptyStr, SecretStr
+from yali.core.models import BaseModel, field_specs
+from yali.core.utils.common import env_config
+
+_env_config = env_config()
 
 ## NOTE: BulkPutEntry is used for `put_objects`
 # It is a tuple of (key, data, overwrite)
 BulkPutEntry = Tuple[str, BytesIO, bool]
 
+CacheSizeInt = Annotated[int, constr_num_hook(ge=1)]
+CacheTTLInt = Annotated[int, constr_num_hook(ge=10)]
+StorageConcurrancyInt = Annotated[int, constr_num_hook(ge=1)]
 
-class StorageSettings(BaseSettings):
-    model_config = SettingsConfigDict(env_file_encoding="utf-8", case_sensitive=True)
 
-    max_object_cache_size: int = Field(128, ge=1)
-    max_object_cache_ttl: int = Field(300, ge=10)
-    max_storage_concurrancy: int = Field(16, ge=1)
-    stores_config_fpath: str = Field(
-        "~/.yali/stores.yaml", validation_alias="YALI_STORES_CONFIG_FPATH"
+class StorageSettings(BaseModel):
+    max_object_cache_size: CacheSizeInt = field_specs(default=128)
+    max_object_cache_ttl: CacheTTLInt = field_specs(default=300)
+    max_storage_concurrancy: StorageConcurrancyInt = field_specs(default=16)
+    stores_config_fpath: str = _env_config(
+        "YALI_STORES_CONFIG_FPATH", default="~/.yali/stores.yaml"
     )
 
 
@@ -47,26 +49,22 @@ def storage_settings():
     return __storage_settings
 
 
-class UnixFsStoreConfig(FlexiTypesModel):
+class UnixFsStoreConfig(BaseModel):
     stype: Literal["unix-fs"] = "unix-fs"
     sroot: NonEmptyStr
     is_readonly: bool = False
 
-    @field_serializer("sroot", when_used="unless-none")
-    @staticmethod
-    def sroot_serializer(sroot: NonEmptyStr):
-        if not sroot.startswith("/"):
-            raise ValueError(f"Store's root folder path must be absolute: {sroot}")
+    def __post_init__(self):
+        if not self.sroot.startswith("/"):
+            raise ValueError(f"Store's root folder path must be absolute: {self.sroot}")
 
-        if sroot.endswith("/"):
+        if self.sroot.endswith("/"):
             raise ValueError(
-                f"Store's root folder path must not end with a slash: {sroot}"
+                f"Store's root folder path must not end with a slash: {self.sroot}"
             )
 
-        return sroot
 
-
-class AwsS3StoreConfig(FlexiTypesModel):
+class AwsS3StoreConfig(BaseModel):
     stype: Literal["aws-s3"] = "aws-s3"
     endpoint: NonEmptyStr = "s3.amazonaws.com"
     tls_enabled: bool = True
@@ -79,27 +77,14 @@ class AwsS3StoreConfig(FlexiTypesModel):
     access_key: NonEmptyStr
     secret_key: SecretStr
 
-    @field_serializer("secret_key", when_used="unless-none")
-    @staticmethod
-    def secret_key_serializer(secret_key: SecretStr):
-        return secret_key.get_secret_value()
 
-
-class AzureBlobStoreConfig(FlexiTypesModel):
+class AzureBlobStoreConfig(BaseModel):
     stype: Literal["azure-blob"] = "azure-blob"
     container_name: NonEmptyStr
     connection_string: SecretStr
 
-    @field_serializer("connection_string", when_used="unless-none")
-    @staticmethod
-    def connection_string_serializer(connection_string: SecretStr):
-        return connection_string.get_secret_value()
 
-
-StoreConfig = Annotated[
-    Union[UnixFsStoreConfig, AwsS3StoreConfig, AzureBlobStoreConfig],
-    Field(discriminator="stype"),
-]
+StoreConfig = UnixFsStoreConfig | AwsS3StoreConfig | AzureBlobStoreConfig
 
 
 class AbstractStore(ABC):
@@ -120,8 +105,8 @@ class AbstractStore(ABC):
         return self._store_id
 
     def _gen_store_id(self, config: StoreConfig):
-        config_str = config.model_dump_json(exclude_none=True)
-        return hashlib.md5(config_str.encode("utf-8")).hexdigest()
+        config_bytes = data_to_json(data=config)
+        return hashlib.md5(config_bytes).hexdigest()
 
     def object_basename(self, key: str) -> str:
         return key.split("/")[-1]

@@ -1,22 +1,19 @@
 import asyncio
+from io import BytesIO
 from typing import Any, AsyncGenerator, List
 
 from minio import Minio
 from minio.error import S3Error
-from yali.core.typings import YaliError
 
-from .abc_store import (
-    AbstractStore,
-    AwsS3StoreConfig,
-    BulkPutEntry,
-    BytesIO,
-    ErrorOrBytesIO,
-    ErrorOrStr,
-)
+from yali.core.errors import ErrorOrBytesIO, ErrorOrStr, YaliError
+
+from .abc_store import AbstractStore, AwsS3StoreConfig, BulkPutEntry
 
 
 class AwsS3Store(AbstractStore):
-    def __init__(self, *, config: AwsS3StoreConfig, aio_loop: asyncio.AbstractEventLoop):
+    def __init__(
+        self, *, config: AwsS3StoreConfig, aio_loop: asyncio.AbstractEventLoop
+    ):
         self._config = config
         super().__init__(config, aio_loop)
 
@@ -82,13 +79,19 @@ class AwsS3Store(AbstractStore):
 
         return data_len
 
-    async def put_object(self, key: str, data: BytesIO, overwrite: bool = False) -> ErrorOrStr:
+    async def put_object(
+        self, key: str, data: BytesIO, overwrite: bool = False
+    ) -> ErrorOrStr:
         try:
-            result = await self.add_thread_pool_task(self.__put_object, key, data, overwrite)
+            result = await self.add_thread_pool_task(
+                self.__put_object, key, data, overwrite
+            )
             assert isinstance(result, int)
 
             if result == -1:
-                return YaliError(f"Object: {key} already exists in store: {self._store_id}")
+                return YaliError(
+                    f"Object: {key} already exists in store: {self._store_id}"
+                )
 
             return f"Written {result} bytes for object: {key}"
         except Exception as ex:
@@ -98,7 +101,9 @@ class AwsS3Store(AbstractStore):
             return YaliError(error_mesg, exc_cause=ex)
 
     def __delete_object(self, key: str):
-        self._client.remove_object(bucket_name=self._config.bucket_name, object_name=key)
+        self._client.remove_object(
+            bucket_name=self._config.bucket_name, object_name=key
+        )
 
     async def delete_object(self, key: str) -> ErrorOrStr:
         try:
@@ -119,7 +124,9 @@ class AwsS3Store(AbstractStore):
             result = await self.get_object(key=okey)
             yield result
 
-    async def put_objects(self, entries: List[BulkPutEntry]) -> AsyncGenerator[ErrorOrStr, Any]:
+    async def put_objects(
+        self, entries: List[BulkPutEntry]
+    ) -> AsyncGenerator[ErrorOrStr, Any]:
         if not entries:
             return YaliError("Entries list is empty")
 
@@ -163,7 +170,9 @@ class AwsS3Store(AbstractStore):
         await asyncio.sleep(0)
         count = 0
 
-        for _ in self._client.list_objects(bucket_name=self._config.bucket_name, recursive=True):
+        for _ in self._client.list_objects(
+            bucket_name=self._config.bucket_name, recursive=True
+        ):
             count += 1
 
         return count

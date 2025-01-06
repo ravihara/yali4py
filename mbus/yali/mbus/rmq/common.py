@@ -1,14 +1,17 @@
 import re
 from logging import getLogger
-from typing import Any, Callable, Coroutine, Dict, List, Tuple
+from typing import Annotated, Any, Callable, Coroutine, Dict, List, Tuple
 
 from aio_pika import ExchangeType
 from aio_pika.abc import AbstractIncomingMessage
-from pydantic import AmqpDsn, Field, field_validator, model_validator
-from yali.core.typings import FlexiTypesModel, SnakeCaseStr
+
+from yali.core.hooks import constr_num_hook
+from yali.core.metatypes import AmqpUrl, NonEmptyStr, PositiveInt, SnakeCaseStr
+from yali.core.models import BaseModel, field_specs
 from yali.core.utils.common import sizeof_object
 
 _binding_key_regex = re.compile(r"^(?:\w+|\*)(?:\.(?:\w+|\*))*(?:\.\#)?$")
+
 
 ## Callbacks / handlers for RMQ messages
 RMQBatchItem = Tuple[int, Dict]
@@ -17,43 +20,38 @@ RMQDataPreprocessor = Callable[[RMQData], Coroutine[Any, Any, RMQData]]
 RMQDataProcessor = Callable[[RMQData], Coroutine[Any, Any, None]]
 
 
-class PublisherConfig(FlexiTypesModel):
-    service: str = Field(min_length=3)
-    amqp_url: AmqpDsn = Field(min_length=5)
+class PublisherConfig(BaseModel):
+    service: NonEmptyStr
+    amqp_url: AmqpUrl
     exchange_name: SnakeCaseStr
     exchange_type: ExchangeType = ExchangeType.TOPIC
-    max_message_size: int = Field(5242880, ge=5120)
+    max_message_size: Annotated[int, constr_num_hook(ge=5120)] = field_specs(
+        default=5242880
+    )
 
 
 class PubSubConfig(PublisherConfig):
-    prefetch_count: int = Field(default=1, ge=1)
+    prefetch_count: PositiveInt = field_specs(default=1)
     binding_keys: List[str] = []
     data_processor: RMQDataProcessor
     data_preprocessor: RMQDataPreprocessor | None = None
 
     ## Only used for batch based pubsub
-    batch_interval: float = Field(10.0, ge=1.0)
-    max_batch_entries: int = Field(10, gt=1)
-    max_batch_size: int = Field(52428800, ge=10240)
+    batch_interval: Annotated[float, constr_num_hook(ge=1.0)] = field_specs(
+        default=10.0
+    )
+    max_batch_entries: PositiveInt = field_specs(default=10)
+    max_batch_size: Annotated[int, constr_num_hook(ge=10240)] = field_specs(
+        default=52428800
+    )
 
-    @model_validator(mode="after")
-    def ensure_max_batch_size(self):
+    def __post_init__(self):
         if self.max_batch_size <= self.max_message_size:
             raise ValueError("'max_batch_size' must be greater than 'max_message_size'")
 
-        return self
-
-    @field_validator("binding_keys", mode="before")
-    @classmethod
-    def validate_binding_keys(cls, v: List[str]):
-        if not isinstance(v, list):
-            raise ValueError("Binding keys must be a list of string")
-
-        for key in v:
+        for key in self.binding_keys:
             if not _binding_key_regex.match(key):
                 raise ValueError(f"Invalid binding key: {key}")
-
-        return v
 
 
 class RMQBatchBuffer:
@@ -77,11 +75,15 @@ class RMQBatchBuffer:
         data_size = sizeof_object(data)
 
         if len(self._entries) >= self._max_entries:
-            self._logger.error(f"Dropping message due to entry limit of {self._max_entries}")
+            self._logger.error(
+                f"Dropping message due to entry limit of {self._max_entries}"
+            )
             return -1
 
         if (self._size + data_size) > self._max_size:
-            self._logger.error(f"Dropping message due to size limit of {self._max_size}")
+            self._logger.error(
+                f"Dropping message due to size limit of {self._max_size}"
+            )
             return -1
 
         self._entries.append((message.delivery_tag, data))
@@ -94,7 +96,9 @@ class RMQBatchBuffer:
         return len(self._entries)
 
     def is_full(self):
-        return (len(self._entries) >= self._max_entries) or (self._size >= self._max_size)
+        return (len(self._entries) >= self._max_entries) or (
+            self._size >= self._max_size
+        )
 
     def is_empty(self):
         return len(self._entries) == 0
