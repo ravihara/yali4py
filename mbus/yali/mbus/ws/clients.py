@@ -88,7 +88,7 @@ class UniTxnWsClient:
         self, connection: AioWsClientConnection, data: Dict[str, Any]
     ):
         try:
-            await connection.send(data_to_json(data=data))
+            await connection.send(data_to_json(data=data, as_string=True))
 
             response = await connection.recv()
             response = safe_load_json(data=response)
