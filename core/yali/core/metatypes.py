@@ -3,10 +3,12 @@ import datetime as dt
 from concurrent.futures import ProcessPoolExecutor, ThreadPoolExecutor
 from enum import StrEnum
 from threading import Lock
-from typing import Annotated, Any, Callable, Coroutine
+from typing import Annotated, Any, Callable, Coroutine, Type, TypeVar
 
 import msgspec
 
+YaliT = TypeVar("YaliT")
+DataType = Type[YaliT]
 ResultCode = int | str
 JSONValue = dict | list
 Awaitable = Coroutine | asyncio.Future | asyncio.Task

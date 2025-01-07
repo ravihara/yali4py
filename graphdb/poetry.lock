@@ -153,6 +153,17 @@ files = [
 colors = ["colorama (>=0.4.6)"]
 
 [[package]]
+name = "janus"
+version = "2.0.0"
+description = "Mixed sync-async queue to interoperate between asyncio tasks and classic threads"
+optional = false
+python-versions = ">=3.9"
+files = [
+    {file = "janus-2.0.0-py3-none-any.whl", hash = "sha256:7e6449d34eab04cd016befbd7d8c0d8acaaaab67cb59e076a69149f9031745f9"},
+    {file = "janus-2.0.0.tar.gz", hash = "sha256:0970f38e0e725400496c834a368a67ee551dc3b5ad0a257e132f5b46f2e77770"},
+]
+
+[[package]]
 name = "lz4"
 version = "4.3.3"
 description = "LZ4 Bindings for Python"
@@ -641,6 +652,7 @@ develop = true
 
 [package.dependencies]
 cachetools = "^5.4.0"
+janus = "^2.0.0"
 lz4 = "^4.3.3"
 msgspec = "^0.19.0"
 netifaces2 = "^0.0.22"

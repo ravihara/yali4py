@@ -21,6 +21,7 @@ netifaces2 = "^0.0.22"
 pyyaml = "^6.0.2"
 msgspec = "^0.19.0"
 python-decouple = "^3.8"
+janus = "^2.0.0"
 
 [tool.poetry.group.dev.dependencies]
 pylint = "^3.2.6"

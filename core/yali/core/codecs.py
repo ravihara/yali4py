@@ -1,11 +1,9 @@
-from typing import Any, Callable, Type, TypeVar
+from typing import Any, Callable, Type
 
 import msgspec
 
 from .hooks import json_default_dec_hook, json_default_enc_hook
-
-YaliT = TypeVar("YaliT")
-DataType = Type[YaliT]
+from .metatypes import DataType
 
 JSONEncHook = Callable[[Any], Any]
 JSONDecHook = Callable[[Type, Any], Any]
@@ -36,6 +34,9 @@ def data_to_json_file(data: Any, *, file_path: str):
 
 ## Decoding functions
 def data_from_json(data: bytes | str, *, dec_type: DataType | None = None):
+    if data is None:
+        return None
+
     if dec_type:
         return msgspec.json.decode(data, type=dec_type, dec_hook=json_default_dec_hook)
 
