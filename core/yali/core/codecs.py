@@ -1,14 +1,9 @@
-from typing import Any, Callable, Type
+from typing import Any
 
 import msgspec
 
 from .hooks import json_default_dec_hook, json_default_enc_hook
 from .metatypes import DataType
-
-JSONEncHook = Callable[[Any], Any]
-JSONDecHook = Callable[[Type, Any], Any]
-JSONEncoder = msgspec.json.Encoder
-JSONDecoder = msgspec.json.Decoder
 
 
 def is_valid_json(data: Any):
