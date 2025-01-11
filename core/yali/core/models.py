@@ -4,7 +4,7 @@ from typing import Any, Callable, Iterable, List, Tuple, Type
 import msgspec
 
 from .hooks import model_tag_hook
-from .metatypes import NonEmptyStr
+from .metatypes import NonEmptyStr, UnsignedInt
 
 _YALI_TAG_FIELD = "_yali_mdl_tag"
 
@@ -61,6 +61,7 @@ class Failure(BaseModel):
 
 class Success(BaseModel):
     data: dict
+    code: UnsignedInt | None = field_specs(default=None)
 
 
 Result = Success | Failure

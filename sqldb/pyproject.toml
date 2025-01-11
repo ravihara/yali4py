@@ -16,7 +16,8 @@ packages = [{ include = "yali" }]
 python = "^3.11"
 yali-core = { path = "../core", develop = true }
 sqlalchemy = {extras = ["asyncio"], version = "^2.0.36"}
-psycopg = {extras = ["binary", "pool"], version = "^3.2.3"}
+psycopg2 = "^2.9.10"
+pymysql = {extras = ["ed25519", "rsa"], version = "^1.1.1"}
 
 [tool.poetry.group.dev.dependencies]
 pylint = "^3.2.6"

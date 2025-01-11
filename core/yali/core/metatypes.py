@@ -17,8 +17,11 @@ AwaitableDoneHandler = Callable[[asyncio.Future], None]
 PoolExecutorInitFunc = Callable[[Any], object]
 
 ## Common annotated type definitions
+UnsignedInt = Annotated[
+    int, msgspec.Meta(title="UnsignedInt", description="Non-negative integer", ge=0)
+]
 PositiveInt = Annotated[
-    int, msgspec.Meta(title="PositiveInt", description="Non-negative integer", gt=0)
+    int, msgspec.Meta(title="PositiveInt", description="Positive integer", gt=0)
 ]
 TZDateTime = Annotated[
     dt.datetime,

@@ -7,9 +7,8 @@ from opentelemetry import trace
 from opentelemetry.trace.span import INVALID_SPAN
 
 from yali.core.codecs import data_to_json
+from yali.core.settings import LogLevelName, LogSettings
 from yali.core.utils.datetimes import DateTimeConv
-
-from ..settings import LogLevelName, LogSettings
 
 _LOG_DATETIME_FORMAT = "%Y-%m-%d %H:%M:%S.%f"
 _LOG_RECORD_ATTRS = {
@@ -40,13 +39,6 @@ _LOG_RECORD_ATTRS = {
 }
 
 log_settings = LogSettings()
-
-
-def _json_serializable(obj):
-    try:
-        return obj.__dict__
-    except AttributeError:
-        return str(obj)
 
 
 def effective_log_level():

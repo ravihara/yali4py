@@ -98,7 +98,11 @@ def uvicorn_log_config(log_name: str):
         },
         "root": {"handlers": ["default_console"], "level": _log_level},
         "loggers": {
-            "uvicorn": {"handlers": ["default_console"], "level": _log_level, "propagate": False},
+            "uvicorn": {
+                "handlers": ["default_console"],
+                "level": _log_level,
+                "propagate": False,
+            },
             "uvicorn.error": {"handlers": ["default_console"], "level": _log_level},
             "uvicorn.access": {
                 "handlers": ["access_console"],

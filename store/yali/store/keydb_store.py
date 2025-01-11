@@ -9,7 +9,7 @@ from redis.retry import Retry
 from yali.core.codecs import data_from_json, data_to_json
 from yali.core.metatypes import DataType, NonEmptyStr, PositiveInt, SecretStr
 from yali.core.models import BaseModel, field_specs
-from yali.core.utils.common import env_config
+from yali.core.settings import env_config
 
 _env_config = env_config()
 

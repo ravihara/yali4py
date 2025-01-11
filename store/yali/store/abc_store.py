@@ -15,7 +15,7 @@ from yali.core.errors import ErrorOrBytesIO, ErrorOrStr
 from yali.core.hooks import constr_num_hook
 from yali.core.metatypes import NonEmptyStr, SecretStr
 from yali.core.models import BaseModel, field_specs
-from yali.core.utils.common import env_config
+from yali.core.settings import env_config
 
 _env_config = env_config()
 

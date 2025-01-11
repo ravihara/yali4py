@@ -1,7 +1,7 @@
 from yali.core.constants import YALI_NUM_PROCESS_WORKERS, YALI_NUM_THREAD_WORKERS
 from yali.core.metatypes import PositiveInt
 from yali.core.models import BaseModel
-from yali.core.utils.common import env_config
+from yali.core.settings import env_config
 
 _env_config = env_config()
 

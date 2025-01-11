@@ -8,9 +8,9 @@ from typing import Any, Callable, Dict
 from yali.core.constants import YALI_BREAK_EVENT
 from yali.core.metatypes import NonEmptyStr, SingletonMeta
 from yali.core.models import BaseModel
+from yali.core.settings import log_settings
 from yali.core.utils.strings import lower_with_hyphens
 
-from ..settings import log_settings
 from .configs import default_log_config
 from .formatters import effective_log_level
 

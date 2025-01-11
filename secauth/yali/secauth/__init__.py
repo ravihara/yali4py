@@ -11,6 +11,8 @@ from yali.core.models import BaseModel
 from yali.core.utils.datetimes import DateTimeConv
 from yali.core.utils.osfiles import FilesConv
 
+from .settings import ClientSSLSettings, ServerSSLSettings
+
 _yali_jwt_signing_key: str | None = None
 
 
@@ -66,68 +68,61 @@ def create_ssl_context(
 def server_ssl_context():
     """
     Get the SSL context for the server using environment variables
-    YALI_SERVER_PEM_CERT_FILE and YALI_SERVER_PEM_KEY_FILE.
 
     Returns
     -------
     ssl.SSLContext
         SSL context
     """
-    ssl_cert_file = os.getenv("YALI_SERVER_PEM_CERT_FILE")
-    ssl_key_file = os.getenv("YALI_SERVER_PEM_KEY_FILE")
 
-    if not ssl_cert_file or not ssl_key_file:
-        raise ValueError(
-            "YALI_SERVER_PEM_CERT_FILE or YALI_SERVER_PEM_KEY_FILE is not set"
-        )
+    settings = ServerSSLSettings()
+    verify_mode = ssl.CERT_OPTIONAL if settings.is_self_signed else ssl.CERT_REQUIRED
+    get_password = (
+        (lambda: settings.password.get_secret_value()) if settings.password else None
+    )
 
-    if not FilesConv.is_file_readable(ssl_cert_file):
-        raise ValueError(f"YALI_SERVER_PEM_CERT_FILE '{ssl_cert_file}' is not readable")
+    ctx = ssl.SSLContext(ssl.PROTOCOL_TLS_SERVER)
+    ctx.load_default_certs(ssl.Purpose.CLIENT_AUTH)
+    ctx.load_cert_chain(settings.cert_file, settings.key_file, get_password)
 
-    if not FilesConv.is_file_readable(ssl_key_file):
-        raise ValueError(f"YALI_SERVER_PEM_KEY_FILE '{ssl_key_file}' is not readable")
+    ctx.verify_mode = ssl.VerifyMode(verify_mode)
 
-    ssl_context = ssl.SSLContext(ssl.PROTOCOL_TLS_SERVER)
-    ssl_context.load_default_certs(ssl.Purpose.CLIENT_AUTH)
-    ssl_context.load_cert_chain(certfile=ssl_cert_file, keyfile=ssl_key_file)
+    if not settings.is_self_signed:
+        ctx.load_verify_locations(settings.ca_file)
 
-    return ssl_context
+    return ctx
 
 
 def client_ssl_context():
     """
     Get the SSL context for the client using environment variables
-    YALI_CLIENT_PEM_CERT_FILE and YALI_CLIENT_PEM_KEY_FILE.
 
     Returns
     -------
     ssl.SSLContext
         SSL context
     """
-    ssl_cert_file = os.getenv("YALI_CLIENT_PEM_CERT_FILE")
-    ssl_key_file = os.getenv("YALI_CLIENT_PEM_KEY_FILE")
+    settings = ClientSSLSettings()
+    verify_mode = ssl.CERT_OPTIONAL if settings.is_self_signed else ssl.CERT_REQUIRED
+    get_password = (
+        (lambda: settings.password.get_secret_value()) if settings.password else None
+    )
 
-    if not ssl_cert_file or not ssl_key_file:
-        raise ValueError(
-            "YALI_CLIENT_PEM_CERT_FILE or YALI_CLIENT_PEM_KEY_FILE is not set"
-        )
+    ctx = ssl.SSLContext(ssl.PROTOCOL_TLS_CLIENT)
+    ctx.load_default_certs(ssl.Purpose.SERVER_AUTH)
+    ctx.load_cert_chain(settings.cert_file, settings.key_file, get_password)
 
-    if not FilesConv.is_file_readable(ssl_cert_file):
-        raise ValueError(f"YALI_CLIENT_PEM_CERT_FILE '{ssl_cert_file}' is not readable")
+    ctx.verify_mode = ssl.VerifyMode(verify_mode)
 
-    if not FilesConv.is_file_readable(ssl_key_file):
-        raise ValueError(f"YALI_CLIENT_PEM_KEY_FILE '{ssl_key_file}' is not readable")
+    if not settings.is_self_signed:
+        ctx.load_verify_locations(settings.ca_file)
 
-    ssl_context = ssl.SSLContext(ssl.PROTOCOL_TLS_CLIENT)
-    ssl_context.load_default_certs(ssl.Purpose.SERVER_AUTH)
-    ssl_context.load_cert_chain(certfile=ssl_cert_file, keyfile=ssl_key_file)
-
-    return ssl_context
+    return ctx
 
 
 def jwt_signing_key_from_env():
     """
-    Get the PEM formatted signing key from the environment variable YALI_JWT_SIGNING_KEY_FILE.
+    Get the PEM formatted signing key from the environment variable JWT_SIGNING_KEY_FILE.
 
     Returns
     -------
@@ -139,13 +134,13 @@ def jwt_signing_key_from_env():
     if _yali_jwt_signing_key:
         return _yali_jwt_signing_key
 
-    key_file = os.getenv("YALI_JWT_SIGNING_KEY_FILE")
+    key_file = os.getenv("JWT_SIGNING_KEY_FILE")
 
     if not key_file:
-        raise ValueError("YALI_JWT_SIGNING_KEY_FILE is not set")
+        raise ValueError("JWT_SIGNING_KEY_FILE is not set")
 
     if not FilesConv.is_file_readable(key_file):
-        raise ValueError(f"YALI_JWT_SIGNING_KEY_FILE '{key_file}' is not readable")
+        raise ValueError(f"JWT_SIGNING_KEY_FILE '{key_file}' is not readable")
 
     with open(key_file, "r") as f:
         _yali_jwt_signing_key = f.read()

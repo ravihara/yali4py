@@ -3,45 +3,13 @@ import os
 import re
 import socket
 import sys
-from collections import ChainMap
-from typing import Iterable, List
+from typing import Iterable
 
 import netifaces
 from cachetools.func import ttl_cache
-from decouple import Config as EnvConfig
-from decouple import RepositoryEnv, RepositoryIni
 from msgspec import DecodeError, ValidationError
 
 from ..models import Failure, Result, Success
-
-__env_config: EnvConfig | None = None
-
-
-def env_config():
-    global __env_config
-
-    if __env_config:
-        return __env_config
-
-    env_files = os.getenv("ENV_FILES", ".env").split(",")
-    conf_repos: List[RepositoryEnv | RepositoryIni] = []
-
-    for env_file in env_files:
-        env_file = env_file.strip()
-
-        if env_file.endswith(".env"):
-            conf_repos.append(RepositoryEnv(env_file))
-        elif env_file.endswith(".ini"):
-            conf_repos.append(RepositoryIni(env_file))
-
-    if not conf_repos:
-        raise ValueError(
-            "No environment files found. Please set ENV_FILES environment variable with comma separated list of environment files (.env or .ini)"
-        )
-
-    __env_config = EnvConfig(ChainMap(*conf_repos))
-
-    return __env_config
 
 
 def os_uname_str():

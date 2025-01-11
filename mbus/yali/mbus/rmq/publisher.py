@@ -117,7 +117,7 @@ class RMQPublisher:
             )
             result = await self._exchange.publish(message, routing_key=routing_key)
 
-            if not result:
+            if result:
                 self._logger.info(
                     f"Message published with delivery-tag: {result.delivery_tag}"
                 )
