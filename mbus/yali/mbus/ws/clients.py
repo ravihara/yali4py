@@ -9,7 +9,7 @@ from websockets.asyncio.client import ClientConnection as AioWsClientConnection
 from websockets.asyncio.client import connect as aio_ws_connect
 from websockets.frames import CloseCode
 
-from yali.core.codecs import data_to_json, safe_load_json
+from yali.core.codecs import data_to_json_str, safe_load_json
 from yali.core.hooks import constr_num_hook
 from yali.core.metatypes import WebsocketUrl
 from yali.core.models import BaseModel, Failure, Result, Success, field_specs
@@ -88,7 +88,7 @@ class UniTxnWsClient:
         self, connection: AioWsClientConnection, data: Dict[str, Any]
     ):
         try:
-            await connection.send(data_to_json(data=data, as_string=True))
+            await connection.send(data_to_json_str(data))
 
             response = await connection.recv()
             response = safe_load_json(data=response)

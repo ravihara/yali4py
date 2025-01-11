@@ -177,6 +177,24 @@ graph = ["objgraph (>=1.7.2)"]
 profile = ["gprof2dot (>=2022.7.29)"]
 
 [[package]]
+name = "geoalchemy2"
+version = "0.17.0"
+description = "Using SQLAlchemy with Spatial Databases"
+optional = false
+python-versions = ">=3.7"
+files = [
+    {file = "GeoAlchemy2-0.17.0-py3-none-any.whl", hash = "sha256:2218d7d5a8f123cc4b88cbf3f9595ef3b2741c26e417a2bff56ba96ac9208919"},
+    {file = "geoalchemy2-0.17.0.tar.gz", hash = "sha256:00e105e6a93cc2815914a29acb4fc129da5b2ebd500bf447b108e7904138c83f"},
+]
+
+[package.dependencies]
+packaging = "*"
+SQLAlchemy = ">=1.4"
+
+[package.extras]
+shapely = ["Shapely (>=1.7)"]
+
+[[package]]
 name = "greenlet"
 version = "3.1.1"
 description = "Lightweight in-process concurrent programming"
@@ -1043,4 +1061,4 @@ cffi = ["cffi (>=1.11)"]
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.11"
-content-hash = "62098c2f1955336da9644c590298675c313710ab776b8f9b2df58dffd9c24581"
+content-hash = "30a7335e1a58933d20d86da6b4d1a4f58573cfa6347fa79a5860c01c9631c8a2"

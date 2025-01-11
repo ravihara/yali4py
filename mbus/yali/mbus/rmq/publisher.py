@@ -10,7 +10,7 @@ from aio_pika.abc import (
     HeadersType,
 )
 
-from yali.core.codecs import data_to_json
+from yali.core.codecs import data_to_json_bytes
 from yali.core.errors import YaliError
 from yali.core.utils.datetimes import DateTimeConv
 
@@ -111,7 +111,7 @@ class RMQPublisher:
                     f"Exchange {self._config.exchange_name} not initialized yet"
                 )
 
-            mesg_body = data_to_json(data=json_data)
+            mesg_body = data_to_json_bytes(data=json_data)
             message = Message(
                 body=mesg_body, content_type="application/json", headers=headers
             )

@@ -1,9 +1,28 @@
+from typing import List
+
 from yali.core.constants import YALI_NUM_PROCESS_WORKERS, YALI_NUM_THREAD_WORKERS
-from yali.core.metatypes import PositiveInt
-from yali.core.models import BaseModel
+from yali.core.metatypes import NonEmptyStr, PositiveInt
+from yali.core.models import BaseModel, field_specs
 from yali.core.settings import env_config
 
 _env_config = env_config()
+
+
+class PathConfig(BaseModel):
+    name: NonEmptyStr
+    path: NonEmptyStr
+
+
+class EndpointConfig(BaseModel):
+    host: NonEmptyStr = field_specs(default="0.0.0.0")
+    port: PositiveInt
+    base_path: NonEmptyStr
+    end_paths: List[PathConfig]
+
+
+class PortalConfig(BaseModel):
+    api: EndpointConfig
+    web: EndpointConfig | None = field_specs(default=None)
 
 
 class MicroServiceSettings(BaseModel):

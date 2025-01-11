@@ -11,7 +11,7 @@ from websockets.exceptions import ConnectionClosedError as WsConnectionClosedErr
 from websockets.exceptions import ConnectionClosedOK as WsConnectionClosedOK
 from websockets.frames import CloseCode
 
-from yali.core.codecs import data_from_json, data_to_json
+from yali.core.codecs import data_from_json, data_to_json_str
 from yali.core.metatypes import NonEmptyStr, PositiveInt
 from yali.core.models import BaseModel, Failure, Result
 from yali.secauth import JWTPayloadValidator, JWTReference, server_ssl_context
@@ -93,7 +93,7 @@ class WebSocketServer:
                 except (ValidationError, DecodeError) as ex:
                     self._logger.error(ex, exc_info=True)
                     error_res = Failure(error=str(ex))
-                    await connection.send(data_to_json(data=error_res, as_string=True))
+                    await connection.send(data_to_json_str(data=error_res))
                 except WsConnectionClosed:
                     self._logger.warning(
                         f"Cannot use already closed {self._config.service} ws-server connection for client {client_id} at {request_path}"

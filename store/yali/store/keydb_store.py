@@ -6,7 +6,7 @@ from redis.backoff import ExponentialBackoff
 from redis.exceptions import BusyLoadingError, ConnectionError, TimeoutError
 from redis.retry import Retry
 
-from yali.core.codecs import data_from_json, data_to_json
+from yali.core.codecs import data_from_json, data_to_json_str
 from yali.core.metatypes import DataType, NonEmptyStr, PositiveInt, SecretStr
 from yali.core.models import BaseModel, field_specs
 from yali.core.settings import env_config
@@ -92,7 +92,7 @@ class KeydbStore:
 
         key = self._pfx_key(key=entry.key)
         val = (
-            data_to_json(data=entry.value, as_string=True)
+            data_to_json_str(data=entry.value)
             if not isinstance(entry.value, str)
             else entry.value
         )
@@ -112,7 +112,7 @@ class KeydbStore:
             try:
                 key = self._pfx_key(key=entry.key)
                 val = (
-                    data_to_json(data=entry.value, as_string=True)
+                    data_to_json_str(data=entry.value)
                     if not isinstance(entry.value, str)
                     else entry.value
                 )
@@ -213,7 +213,7 @@ class KeydbStore:
             for entry in entries:
                 key = self._pfx_key(key=entry.key)
                 val = (
-                    data_to_json(data=entry.value, as_string=True)
+                    data_to_json_str(data=entry.value)
                     if not isinstance(entry.value, str)
                     else entry.value
                 )

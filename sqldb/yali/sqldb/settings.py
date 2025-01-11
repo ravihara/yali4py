@@ -51,6 +51,7 @@ class PgSQLSettings(DbSSLSettings):
     host: str = _env_config("PGSQL_HOST", default="localhost")
     port: int = _env_config("PGSQL_PORT", default=5432, cast=int)
     database: str = _env_config("PGSQL_DATABASE")
+    geospatial: bool = _env_config("PGSQL_GEOSPATIAL", default=False, cast=bool)
 
 
 class MySQLSettings(DbSSLSettings):

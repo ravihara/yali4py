@@ -9,7 +9,7 @@ import lz4.frame as lz4f
 import zstandard as zstd
 from msgspec import DecodeError, ValidationError
 
-from ..codecs import data_from_json, data_to_json
+from ..codecs import data_from_json, data_to_json_bytes
 from ..hooks import constr_num_hook
 from ..metatypes import JSONValue
 from ..models import BaseModel
@@ -240,5 +240,5 @@ class Archiver:
         bytes or base64 encoded string
             Compressed data
         """
-        in_data = data_to_json(data=data)
+        in_data = data_to_json_bytes(data=data)
         return Archiver.compress_bytes(data=in_data, config=config)

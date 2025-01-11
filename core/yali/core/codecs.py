@@ -11,13 +11,12 @@ def is_valid_json(data: Any):
 
 
 ## Encoding functions
-def data_to_json(data: Any, *, as_string: bool = False):
-    result = msgspec.json.encode(data, enc_hook=json_default_enc_hook)
+def data_to_json_bytes(data: Any):
+    return msgspec.json.encode(data, enc_hook=json_default_enc_hook)
 
-    if as_string:
-        return result.decode("utf-8")
 
-    return result
+def data_to_json_str(data: Any):
+    return msgspec.json.encode(data, enc_hook=json_default_enc_hook).decode("utf-8")
 
 
 def data_to_json_file(data: Any, *, file_path: str):

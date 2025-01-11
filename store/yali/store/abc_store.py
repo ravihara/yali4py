@@ -10,7 +10,7 @@ from typing import Annotated, Any, AsyncGenerator, Callable, List, Literal, Tupl
 import urllib3
 from minio.credentials.providers import Provider as CredentialsProvider
 
-from yali.core.codecs import data_to_json
+from yali.core.codecs import data_to_json_bytes
 from yali.core.errors import ErrorOrBytesIO, ErrorOrStr
 from yali.core.hooks import constr_num_hook
 from yali.core.metatypes import NonEmptyStr, SecretStr
@@ -105,7 +105,7 @@ class AbstractStore(ABC):
         return self._store_id
 
     def _gen_store_id(self, config: StoreConfig):
-        config_bytes = data_to_json(data=config)
+        config_bytes = data_to_json_bytes(data=config)
         return hashlib.md5(config_bytes).hexdigest()
 
     def object_basename(self, key: str) -> str:
