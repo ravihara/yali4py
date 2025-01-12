@@ -4,7 +4,7 @@ import threading
 from concurrent.futures import as_completed
 
 import pytest
-from core.yali.core.threadasync import ThreadPoolAsyncExecutor
+from core.yali.core.utils.threadaio import ThreadPoolAsyncExecutor
 
 
 @pytest.mark.asyncio(scope="class")

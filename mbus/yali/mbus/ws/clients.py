@@ -14,7 +14,7 @@ from yali.core.hooks import constr_num_hook
 from yali.core.metatypes import WebsocketUrl
 from yali.core.models import BaseModel, Failure, Result, Success, field_specs
 from yali.core.utils.common import dict_to_result
-from yali.secauth import JWTPayload, client_ssl_context, generate_jwt
+from yali.core.utils.sectoken import JWTPayload, client_ssl_context, generate_jwt
 
 WsClientExcludeArgs = [
     "ws_url",

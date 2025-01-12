@@ -2723,6 +2723,7 @@ opentelemetry-api = "^1.27.0"
 opentelemetry-exporter-otlp = "^1.27.0"
 opentelemetry-instrumentation-logging = "^0.48b0"
 opentelemetry-sdk = "^1.27.0"
+pyjwt = {version = "^2.10.1", extras = ["crypto"]}
 python-decouple = "^3.8"
 pyyaml = "^6.0.2"
 zstandard = "^0.23.0"
@@ -2730,23 +2731,6 @@ zstandard = "^0.23.0"
 [package.source]
 type = "directory"
 url = "../core"
-
-[[package]]
-name = "yali-secauth"
-version = "0.1.0"
-description = "Security, authentication and authorization modules for Yali toolkit"
-optional = false
-python-versions = "^3.11"
-files = []
-develop = true
-
-[package.dependencies]
-pyjwt = {version = "^2.10.1", extras = ["crypto"]}
-yali-core = {path = "../core", develop = true}
-
-[package.source]
-type = "directory"
-url = "../secauth"
 
 [[package]]
 name = "zipp"
@@ -2882,4 +2866,4 @@ cffi = ["cffi (>=1.11)"]
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.11"
-content-hash = "c72df663f0e120bed3763562263c1b8ce97f17b670925924295b76003de07e1f"
+content-hash = "0dbdb28881d643f221ab1a2fd752cc7322ab0958e4b0c519a3b7e11bc11a16e3"

@@ -7,11 +7,10 @@ import jwt
 from msgspec import DecodeError, ValidationError
 from msgspec.structs import asdict as json_dict
 
-from yali.core.models import BaseModel
-from yali.core.utils.datetimes import DateTimeConv
-from yali.core.utils.osfiles import FilesConv
-
-from .settings import ClientSSLSettings, ServerSSLSettings
+from ..models import BaseModel
+from ..settings import ClientSSLSettings, ServerSSLSettings
+from ..utils.datetimes import DateTimeConv
+from ..utils.osfiles import FilesConv
 
 _yali_jwt_signing_key: str | None = None
 

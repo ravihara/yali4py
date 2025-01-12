@@ -7,7 +7,7 @@ from websockets.asyncio.server import Response as AioWsResponse
 from websockets.asyncio.server import ServerConnection as AioWsServerConnection
 
 from yali.core.codecs import data_to_json_str
-from yali.secauth import (
+from yali.core.utils.sectoken import (
     JWTFailure,
     JWTPayloadValidator,
     JWTReference,

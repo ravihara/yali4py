@@ -14,7 +14,11 @@ from websockets.frames import CloseCode
 from yali.core.codecs import data_from_json, data_to_json_str
 from yali.core.metatypes import NonEmptyStr, PositiveInt
 from yali.core.models import BaseModel, Failure, Result
-from yali.secauth import JWTPayloadValidator, JWTReference, server_ssl_context
+from yali.core.utils.sectoken import (
+    JWTPayloadValidator,
+    JWTReference,
+    server_ssl_context,
+)
 
 from .common import AioWsServerConnection, wrap_server_process_request
 

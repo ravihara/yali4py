@@ -1589,6 +1589,7 @@ opentelemetry-api = "^1.27.0"
 opentelemetry-exporter-otlp = "^1.27.0"
 opentelemetry-instrumentation-logging = "^0.48b0"
 opentelemetry-sdk = "^1.27.0"
+pyjwt = {version = "^2.10.1", extras = ["crypto"]}
 python-decouple = "^3.8"
 pyyaml = "^6.0.2"
 zstandard = "^0.23.0"
@@ -1596,23 +1597,6 @@ zstandard = "^0.23.0"
 [package.source]
 type = "directory"
 url = "../core"
-
-[[package]]
-name = "yali-secauth"
-version = "0.1.0"
-description = "Security, authentication and authorization modules for Yali toolkit"
-optional = false
-python-versions = "^3.11"
-files = []
-develop = true
-
-[package.dependencies]
-pyjwt = {version = "^2.10.1", extras = ["crypto"]}
-yali-core = {path = "../core", develop = true}
-
-[package.source]
-type = "directory"
-url = "../secauth"
 
 [[package]]
 name = "yarl"
@@ -1844,4 +1828,4 @@ cffi = ["cffi (>=1.11)"]
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.11"
-content-hash = "7e7188c1e2ee1ae95bffb705a0e3972d868dea03a4e3ea7d6a0fb31554b9b785"
+content-hash = "dff55b6b65ec179b4d849c489c06fa008ef783df570a227e7d9fa24b5310b47e"

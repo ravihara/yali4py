@@ -10,8 +10,8 @@ from aio_pika.abc import (
 from aio_pika.exceptions import ChannelClosed
 
 from yali.core.codecs import data_from_json
-from yali.core.threadasync import ThreadPoolAsyncExecutor
 from yali.core.utils.strings import StringConv
+from yali.core.utils.threadaio import ThreadPoolAsyncExecutor
 
 from .common import PubSubConfig
 from .publisher import RMQPublisher
