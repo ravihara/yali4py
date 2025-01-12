@@ -6,7 +6,10 @@ from functools import partial
 from multiprocessing import Queue as LogQueue
 from typing import Any, Callable, Coroutine, Dict, List, Tuple
 
+import uvloop
+
 from yali.core.errors import YaliError
+from yali.core.logging import LogOptions, YaliLog, init_mproc_logging
 from yali.core.metatypes import (
     Awaitable,
     AwaitableDoneHandler,
@@ -14,7 +17,6 @@ from yali.core.metatypes import (
     PoolExecutorInitFunc,
 )
 from yali.core.models import AioExceptValue
-from yali.telemetry.logging import LogOptions, YaliLog, init_mproc_logging
 
 from .settings import micro_service_settings
 
@@ -34,6 +36,8 @@ def subprocess_handler(log_queue: LogQueue, proc_func: Callable, *fnargs, **fnkw
 
 
 class YaliMicro(ABC):
+    asyncio.set_event_loop_policy(uvloop.EventLoopPolicy())
+
     def __init__(
         self,
         *,
@@ -45,7 +49,6 @@ class YaliMicro(ABC):
         process_init_args: Tuple = (),
     ):
         self._service_name = service_name
-
         self.__aio_loop = asyncio.new_event_loop()
         asyncio.set_event_loop(self.__aio_loop)
 

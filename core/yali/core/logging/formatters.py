@@ -6,9 +6,9 @@ from typing import Dict
 from opentelemetry import trace
 from opentelemetry.trace.span import INVALID_SPAN
 
-from yali.core.codecs import data_to_json_str
-from yali.core.settings import LogLevelName, LogSettings
-from yali.core.utils.datetimes import DateTimeConv
+from ..codecs import data_to_json_str
+from ..settings import LogLevelName, LogSettings
+from ..utils.datetimes import DateTimeConv
 
 _LOG_DATETIME_FORMAT = "%Y-%m-%d %H:%M:%S.%f"
 _LOG_RECORD_ATTRS = {

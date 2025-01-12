@@ -1,8 +1,7 @@
 import os
 
-from yali.core.utils.common import filename_by_sysinfo
-from yali.core.utils.osfiles import FilesConv
-
+from ..utils.common import filename_by_sysinfo
+from ..utils.osfiles import FilesConv
 from .filters import get_filter_class_for_level
 from .formatters import (
     AccessLogFormatter,

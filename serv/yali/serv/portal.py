@@ -5,7 +5,7 @@ from yali.core.metatypes import PoolExecutorInitFunc
 from .micro import YaliMicro
 
 
-class YaliWeb(YaliMicro):
+class YaliPortal(YaliMicro):
     def __init__(
         self,
         *,
