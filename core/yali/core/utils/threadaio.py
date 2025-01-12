@@ -6,14 +6,24 @@ import queue
 import threading
 import types
 import weakref
-from concurrent.futures import BrokenExecutor
+from concurrent.futures import BrokenExecutor, ThreadPoolExecutor
 from concurrent.futures import Executor as BaseExecutor
 from concurrent.futures import Future as BaseFuture
-from typing import Coroutine, MutableSet
+from functools import partial
+from typing import Any, Callable, Coroutine, MutableSet
 
-from .constants import YALI_NUM_THREAD_WORKERS
+from janus import AsyncQueue, SyncQueue
+from janus import Queue as _Queue
 
-_logger = logging.getLogger("yali.core.threadasync")
+from ..constants import YALI_BREAK_EVENT, YALI_NUM_THREAD_WORKERS
+from ..metatypes import DataType
+
+SyncQTask = Callable[[SyncQueue[DataType]], Any]
+AsyncQTask = Callable[[AsyncQueue[DataType]], Coroutine[Any, Any, Any]]
+SyncConsumer = Callable[[DataType], None]
+AsyncConsumer = Callable[[DataType], Coroutine[Any, Any, None]]
+
+_logger = logging.getLogger("yali.core.utils.threadaio")
 _threads_queues = weakref.WeakKeyDictionary()
 _shutdown = False
 
@@ -49,6 +59,15 @@ if hasattr(os, "register_at_fork"):
         after_in_child=_global_shutdown_lock._at_fork_reinit,
         after_in_parent=_global_shutdown_lock.release,
     )
+
+
+def _sync_handler(sync_q: SyncQueue[DataType], sync_q_task: SyncQTask):
+    logger = logging.getLogger(sync_q_task.__qualname__)
+
+    try:
+        return sync_q_task(sync_q)
+    except Exception as ex:
+        logger.error(ex, exc_info=True)
 
 
 class _WorkItem(object):
@@ -277,3 +296,78 @@ class ThreadPoolAsyncExecutor(BaseExecutor):
                 t.join()
 
     shutdown.__doc__ = BaseExecutor.shutdown.__doc__
+
+
+class MemPubSub:
+    def __init__(
+        self,
+        *,
+        max_queue_size: int = 1000,
+        sync_consumer: SyncConsumer | None = None,
+        async_consumer: AsyncConsumer | None = None,
+        sync_executor: ThreadPoolExecutor | None = None,
+    ):
+        queue_inst = _Queue(maxsize=max_queue_size)
+
+        self.__sync_q = queue_inst.sync_q
+        self.__async_q = queue_inst.async_q
+
+        self.__sync_consumer = sync_consumer
+        self.__async_consumer = async_consumer
+
+        self.__sync_executor = sync_executor
+
+    def publish(self, item: DataType):
+        self.__sync_q.put(item)
+
+    async def aio_publish(self, item: DataType):
+        await self.__async_q.put(item)
+
+    def consume(self):
+        if not self.__sync_consumer:
+            raise ValueError("Sync consumer is not set")
+
+        while True:
+            item = self.__sync_q.get()
+
+            if item is YALI_BREAK_EVENT:
+                break
+
+            try:
+                self.__sync_consumer(item)
+            except Exception as ex:
+                _logger.error("Unhandled error while consuming message", exc_info=ex)
+
+            self.__sync_q.task_done()
+
+    async def aio_consume(self):
+        if not self.__async_consumer:
+            raise ValueError("Async consumer is not set")
+
+        while True:
+            item = await self.__async_q.get()
+
+            if item is YALI_BREAK_EVENT:
+                break
+
+            try:
+                await self.__async_consumer(item)
+            except Exception as ex:
+                _logger.error("Unhandled error while consuming message", exc_info=ex)
+
+            await self.__async_q.task_done()
+
+    def run_task(self, sync_q_task: SyncQTask):
+        if not self.__sync_executor:
+            raise ValueError("Sync executor is not set")
+
+        aio_loop = asyncio.get_running_loop()
+        wrapped_fn = partial(_sync_handler, self.__sync_q, sync_q_task)
+
+        return aio_loop.run_in_executor(self.__sync_executor, wrapped_fn)
+
+    async def run_aio_task(self, async_q_task: AsyncQTask):
+        try:
+            return await async_q_task(self.__async_q)
+        except Exception as ex:
+            _logger.error(ex, exc_info=True)
