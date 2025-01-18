@@ -1,68 +1,49 @@
-import os
+import logging
+from http import HTTPStatus
 
-from ..utils.common import filename_by_sysinfo
-from ..utils.osfiles import FilesConv
-from .filters import get_filter_class_for_level
-from .formatters import (
-    AccessLogFormatter,
-    DefaultLogFormatter,
+from yali.core.logging.configs import (
+    ROTATING_FILE_HANDLER_CLS,
+    STREAM_LOG_HANDLER_CLS,
     effective_log_level,
-    log_settings,
+    get_logfile_path,
 )
-
-__STREAM_LOG_HANDLER_CLS = "logging.StreamHandler"
-__ROTATING_FILE_HANDLER_CLS = "logging.handlers.RotatingFileHandler"
+from yali.core.logging.filters import get_filter_class_for_level
+from yali.core.logging.formatters import DefaultLogFormatter, log_settings
 
 _log_level = effective_log_level()
 
 
-def _get_logfile_path(log_name: str):
-    logs_root = log_settings.logs_root_dir
-    log_filename = filename_by_sysinfo(basename=log_name, extension=".log")
+class AccessLogFormatter(DefaultLogFormatter):
+    def get_status_code(self, status_code: int) -> str:
+        try:
+            status_phrase = HTTPStatus(status_code).phrase
+        except ValueError:
+            status_phrase = ""
 
-    if FilesConv.is_dir_writable(dir_path=logs_root, check_creatable=True):
-        os.makedirs(logs_root, exist_ok=True)
-        logfile_path = os.path.join(logs_root, log_filename)
+        return f"{status_code} {status_phrase}"
 
-        return logfile_path
+    def extra_from_record(self, record: logging.LogRecord):
+        extra_dict = super().extra_from_record(record)
 
-    return os.path.join(os.getcwd(), log_filename)
+        (
+            client_addr,
+            method,
+            full_path,
+            http_version,
+            status_code,
+        ) = record.args
 
+        status_code = self.get_status_code(int(status_code))
+        request_line = f"{method} {full_path} HTTP/{http_version}"
+        extra_dict.update(
+            {
+                "client_addr": client_addr,
+                "request_line": request_line,
+                "status_code": status_code,
+            }
+        )
 
-def default_log_config(log_name: str):
-    log_filter_class = get_filter_class_for_level(_log_level)
-
-    log_config = {
-        "version": 1,
-        "disable_existing_loggers": True,
-        "filters": {"default": {"()": log_filter_class}},
-        "formatters": {"default": {"()": DefaultLogFormatter}},
-        "handlers": {
-            "console": {
-                "formatter": "default",
-                "filters": ["default"],
-                "class": __STREAM_LOG_HANDLER_CLS,
-                "level": _log_level,
-            },
-        },
-        "root": {"handlers": ["console"], "level": _log_level},
-    }
-
-    if log_settings.log_to_file:
-        log_config["handlers"]["default_file"] = {
-            "formatter": "default",
-            "filters": ["default"],
-            "class": __ROTATING_FILE_HANDLER_CLS,
-            "level": _log_level,
-            "filename": _get_logfile_path(log_name=log_name),
-            "encoding": "utf-8",
-            "maxBytes": log_settings.max_log_file_bytes,
-            "backupCount": log_settings.max_log_rotations,
-            "mode": "a",
-        }
-        log_config["root"]["handlers"].append("default_file")
-
-    return log_config
+        return extra_dict
 
 
 def uvicorn_log_config(log_name: str):
@@ -83,14 +64,14 @@ def uvicorn_log_config(log_name: str):
             "default_console": {
                 "formatter": "default",
                 "filters": ["default"],
-                "class": __STREAM_LOG_HANDLER_CLS,
+                "class": STREAM_LOG_HANDLER_CLS,
                 "stream": "ext://sys.stderr",
                 "level": _log_level,
             },
             "access_console": {
                 "formatter": "access",
                 "filters": ["default"],
-                "class": __STREAM_LOG_HANDLER_CLS,
+                "class": STREAM_LOG_HANDLER_CLS,
                 "stream": "ext://sys.stdout",
                 "level": _log_level,
             },
@@ -115,9 +96,9 @@ def uvicorn_log_config(log_name: str):
         log_config["handlers"]["default_file"] = {
             "formatter": "default",
             "filters": ["default"],
-            "class": __ROTATING_FILE_HANDLER_CLS,
+            "class": ROTATING_FILE_HANDLER_CLS,
             "level": _log_level,
-            "filename": _get_logfile_path(log_name=log_name),
+            "filename": get_logfile_path(log_name=log_name),
             "encoding": "utf-8",
             "maxBytes": log_settings.max_log_file_bytes,
             "backupCount": log_settings.max_log_rotations,
@@ -127,9 +108,9 @@ def uvicorn_log_config(log_name: str):
         log_config["handlers"]["access_file"] = {
             "formatter": "default",
             "filters": ["default"],
-            "class": __ROTATING_FILE_HANDLER_CLS,
+            "class": ROTATING_FILE_HANDLER_CLS,
             "level": _log_level,
-            "filename": _get_logfile_path(log_name=f"{log_name}-access"),
+            "filename": get_logfile_path(log_name=f"{log_name}-access"),
             "encoding": "utf-8",
             "maxBytes": log_settings.max_log_file_bytes,
             "backupCount": log_settings.max_log_rotations,

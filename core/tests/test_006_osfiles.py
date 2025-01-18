@@ -1,46 +1,46 @@
 from os import path as ospath
 from typing import List
 
-from core.yali.core.utils.osfiles import FilesConv
+from core.yali.core.utils.osfiles import FSNode
 
 base_dir = ospath.dirname(__file__)
 data_dir = ospath.join(base_dir, "samples", "data")
 
 
 def test_is_file_readable():
-    assert FilesConv.is_file_readable(f"{base_dir}/samples/testfile.txt") == True
-    assert FilesConv.is_file_readable(f"{base_dir}/samples/nofile.txt") == False
+    assert FSNode.is_file_readable(f"{base_dir}/samples/testfile.txt") == True
+    assert FSNode.is_file_readable(f"{base_dir}/samples/nofile.txt") == False
 
 
 def test_is_file_writable():
-    assert FilesConv.is_file_writable(f"{base_dir}/samples/testfile.txt") == True
+    assert FSNode.is_file_writable(f"{base_dir}/samples/testfile.txt") == True
     assert (
-        FilesConv.is_file_writable(f"{base_dir}/samples/testfile1.txt", check_creatable=True)
+        FSNode.is_file_writable(f"{base_dir}/samples/testfile1.txt", check_creatable=True)
         == True
     )
     assert (
-        FilesConv.is_file_writable(f"{base_dir}/samples/nodir/testfile.txt", check_creatable=True)
+        FSNode.is_file_writable(f"{base_dir}/samples/nodir/testfile.txt", check_creatable=True)
         == False
     )
 
 
 def test_is_dir_readable():
-    assert FilesConv.is_dir_readable(f"{base_dir}/samples") == True
-    assert FilesConv.is_dir_readable(f"{base_dir}/samples/nodir") == False
+    assert FSNode.is_dir_readable(f"{base_dir}/samples") == True
+    assert FSNode.is_dir_readable(f"{base_dir}/samples/nodir") == False
 
 
 def test_is_dir_writable():
-    assert FilesConv.is_dir_writable(f"{base_dir}/samples") == True
-    assert FilesConv.is_dir_writable(f"{base_dir}/samples/newdir", check_creatable=True) == True
+    assert FSNode.is_dir_writable(f"{base_dir}/samples") == True
+    assert FSNode.is_dir_writable(f"{base_dir}/samples/newdir", check_creatable=True) == True
     assert (
-        FilesConv.is_dir_writable(f"{base_dir}/samples/nodir/newdir", check_creatable=True) == False
+        FSNode.is_dir_writable(f"{base_dir}/samples/nodir/newdir", check_creatable=True) == False
     )
 
 
 def test_file_paths():
     fpaths: List[str] = []
 
-    for fpath in FilesConv.file_paths_from_dir(base_dir=data_dir, extensions=[".rc"]):
+    for fpath in FSNode.file_paths_from_dir(base_dir=data_dir, extensions=[".rc"]):
         fpaths.append(fpath)
 
     assert len(fpaths) == 1
@@ -48,7 +48,7 @@ def test_file_paths():
 
     fpaths.clear()
 
-    for fpath in FilesConv.file_paths_from_dir(base_dir=data_dir, extensions=[".in", ".txt"]):
+    for fpath in FSNode.file_paths_from_dir(base_dir=data_dir, extensions=[".in", ".txt"]):
         fpaths.append(fpath)
 
     assert len(fpaths) == 8
@@ -65,7 +65,7 @@ def test_file_paths():
 def test_file_paths_extn_case():
     fpaths: List[str] = []
 
-    for fpath in FilesConv.file_paths_from_dir(
+    for fpath in FSNode.file_paths_from_dir(
         base_dir=data_dir, extensions=[".OUT"], ignore_extn_case=False
     ):
         fpaths.append(fpath)
@@ -74,7 +74,7 @@ def test_file_paths_extn_case():
 
     fpaths.clear()
 
-    for fpath in FilesConv.file_paths_from_dir(
+    for fpath in FSNode.file_paths_from_dir(
         base_dir=data_dir, extensions=[".OUT"], ignore_extn_case=True
     ):
         fpaths.append(fpath)
@@ -86,7 +86,7 @@ def test_file_paths_extn_case():
 def test_dir_paths():
     dpaths: List[str] = []
 
-    for dpath in FilesConv.dir_paths_from_dir(base_dir=data_dir):
+    for dpath in FSNode.dir_paths_from_dir(base_dir=data_dir):
         dpaths.append(dpath)
 
     assert len(dpaths) == 5
@@ -100,7 +100,7 @@ def test_dir_paths():
 def test_dir_paths_with_pattern():
     dpaths: List[str] = []
 
-    for dpath in FilesConv.dir_paths_from_dir(base_dir=data_dir, dir_pattern=r"d1/sd*"):
+    for dpath in FSNode.dir_paths_from_dir(base_dir=data_dir, dir_pattern=r"d1/sd*"):
         dpaths.append(dpath)
 
     assert len(dpaths) == 2
@@ -109,7 +109,7 @@ def test_dir_paths_with_pattern():
 
     dpaths.clear()
 
-    for dpath in FilesConv.dir_paths_from_dir(base_dir=data_dir, dir_pattern=r"d1/*"):
+    for dpath in FSNode.dir_paths_from_dir(base_dir=data_dir, dir_pattern=r"d1/*"):
         dpaths.append(dpath)
 
     assert len(dpaths) == 3
@@ -121,44 +121,44 @@ def test_dir_paths_with_pattern():
 
 
 def test_total_files_in_dir():
-    count = FilesConv.total_files_in_dir(base_dir=data_dir, extensions=[".rc"])
+    count = FSNode.total_files_in_dir(base_dir=data_dir, extensions=[".rc"])
 
     assert count == 1
 
-    count = FilesConv.total_files_in_dir(base_dir=data_dir, extensions=[".in", ".txt"])
+    count = FSNode.total_files_in_dir(base_dir=data_dir, extensions=[".in", ".txt"])
 
     assert count == 8
 
-    count = FilesConv.total_files_in_dir(
+    count = FSNode.total_files_in_dir(
         base_dir=data_dir, extensions=[".IN", ".TXT"], ignore_extn_case=False
     )
 
     assert count == 0
 
-    count = FilesConv.total_files_in_dir(
+    count = FSNode.total_files_in_dir(
         base_dir=data_dir, extensions=[".IN", ".TXT"], ignore_extn_case=True
     )
 
     assert count == 8
 
-    count = FilesConv.total_files_in_dir(base_dir="nodir", extensions=[".rc"])
+    count = FSNode.total_files_in_dir(base_dir="nodir", extensions=[".rc"])
 
     assert count == -1
 
 
 def test_recursive_dir_content():
-    rdirs, rfiles = FilesConv.recursive_dir_content(base_dir=data_dir)
+    rdirs, rfiles = FSNode.recursive_dir_content(base_dir=data_dir)
 
     assert len(rdirs) == 5
     assert len(rfiles) == 12
 
-    rdirs, rfiles = FilesConv.recursive_dir_content(base_dir=data_dir, extensions=[".out"])
+    rdirs, rfiles = FSNode.recursive_dir_content(base_dir=data_dir, extensions=[".out"])
 
     assert len(rdirs) == 5
     assert len(rfiles) == 1
     assert rfiles[0] == ospath.join(data_dir, "d3/d3.out")
 
-    rdirs, rfiles = FilesConv.recursive_dir_content(
+    rdirs, rfiles = FSNode.recursive_dir_content(
         base_dir=data_dir, extensions=[".OUT"], ignore_extn_case=False
     )
 

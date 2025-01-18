@@ -1,3 +1,4 @@
+import os
 from logging import LogRecord, getLogger
 from logging.config import dictConfig as dict_logging_config
 from multiprocessing import Queue as LogQueue
@@ -5,16 +6,67 @@ from multiprocessing import current_process
 from multiprocessing import get_context as mproc_get_context
 from typing import Any, Callable, Dict
 
-from ..constants import YALI_BREAK_EVENT
-from ..metatypes import NonEmptyStr, SingletonMeta
+from ..common import filename_by_sysinfo
+from ..consts import ROTATING_FILE_HANDLER_CLS, STREAM_LOG_HANDLER_CLS, YALI_BREAK_EVENT
 from ..models import BaseModel
+from ..osfiles import FSNode
 from ..settings import log_settings
-from ..utils.strings import lower_with_hyphens
-from .configs import default_log_config
-from .formatters import effective_log_level
+from ..strings import lower_with_hyphens
+from ..typebase import NonEmptyStr, SingletonMeta
+from .filters import get_filter_class_for_level
+from .formatters import DefaultLogFormatter, effective_log_level
 
-_log_level = effective_log_level()
 _log_settings = log_settings()
+_log_level = effective_log_level()
+
+
+def get_logfile_path(log_name: str):
+    logs_root = _log_settings.logs_root_dir
+    log_filename = filename_by_sysinfo(basename=log_name, extension=".log")
+
+    if FSNode.is_dir_writable(dir_path=logs_root, check_creatable=True):
+        os.makedirs(logs_root, exist_ok=True)
+        logfile_path = os.path.join(logs_root, log_filename)
+
+        return logfile_path
+
+    return os.path.join(os.getcwd(), log_filename)
+
+
+def default_log_config(log_name: str):
+    log_filter_class = get_filter_class_for_level(_log_level)
+
+    log_config = {
+        "version": 1,
+        "disable_existing_loggers": True,
+        "filters": {"default": {"()": log_filter_class}},
+        "formatters": {"default": {"()": DefaultLogFormatter}},
+        "handlers": {
+            "console": {
+                "formatter": "default",
+                "filters": ["default"],
+                "class": STREAM_LOG_HANDLER_CLS,
+                "level": _log_level,
+            },
+        },
+        "root": {"handlers": ["console"], "level": _log_level},
+    }
+
+    if _log_settings.log_to_file:
+        log_config["handlers"]["default_file"] = {
+            "formatter": "default",
+            "filters": ["default"],
+            "class": ROTATING_FILE_HANDLER_CLS,
+            "level": _log_level,
+            "filename": get_logfile_path(log_name=log_name),
+            "encoding": "utf-8",
+            "maxBytes": _log_settings.max_log_file_bytes,
+            "backupCount": _log_settings.max_log_rotations,
+            "mode": "a",
+        }
+        log_config["root"]["handlers"].append("default_file")
+
+    return log_config
 
 
 def init_mproc_logging(queue: LogQueue, is_main: bool = True):

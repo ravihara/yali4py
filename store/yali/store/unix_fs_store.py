@@ -3,7 +3,7 @@ from io import BytesIO
 from typing import Any, AsyncGenerator, List
 
 from yali.core.errors import ErrorOrBytesIO, ErrorOrStr, YaliError
-from yali.core.utils.osfiles import FilesConv
+from yali.core.osfiles import FSNode
 
 from .abc_store import AbstractStore, BulkPutEntry, UnixFsStoreConfig
 
@@ -15,11 +15,11 @@ class UnixFsStore(AbstractStore):
         self._config = config
 
         if self._config.is_readonly:
-            if not FilesConv.is_dir_readable(self._config.sroot):
+            if not FSNode.is_dir_readable(self._config.sroot):
                 raise YaliError(
                     f"Store's root folder is not readable: {self._config.sroot}"
                 )
-        elif not FilesConv.is_dir_writable(self._config.sroot, check_creatable=True):
+        elif not FSNode.is_dir_writable(self._config.sroot, check_creatable=True):
             raise YaliError(
                 f"Store's root folder is not writable: {self._config.sroot}"
             )
@@ -42,7 +42,7 @@ class UnixFsStore(AbstractStore):
     async def get_object(self, key: str) -> ErrorOrBytesIO:
         try:
             opath = self.object_store_path(key=key)
-            odata = await self.add_thread_pool_task(FilesConv.read_bytes, opath)
+            odata = await self.add_thread_pool_task(FSNode.read_bytes, opath)
 
             assert isinstance(odata, bytes)
             return BytesIO(odata)
@@ -63,7 +63,7 @@ class UnixFsStore(AbstractStore):
         try:
             opath = self.object_store_path(key=key)
             result = await self.add_thread_pool_task(
-                FilesConv.write_bytes, opath, data.getvalue(), overwrite=overwrite
+                FSNode.write_bytes, opath, data.getvalue(), overwrite=overwrite
             )
             assert isinstance(result, int)
 
@@ -87,7 +87,7 @@ class UnixFsStore(AbstractStore):
 
         try:
             opath = self.object_store_path(key=key)
-            await self.add_thread_pool_task(FilesConv.delete_file, opath)
+            await self.add_thread_pool_task(FSNode.delete_file, opath)
 
             return f"Deleted object: {key}"
         except Exception as ex:
@@ -134,8 +134,8 @@ class UnixFsStore(AbstractStore):
 
     async def object_exists(self, key: str) -> bool:
         await asyncio.sleep(0)
-        return FilesConv.file_exists(f"{self._config.sroot}/{key}")
+        return FSNode.file_exists(f"{self._config.sroot}/{key}")
 
     async def total_objects(self) -> int:
         await asyncio.sleep(0)
-        return FilesConv.total_files_in_dir(base_dir=self._config.sroot)
+        return FSNode.total_files_in_dir(base_dir=self._config.sroot)

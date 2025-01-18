@@ -8,11 +8,11 @@ from core.yali.core.utils.archives import (
     Lz4Compression,
     ZstdCompression,
 )
-from core.yali.core.utils.osfiles import FilesConv
+from core.yali.core.utils.osfiles import FSNode
 
 test_root = os.path.dirname(os.path.abspath(__file__))
 
-if not FilesConv.is_dir_readable(dir_path=test_root):
+if not FSNode.is_dir_readable(dir_path=test_root):
     test_root = "/yali-core/tests"
 
 gzip_conf = GzipCompression()

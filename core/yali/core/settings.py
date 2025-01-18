@@ -6,24 +6,22 @@ from typing import Annotated, ClassVar, List, Literal
 from decouple import Config as EnvConfig
 from decouple import RepositoryEnv, RepositoryIni
 
-from .hooks import constr_num_hook, constr_str_hook
-from .metatypes import SecretStr
+from .common import id_by_sysinfo
+from .consts import SERVICE_INST_ID_KEY
 from .models import BaseModel
-from .utils.common import id_by_sysinfo
-from .utils.osfiles import FilesConv
-
-_SERVICE_INST_ID_KEY = "service.instance.id"
+from .osfiles import FSNode
+from .typebase import ConstrNode, SecretStr
 
 OTelResourceAttrsStr = Annotated[
     str,
-    constr_str_hook(
+    ConstrNode.constr_str(
         pattern=r"^service.name=[a-zA-Z0-9_.-]+,service.version=[a-zA-Z0-9_.-]+,deployment.environment=[a-zA-Z0-9_.-]+(,[a-zA-Z0-9_.]+=[a-zA-Z0-9_.,%&@\'\"\[\]-]+)*$"
     ),
 ]
-IntervalMillisFloat = Annotated[float, constr_num_hook(ge=1000)]
-QueueSizeInt = Annotated[int, constr_num_hook(ge=1000)]
-LogFileBytesInt = Annotated[int, constr_num_hook(ge=1048576)]
-LogRotationsInt = Annotated[int, constr_num_hook(gt=1, le=100)]
+IntervalMillisFloat = Annotated[float, ConstrNode.constr_num(ge=1000)]
+QueueSizeInt = Annotated[int, ConstrNode.constr_num(ge=1000)]
+LogFileBytesInt = Annotated[int, ConstrNode.constr_num(ge=1048576)]
+LogRotationsInt = Annotated[int, ConstrNode.constr_num(gt=1, le=100)]
 
 
 class LogLevelName(StrEnum):
@@ -88,19 +86,19 @@ class ServerSSLSettings(BaseModel):
 
     def __post_init__(self):
         if self.is_enabled:
-            if not self.cert_file or not FilesConv.is_file_readable(self.cert_file):
+            if not self.cert_file or not FSNode.is_file_readable(self.cert_file):
                 raise ValueError(
                     "SERVER_SSL_CERT_FILE environment variable is not set or, the file is not readable"
                 )
 
-            if not self.key_file or not FilesConv.is_file_readable(self.key_file):
+            if not self.key_file or not FSNode.is_file_readable(self.key_file):
                 raise ValueError(
                     "SERVER_SSL_KEY_FILE environment variable is not set or, the file is not readable"
                 )
 
             if not self.ca_file:
                 self.is_self_signed = True
-            elif not FilesConv.is_file_readable(self.ca_file):
+            elif not FSNode.is_file_readable(self.ca_file):
                 raise ValueError(
                     "SERVER_SSL_CA_FILE environment variable is not set or, the file is not readable"
                 )
@@ -120,19 +118,19 @@ class ClientSSLSettings(BaseModel):
 
     def __post_init__(self):
         if self.is_enabled:
-            if not self.cert_file or not FilesConv.is_file_readable(self.cert_file):
+            if not self.cert_file or not FSNode.is_file_readable(self.cert_file):
                 raise ValueError(
                     "CLIENT_SSL_CERT_FILE environment variable is not set or, the file is not readable"
                 )
 
-            if not self.key_file or not FilesConv.is_file_readable(self.key_file):
+            if not self.key_file or not FSNode.is_file_readable(self.key_file):
                 raise ValueError(
                     "CLIENT_SSL_KEY_FILE environment variable is not set or, the file is not readable"
                 )
 
             if not self.ca_file:
                 self.is_self_signed = True
-            elif not FilesConv.is_file_readable(self.ca_file):
+            elif not FSNode.is_file_readable(self.ca_file):
                 raise ValueError(
                     "CLIENT_SSL_CA_FILE environment variable is not set or, the file is not readable"
                 )
@@ -213,8 +211,8 @@ class TelemetrySettings(BaseModel):
             key, value = resource_pair.split("=")
             self.resource_attributes[key] = value
 
-        if _SERVICE_INST_ID_KEY not in self.resource_attributes:
-            self.resource_attributes[_SERVICE_INST_ID_KEY] = id_by_sysinfo()
+        if SERVICE_INST_ID_KEY not in self.resource_attributes:
+            self.resource_attributes[SERVICE_INST_ID_KEY] = id_by_sysinfo()
 
 
 __log_settings: LogSettings | None = None

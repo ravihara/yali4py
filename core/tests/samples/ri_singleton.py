@@ -1,4 +1,4 @@
-from yali.core.metatypes import RiSingletonMeta
+from yali.core.typebase import RiSingletonMeta
 
 
 class ParentClass(metaclass=RiSingletonMeta):

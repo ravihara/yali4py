@@ -1,4 +1,4 @@
-from yali.core.metatypes import SingletonMeta
+from yali.core.typebase import SingletonMeta
 
 
 class ParentClass(metaclass=SingletonMeta):

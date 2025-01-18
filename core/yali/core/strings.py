@@ -4,11 +4,9 @@ from abc import ABC, abstractmethod
 from io import StringIO
 from typing import List
 
-from ..errors import YaliError
-from ..models import BaseModel
-
-DEFAULT_DELIMITERS = " -_"
-ALLCHARS_REGEX = r"[{}]+"
+from .consts import ALLCHARS_REGEX, DEFAULT_DELIMITERS
+from .errors import YaliError
+from .models import BaseModel
 
 
 def lower_with_underscores(in_str: str):

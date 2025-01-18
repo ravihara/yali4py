@@ -1,17 +1,19 @@
 import datetime as dt
-from typing import Any, Callable, Iterable, List, Tuple, Type
+from typing import Any, Callable, Dict, Iterable, List, Tuple, Type
 
 import msgspec
 
-from .hooks import model_tag_hook
-from .metatypes import NonEmptyStr, UnsignedInt
-
-_YALI_TAG_FIELD = "_yali_mdl_tag"
+from .consts import YALI_TAG_FIELD
+from .typebase import NonEmptyStr, UnsignedInt
 
 ModelType = Type[msgspec.Struct]
 ModelField = str | Tuple[str, type] | Tuple[str, type, Any]
 
 field_specs = msgspec.field
+
+
+def model_tag_hook(name: str):
+    return f"YaliMdl.{name}"
 
 
 class DataModelOptions(msgspec.Struct):
@@ -29,9 +31,9 @@ class BaseModel(
     eq=True,
     kw_only=True,
     omit_defaults=False,
-    forbid_unknown_fields=True,
+    forbid_unknown_fields=False,
     tag=model_tag_hook,
-    tag_field=_YALI_TAG_FIELD,
+    tag_field=YALI_TAG_FIELD,
     array_like=False,
 ):
     pass
@@ -56,7 +58,8 @@ class DateTimeRange(BaseModel):
 
 class Failure(BaseModel):
     error: NonEmptyStr
-    extra: dict = field_specs(default={})
+    cause: BaseException | None = None
+    extrac: Dict[str, Any] | None = None
 
 
 class Success(BaseModel):
@@ -80,7 +83,7 @@ def data_model(
     options: DataModelOptions = DataModelOptions(),
 ):
     model_ns = None
-    tag_field = _YALI_TAG_FIELD if options.is_tagged else None
+    tag_field = YALI_TAG_FIELD if options.is_tagged else None
     tag_value = model_tag_hook if options.is_tagged else None
 
     if options.post_init_hook:
@@ -96,7 +99,7 @@ def data_model(
         eq=True,
         kw_only=True,
         omit_defaults=False,
-        forbid_unknown_fields=True,
+        forbid_unknown_fields=False,
         tag=tag_value,
         tag_field=tag_field,
         array_like=False,

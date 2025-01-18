@@ -9,12 +9,12 @@ from websockets.asyncio.client import ClientConnection as AioWsClientConnection
 from websockets.asyncio.client import connect as aio_ws_connect
 from websockets.frames import CloseCode
 
-from yali.core.codecs import data_to_json_str, safe_load_json
-from yali.core.hooks import constr_num_hook
-from yali.core.metatypes import WebsocketUrl
+from yali.core.codecs import JSONNode
+from yali.core.common import dict_to_result
 from yali.core.models import BaseModel, Failure, Result, Success, field_specs
-from yali.core.utils.common import dict_to_result
-from yali.core.utils.sectoken import JWTPayload, client_ssl_context, generate_jwt
+from yali.core.secjwt import JWTNode, JWTPayload
+from yali.core.secssl import SSLNode
+from yali.core.typebase import ConstrNode, WebsocketUrl
 
 WsClientExcludeArgs = [
     "ws_url",
@@ -38,7 +38,7 @@ def _update_headers(
         kwargs["additional_headers"] = [("X-Client-Id", client_id)]
 
     if jwt_payload:
-        jwt = generate_jwt(jwt_payload)
+        jwt = JWTNode.generate_token(jwt_payload)
 
         if isinstance(kwargs["additional_headers"], list):
             kwargs["additional_headers"].append(("Authorization", f"Bearer {jwt}"))
@@ -50,7 +50,7 @@ class LoopedWsClientConfig(BaseModel):
     ws_url: WebsocketUrl
     on_message: Callable[[AioWsClientConnection], Coroutine[Any, Any, None]]
     jwt_payload: JWTPayload | None = None
-    retry_timeout_sec: Annotated[float, constr_num_hook(ge=10.0)] = field_specs(
+    retry_timeout_sec: Annotated[float, ConstrNode.constr_num(ge=10.0)] = field_specs(
         default=10.0
     )
 
@@ -77,7 +77,7 @@ class UniTxnWsClient:
         _update_headers(self._kwargs, self._cid, self._jwt_payload)
 
         if ws_url.startswith("wss://"):
-            self._ssl_context = client_ssl_context()
+            self._ssl_context = SSLNode.client_context()
         else:
             self._ssl_context = None
             self._logger.warning(
@@ -88,10 +88,10 @@ class UniTxnWsClient:
         self, connection: AioWsClientConnection, data: Dict[str, Any]
     ):
         try:
-            await connection.send(data_to_json_str(data))
+            await connection.send(JSONNode.dump_str(data))
 
             response = await connection.recv()
-            response = safe_load_json(data=response)
+            response = JSONNode.safe_load_data(data=response)
 
             if not isinstance(response, dict):
                 return Success(data={"result": response})
@@ -167,7 +167,7 @@ class LoopedWsClient:
         _update_headers(self._kwargs, self._cid, self._config.jwt_payload)
 
         if config.ws_url.startswith("wss://"):
-            self._ssl_context = client_ssl_context()
+            self._ssl_context = SSLNode.client_context()
         else:
             self._ssl_context = None
             self._logger.warning(

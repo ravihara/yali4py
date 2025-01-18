@@ -76,6 +76,80 @@ WebsocketUrl = Annotated[
 ]
 
 
+class ConstrNode:
+    @staticmethod
+    def constr_num(
+        *,
+        title: str | None = None,
+        description: str | None = None,
+        ge: int | float | None = None,
+        le: int | float | None = None,
+        gt: int | float | None = None,
+        lt: int | float | None = None,
+        multiple_of: int | float | None = None,
+    ):
+        if (
+            ge is None
+            and gt is None
+            and le is None
+            and lt is None
+            and multiple_of is None
+        ):
+            raise ValueError(
+                "At least one of ge, gt, le, lt, or multiple_of must be set"
+            )
+
+        return msgspec.Meta(
+            title=title,
+            description=description,
+            ge=ge,
+            gt=gt,
+            le=le,
+            lt=lt,
+            multiple_of=multiple_of,
+        )
+
+    @staticmethod
+    def constr_str(
+        *,
+        title: str | None = None,
+        description: str | None = None,
+        min_length: int | None = None,
+        max_length: int | None = None,
+        pattern: str | None = None,
+    ):
+        if min_length is None and max_length is None and pattern is None:
+            raise ValueError(
+                "At least one of min_length, max_length, or pattern must be set"
+            )
+
+        return msgspec.Meta(
+            title=title,
+            description=description,
+            min_length=min_length,
+            max_length=max_length,
+            pattern=pattern,
+        )
+
+    @staticmethod
+    def constr_seq(
+        *,
+        title: str | None = None,
+        description: str | None = None,
+        min_length: int | None = None,
+        max_length: int | None = None,
+    ):
+        if min_length is None and max_length is None:
+            raise ValueError("At least one of min_length or max_length must be set")
+
+        return msgspec.Meta(
+            title=title,
+            description=description,
+            min_length=min_length,
+            max_length=max_length,
+        )
+
+
 class AwaitCondition(StrEnum):
     ALL_DONE = asyncio.ALL_COMPLETED
     ANY_DONE = asyncio.FIRST_COMPLETED

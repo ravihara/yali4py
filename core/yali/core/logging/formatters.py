@@ -1,14 +1,13 @@
 import logging
 from decimal import Decimal
-from http import HTTPStatus
 from typing import Dict
 
 from opentelemetry import trace
 from opentelemetry.trace.span import INVALID_SPAN
 
-from ..codecs import data_to_json_str
+from ..codecs import JSONNode
+from ..datetimes import Chrono
 from ..settings import LogLevelName, LogSettings
-from ..utils.datetimes import DateTimeConv
 
 _LOG_DATETIME_FORMAT = "%Y-%m-%d %H:%M:%S.%f"
 _LOG_RECORD_ATTRS = {
@@ -60,7 +59,7 @@ class DefaultLogFormatter(logging.Formatter):
         Decimal,
         complex,
         str,
-        DateTimeConv.mod.datetime,
+        Chrono.mod.datetime,
     )
 
     def format(self, record):
@@ -89,7 +88,7 @@ class DefaultLogFormatter(logging.Formatter):
         Override this method to change the way dict is converted to JSON.
         """
         try:
-            return data_to_json_str(data=record)
+            return JSONNode.dump_str(data=record)
         except (TypeError, ValueError, OverflowError):
             return "{}"
 
@@ -151,7 +150,7 @@ class DefaultLogFormatter(logging.Formatter):
             extra["asctime"] = record.asctime
 
         if "utctime" not in extra:
-            extra["utctime"] = DateTimeConv.get_current_utc_time()
+            extra["utctime"] = Chrono.get_current_utc_time()
 
         if record.exc_info:
             extra["exc_info"] = self.formatException(record.exc_info)
@@ -177,41 +176,8 @@ class DefaultLogFormatter(logging.Formatter):
         for attr_name in json_record:
             attr = json_record[attr_name]
 
-            if isinstance(attr, DateTimeConv.mod.datetime):
+            if isinstance(attr, Chrono.mod.datetime):
                 attr_str = attr.strftime(_LOG_DATETIME_FORMAT)[:-3]
                 json_record[attr_name] = attr_str + attr.strftime("%z")
 
         return json_record
-
-
-class AccessLogFormatter(DefaultLogFormatter):
-    def get_status_code(self, status_code: int) -> str:
-        try:
-            status_phrase = HTTPStatus(status_code).phrase
-        except ValueError:
-            status_phrase = ""
-
-        return f"{status_code} {status_phrase}"
-
-    def extra_from_record(self, record: logging.LogRecord):
-        extra_dict = super().extra_from_record(record)
-
-        (
-            client_addr,
-            method,
-            full_path,
-            http_version,
-            status_code,
-        ) = record.args
-
-        status_code = self.get_status_code(int(status_code))
-        request_line = f"{method} {full_path} HTTP/{http_version}"
-        extra_dict.update(
-            {
-                "client_addr": client_addr,
-                "request_line": request_line,
-                "status_code": status_code,
-            }
-        )
-
-        return extra_dict

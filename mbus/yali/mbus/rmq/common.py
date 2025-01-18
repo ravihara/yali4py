@@ -5,10 +5,15 @@ from typing import Annotated, Any, Callable, Coroutine, Dict, List, Tuple
 from aio_pika import ExchangeType
 from aio_pika.abc import AbstractIncomingMessage
 
-from yali.core.hooks import constr_num_hook
-from yali.core.metatypes import AmqpUrl, NonEmptyStr, PositiveInt, SnakeCaseStr
+from yali.core.common import sizeof_object
 from yali.core.models import BaseModel, field_specs
-from yali.core.utils.common import sizeof_object
+from yali.core.typebase import (
+    AmqpUrl,
+    ConstrNode,
+    NonEmptyStr,
+    PositiveInt,
+    SnakeCaseStr,
+)
 
 _binding_key_regex = re.compile(r"^(?:\w+|\*)(?:\.(?:\w+|\*))*(?:\.\#)?$")
 
@@ -25,7 +30,7 @@ class PublisherConfig(BaseModel):
     amqp_url: AmqpUrl
     exchange_name: SnakeCaseStr
     exchange_type: ExchangeType = ExchangeType.TOPIC
-    max_message_size: Annotated[int, constr_num_hook(ge=5120)] = field_specs(
+    max_message_size: Annotated[int, ConstrNode.constr_num(ge=5120)] = field_specs(
         default=5242880
     )
 
@@ -37,11 +42,11 @@ class PubSubConfig(PublisherConfig):
     data_preprocessor: RMQDataPreprocessor | None = None
 
     ## Only used for batch based pubsub
-    batch_interval: Annotated[float, constr_num_hook(ge=1.0)] = field_specs(
+    batch_interval: Annotated[float, ConstrNode.constr_num(ge=1.0)] = field_specs(
         default=10.0
     )
     max_batch_entries: PositiveInt = field_specs(default=10)
-    max_batch_size: Annotated[int, constr_num_hook(ge=10240)] = field_specs(
+    max_batch_size: Annotated[int, ConstrNode.constr_num(ge=10240)] = field_specs(
         default=52428800
     )
 

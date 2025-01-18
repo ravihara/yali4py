@@ -1,15 +1,7 @@
 import datetime as dt
-from typing import List
 
-from ..models import BaseModel
-
-ALLOWED_DATETIME_FORMATS: List[str] = [
-    "%Y-%m-%dT%H:%M:%S.%f%z",
-    "%Y-%m-%dT%H:%M:%S.%f%Z",
-    "%Y-%m-%dT%H:%M:%S.%f",
-    "%Y-%m-%d %H:%M:%S.%f",
-    "%Y-%m-%d %H:%M:%S",
-]
+from .consts import ALLOWED_DATETIME_FORMATS
+from .models import BaseModel
 
 
 class TimeParts(BaseModel):
@@ -19,7 +11,7 @@ class TimeParts(BaseModel):
     secs: int = 0
 
 
-class DateTimeConv:
+class Chrono:
     mod = dt
 
     @staticmethod

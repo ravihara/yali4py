@@ -9,16 +9,14 @@ import lz4.frame as lz4f
 import zstandard as zstd
 from msgspec import DecodeError, ValidationError
 
-from ..codecs import data_from_json, data_to_json_bytes
-from ..hooks import constr_num_hook
-from ..metatypes import JSONValue
-from ..models import BaseModel
+from .codecs import JSONNode
+from .consts import DEFAULT_COMPRESS_LEVEL
+from .models import BaseModel
+from .typebase import ConstrNode, JSONValue
 
-DEFAULT_COMPRESS_LEVEL = 6
-
-GzipLevel = Annotated[int, constr_num_hook(ge=0, le=9)]
-ZstdLevel = Annotated[int, constr_num_hook(ge=0, le=22)]
-Lz4Level = Annotated[int, constr_num_hook(ge=0, le=16)]
+GzipLevel = Annotated[int, ConstrNode.constr_num(ge=0, le=9)]
+ZstdLevel = Annotated[int, ConstrNode.constr_num(ge=0, le=22)]
+Lz4Level = Annotated[int, ConstrNode.constr_num(ge=0, le=16)]
 
 
 class GzipCompression(BaseModel):
@@ -53,7 +51,7 @@ class DecompressionConfig(BaseModel):
 
 class Archiver:
     @staticmethod
-    def lz4b_decompress(data: bytes):
+    def _lz4b_decompress(data: bytes):
         """
         Decompress data using lz4b
 
@@ -160,7 +158,7 @@ class Archiver:
                 try:
                     res_data = lz4b.decompress(data, return_bytearray=False)
                 except Exception:
-                    res_data = Archiver.lz4b_decompress(data=data)
+                    res_data = Archiver._lz4b_decompress(data=data)
         else:
             zstd_decompressor = zstd.ZstdDecompressor()
 
@@ -173,7 +171,7 @@ class Archiver:
             res_data = bytes.decode(res_data, encoding=config.encoding)
         elif config.output == "json":
             try:
-                res_data = data_from_json(data=res_data)
+                res_data = JSONNode.load_data(data=res_data)
             except (ValidationError, DecodeError):
                 pass
 
@@ -240,5 +238,5 @@ class Archiver:
         bytes or base64 encoded string
             Compressed data
         """
-        in_data = data_to_json_bytes(data=data)
+        in_data = JSONNode.dump_bytes(data=data)
         return Archiver.compress_bytes(data=in_data, config=config)

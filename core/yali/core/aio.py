@@ -15,8 +15,8 @@ from typing import Any, Callable, Coroutine, MutableSet
 from janus import AsyncQueue, SyncQueue
 from janus import Queue as _Queue
 
-from ..constants import YALI_BREAK_EVENT, YALI_NUM_THREAD_WORKERS
-from ..metatypes import DataType
+from .consts import YALI_BREAK_EVENT, YALI_NUM_THREAD_WORKERS
+from .typebase import DataType
 
 SyncQTask = Callable[[SyncQueue[DataType]], Any]
 AsyncQTask = Callable[[AsyncQueue[DataType]], Coroutine[Any, Any, Any]]
@@ -298,7 +298,7 @@ class ThreadPoolAsyncExecutor(BaseExecutor):
     shutdown.__doc__ = BaseExecutor.shutdown.__doc__
 
 
-class MemPubSub:
+class ThreadAio:
     def __init__(
         self,
         *,
@@ -359,7 +359,9 @@ class MemPubSub:
 
     def run_task(self, sync_q_task: SyncQTask):
         if not self.__sync_executor:
-            raise ValueError("Sync executor is not set")
+            _logger.warning(
+                "Sync executor is not set explicitly. Using the default thread-pool-executor"
+            )
 
         aio_loop = asyncio.get_running_loop()
         wrapped_fn = partial(_sync_handler, self.__sync_q, sync_q_task)

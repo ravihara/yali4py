@@ -6,10 +6,10 @@ from redis.backoff import ExponentialBackoff
 from redis.exceptions import BusyLoadingError, ConnectionError, TimeoutError
 from redis.retry import Retry
 
-from yali.core.codecs import data_from_json, data_to_json_str
-from yali.core.metatypes import DataType, NonEmptyStr, PositiveInt, SecretStr
+from yali.core.codecs import JSONNode
 from yali.core.models import BaseModel, field_specs
 from yali.core.settings import env_config
+from yali.core.typebase import DataType, NonEmptyStr, PositiveInt, SecretStr
 
 _env_config = env_config()
 
@@ -79,9 +79,9 @@ class KeydbStore:
 
     def _decoded_value(self, val: Any, val_type: DataType | None = None):
         if not val_type:
-            return data_from_json(data=val)
+            return JSONNode.load_data(data=val)
 
-        return data_from_json(data=val, dec_type=val_type)
+        return JSONNode.load_data(data=val, dec_type=val_type)
 
     async def close(self):
         await self.__client.aclose()
@@ -92,7 +92,7 @@ class KeydbStore:
 
         key = self._pfx_key(key=entry.key)
         val = (
-            data_to_json_str(data=entry.value)
+            JSONNode.dump_str(data=entry.value)
             if not isinstance(entry.value, str)
             else entry.value
         )
@@ -112,7 +112,7 @@ class KeydbStore:
             try:
                 key = self._pfx_key(key=entry.key)
                 val = (
-                    data_to_json_str(data=entry.value)
+                    JSONNode.dump_str(data=entry.value)
                     if not isinstance(entry.value, str)
                     else entry.value
                 )
@@ -213,7 +213,7 @@ class KeydbStore:
             for entry in entries:
                 key = self._pfx_key(key=entry.key)
                 val = (
-                    data_to_json_str(data=entry.value)
+                    JSONNode.dump_str(data=entry.value)
                     if not isinstance(entry.value, str)
                     else entry.value
                 )

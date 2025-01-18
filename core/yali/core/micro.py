@@ -8,19 +8,18 @@ from typing import Any, Callable, Coroutine, Dict, List, Tuple
 
 import uvloop
 
-from yali.core.errors import YaliError
-from yali.core.logging import LogOptions, YaliLog, init_mproc_logging
-from yali.core.metatypes import (
+from .consts import YALI_NUM_PROCESS_WORKERS, YALI_NUM_THREAD_WORKERS
+from .errors import YaliError
+from .logging import LogOptions, YaliLog, init_mproc_logging
+from .models import AioExceptValue
+from .settings import env_config
+from .typebase import (
     Awaitable,
     AwaitableDoneHandler,
     AwaitCondition,
     PoolExecutorInitFunc,
+    PositiveInt,
 )
-from yali.core.models import AioExceptValue
-
-from .settings import micro_service_settings
-
-_mserv_settings = micro_service_settings()
 
 
 def subprocess_handler(log_queue: LogQueue, proc_func: Callable, *fnargs, **fnkwargs):
@@ -36,6 +35,7 @@ def subprocess_handler(log_queue: LogQueue, proc_func: Callable, *fnargs, **fnkw
 
 
 class YaliMicro(ABC):
+    _env_config = env_config()
     asyncio.set_event_loop_policy(uvloop.EventLoopPolicy())
 
     def __init__(
@@ -59,15 +59,22 @@ class YaliMicro(ABC):
         self.__app_log: YaliLog = YaliLog(options=log_options)
         self._logger = self.__app_log.get_logger(name=service_name)
 
+        num_thread_workers = self._env_config(
+            "MAX_THREAD_WORKERS", default=YALI_NUM_THREAD_WORKERS, cast=PositiveInt
+        )
+        num_process_workers = self._env_config(
+            "MAX_PROCESS_WORKERS", default=YALI_NUM_PROCESS_WORKERS, cast=PositiveInt
+        )
+
         self.__thread_pool_executor = ThreadPoolExecutor(
-            max_workers=_mserv_settings.max_thread_workers,
+            max_workers=num_thread_workers,
             thread_name_prefix=f"{self._service_name}_thrd:",
             initializer=thread_init_func,
             initargs=thread_init_args,
         )
 
         self.__process_pool_executor = ThreadPoolExecutor(
-            max_workers=_mserv_settings.max_process_workers,
+            max_workers=num_process_workers,
             thread_name_prefix=f"{self._service_name}_proc:",
             initializer=process_init_func,
             initargs=process_init_args,

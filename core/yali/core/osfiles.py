@@ -6,8 +6,8 @@ from typing import Dict, List
 
 import yaml
 
-from ..codecs import data_from_json_file, data_to_json_file
-from ..errors import YaliError
+from .codecs import JSONNode
+from .errors import YaliError
 
 
 def _select_matching_file(
@@ -140,7 +140,7 @@ def _recursive_dir_content(
     return res_dirs, res_files
 
 
-class FilesConv:
+class FSNode:
     @staticmethod
     def file_exists(file_path: str) -> bool:
         """Check if the given file path refers to an existing file"""
@@ -315,7 +315,7 @@ class FilesConv:
         int
             The number of files
         """
-        if not FilesConv.is_dir_readable(base_dir):
+        if not FSNode.is_dir_readable(base_dir):
             return -1
 
         if ignore_extn_case:
@@ -360,7 +360,7 @@ class FilesConv:
         Generator
             Generator function to yield file paths
         """
-        if not FilesConv.is_dir_readable(base_dir):
+        if not FSNode.is_dir_readable(base_dir):
             return ""
 
         if ignore_extn_case:
@@ -406,7 +406,7 @@ class FilesConv:
         Generator
             Generator function to yield directory paths
         """
-        if not FilesConv.is_dir_readable(base_dir):
+        if not FSNode.is_dir_readable(base_dir):
             return ""
 
         if dir_pattern:
@@ -434,7 +434,7 @@ class FilesConv:
         bytes
             The bytes read from the file
         """
-        if not FilesConv.is_file_readable(file_path):
+        if not FSNode.is_file_readable(file_path):
             raise YaliError(f"File '{file_path}' is not readable")
 
         with open(file_path, "rb") as f:
@@ -455,7 +455,7 @@ class FilesConv:
         str
             The text read from the file
         """
-        if not FilesConv.is_file_readable(file_path):
+        if not FSNode.is_file_readable(file_path):
             raise YaliError(f"Text file '{file_path}' is not readable")
 
         with open(file_path, "r") as f:
@@ -476,10 +476,10 @@ class FilesConv:
         Dict
             The json read from the file
         """
-        if not FilesConv.is_file_readable(file_path):
+        if not FSNode.is_file_readable(file_path):
             raise YaliError(f"Json file '{file_path}' is not readable")
 
-        return data_from_json_file(file_path)
+        return JSONNode.load_file(file_path)
 
     @staticmethod
     def read_yaml(file_path: str) -> Dict:
@@ -496,7 +496,7 @@ class FilesConv:
         Dict
             The yaml read from the file
         """
-        if not FilesConv.is_file_readable(file_path):
+        if not FSNode.is_file_readable(file_path):
             raise YaliError(f"Yaml file '{file_path}' is not readable")
 
         with open(file_path, "r") as f:
@@ -517,7 +517,7 @@ class FilesConv:
         Dict
             The toml read from the file
         """
-        if not FilesConv.is_file_readable(file_path):
+        if not FSNode.is_file_readable(file_path):
             raise YaliError(f"Toml file '{file_path}' is not readable")
 
         with open(file_path, "rb") as f:
@@ -542,10 +542,10 @@ class FilesConv:
         int
             The number of bytes written
         """
-        if not FilesConv.is_file_writable(file_path, check_creatable=True):
+        if not FSNode.is_file_writable(file_path, check_creatable=True):
             raise YaliError(f"File '{file_path}' is not writable")
 
-        if not overwrite and FilesConv.file_exists(file_path):
+        if not overwrite and FSNode.file_exists(file_path):
             return -1
 
         os.makedirs(os.path.dirname(file_path), exist_ok=True)
@@ -572,10 +572,10 @@ class FilesConv:
         int
             The number of bytes written
         """
-        if not FilesConv.is_file_writable(file_path, check_creatable=True):
+        if not FSNode.is_file_writable(file_path, check_creatable=True):
             raise YaliError(f"Text file '{file_path}' is not writable")
 
-        if not overwrite and FilesConv.file_exists(file_path):
+        if not overwrite and FSNode.file_exists(file_path):
             return -1
 
         os.makedirs(os.path.dirname(file_path), exist_ok=True)
@@ -601,14 +601,14 @@ class FilesConv:
         -------
         None
         """
-        if not FilesConv.is_file_writable(file_path, check_creatable=True):
+        if not FSNode.is_file_writable(file_path, check_creatable=True):
             raise YaliError(f"Json file '{file_path}' is not writable")
 
-        if not overwrite and FilesConv.file_exists(file_path):
+        if not overwrite and FSNode.file_exists(file_path):
             return -1
 
         os.makedirs(os.path.dirname(file_path), exist_ok=True)
-        return data_to_json_file(data=data, file_path=file_path)
+        return JSONNode.dump_file(data=data, file_path=file_path)
 
     @staticmethod
     def delete_file(file_path: str):
@@ -624,7 +624,7 @@ class FilesConv:
         -------
         None
         """
-        if not FilesConv.is_file_writable(file_path):
+        if not FSNode.is_file_writable(file_path):
             raise YaliError(f"File '{file_path}' is not writable")
 
         os.remove(file_path)
@@ -643,7 +643,7 @@ class FilesConv:
         -------
         None
         """
-        if not FilesConv.is_dir_writable(dir_path):
+        if not FSNode.is_dir_writable(dir_path):
             raise YaliError(f"Directory '{dir_path}' is not writable")
 
         os.rmdir(dir_path)

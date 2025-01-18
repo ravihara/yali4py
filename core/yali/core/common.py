@@ -9,7 +9,7 @@ import netifaces
 from cachetools.func import ttl_cache
 from msgspec import DecodeError, ValidationError
 
-from ..models import Failure, Result, Success
+from .models import Failure, Result, Success
 
 
 def os_uname_str():
@@ -21,7 +21,7 @@ def os_uname_str():
 def alphanum_sorted(data: Iterable):
     """Sort a list of strings in the way that humans expect."""
 
-    def convert(text):
+    def convert(text: str):
         return int(text) if text.isdigit() else text.lower()
 
     def alphanum_key(key):

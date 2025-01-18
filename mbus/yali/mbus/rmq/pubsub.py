@@ -9,9 +9,9 @@ from aio_pika.abc import (
 )
 from aio_pika.exceptions import ChannelClosed
 
-from yali.core.codecs import data_from_json
-from yali.core.utils.strings import StringConv
-from yali.core.utils.threadaio import ThreadPoolAsyncExecutor
+from yali.core.aio import ThreadPoolAsyncExecutor
+from yali.core.codecs import JSONNode
+from yali.core.strings import StringConv
 
 from .common import PubSubConfig
 from .publisher import RMQPublisher
@@ -111,7 +111,7 @@ class RMQPubSub(RMQPublisher):
 
     async def process_message(self, message: AbstractIncomingMessage):
         try:
-            mesg_json: Dict = data_from_json(data=message.body)
+            mesg_json: Dict = JSONNode.load_data(data=message.body)
 
             if self._config.data_preprocessor:
                 mesg_json = await self._q_executor.submit(

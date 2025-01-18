@@ -1,6 +1,6 @@
 from io import BytesIO
 
-from .metatypes import NonEmptyStr
+from .typebase import NonEmptyStr
 
 
 class YaliError(Exception):

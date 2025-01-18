@@ -40,6 +40,18 @@ db_config = SQLAlchemyAsyncConfig(
 db_plugin = SQLAlchemyPlugin(config=db_config)
 
 
+async def session_ctx():
+    return db_config.get_session()
+
+
+async def connection():
+    return db_config.get_engine().connect()
+
+
+async def transaction_ctx():
+    return db_config.get_engine().begin()
+
+
 def provide_limit_offset_pagination(
     current_page: int = Parameter(ge=1, query="currentPage", default=1, required=False),
     page_size: int = Parameter(query="pageSize", ge=1, default=10, required=False),
@@ -59,6 +71,7 @@ def provide_limit_offset_pagination(
 
 
 async def app_init_db(app: Litestar):
+    """App startup hook to initialize the database"""
     async with db_config.get_engine().begin() as conn:
         await conn.run_sync(DbModel.metadata.create_all())
 
@@ -69,6 +82,7 @@ async def app_init_db(app: Litestar):
 
 
 async def app_close_db(app: Litestar):
+    """App shutdown hook to close the database connection"""
     if getattr(app.state, "db_engine", None):
         await cast("AsyncEngine", app.state.db_engine).dispose()
         del app.state.db_engine

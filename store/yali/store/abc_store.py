@@ -10,12 +10,11 @@ from typing import Annotated, Any, AsyncGenerator, Callable, List, Literal, Tupl
 import urllib3
 from minio.credentials.providers import Provider as CredentialsProvider
 
-from yali.core.codecs import data_to_json_bytes
+from yali.core.codecs import JSONNode
 from yali.core.errors import ErrorOrBytesIO, ErrorOrStr
-from yali.core.hooks import constr_num_hook
-from yali.core.metatypes import NonEmptyStr, SecretStr
 from yali.core.models import BaseModel, field_specs
 from yali.core.settings import env_config
+from yali.core.typebase import ConstrNode, NonEmptyStr, SecretStr
 
 _env_config = env_config()
 
@@ -23,9 +22,9 @@ _env_config = env_config()
 # It is a tuple of (key, data, overwrite)
 BulkPutEntry = Tuple[str, BytesIO, bool]
 
-CacheSizeInt = Annotated[int, constr_num_hook(ge=1)]
-CacheTTLInt = Annotated[int, constr_num_hook(ge=10)]
-StorageConcurrancyInt = Annotated[int, constr_num_hook(ge=1)]
+CacheSizeInt = Annotated[int, ConstrNode.constr_num(ge=1)]
+CacheTTLInt = Annotated[int, ConstrNode.constr_num(ge=10)]
+StorageConcurrancyInt = Annotated[int, ConstrNode.constr_num(ge=1)]
 
 
 class StorageSettings(BaseModel):
@@ -105,7 +104,7 @@ class AbstractStore(ABC):
         return self._store_id
 
     def _gen_store_id(self, config: StoreConfig):
-        config_bytes = data_to_json_bytes(data=config)
+        config_bytes = JSONNode.dump_bytes(data=config)
         return hashlib.md5(config_bytes).hexdigest()
 
     def object_basename(self, key: str) -> str:

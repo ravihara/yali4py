@@ -11,8 +11,8 @@ from opentelemetry.sdk.resources import Resource
 from opentelemetry.sdk.trace import Tracer, TracerProvider
 from opentelemetry.sdk.trace.export import BatchSpanProcessor
 
-from .metatypes import SingletonMeta
 from .settings import telemetry_settings
+from .typebase import SingletonMeta
 
 
 class YaliTelemetry(metaclass=SingletonMeta):

@@ -11,14 +11,11 @@ from websockets.exceptions import ConnectionClosedError as WsConnectionClosedErr
 from websockets.exceptions import ConnectionClosedOK as WsConnectionClosedOK
 from websockets.frames import CloseCode
 
-from yali.core.codecs import data_from_json, data_to_json_str
-from yali.core.metatypes import NonEmptyStr, PositiveInt
+from yali.core.codecs import JSONNode
 from yali.core.models import BaseModel, Failure, Result
-from yali.core.utils.sectoken import (
-    JWTPayloadValidator,
-    JWTReference,
-    server_ssl_context,
-)
+from yali.core.secjwt import JWTPayloadValidator, JWTReference
+from yali.core.secssl import SSLNode
+from yali.core.typebase import NonEmptyStr, PositiveInt
 
 from .common import AioWsServerConnection, wrap_server_process_request
 
@@ -92,12 +89,12 @@ class WebSocketServer:
         try:
             async for message in connection:
                 try:
-                    mesg_json: Dict = data_from_json(data=message)
+                    mesg_json: Dict = JSONNode.load_data(data=message)
                     await self._config.on_message(client_id, request_path, mesg_json)
                 except (ValidationError, DecodeError) as ex:
                     self._logger.error(ex, exc_info=True)
                     error_res = Failure(error=str(ex))
-                    await connection.send(data_to_json_str(data=error_res))
+                    await connection.send(JSONNode.dump_str(data=error_res))
                 except WsConnectionClosed:
                     self._logger.warning(
                         f"Cannot use already closed {self._config.service} ws-server connection for client {client_id} at {request_path}"
@@ -148,7 +145,7 @@ class WebSocketServer:
 
         if self._config.with_ssl:
             try:
-                ssl_context = server_ssl_context()
+                ssl_context = SSLNode.server_context()
             except ValueError as ex:
                 self._logger.error(ex, exc_info=True)
                 return

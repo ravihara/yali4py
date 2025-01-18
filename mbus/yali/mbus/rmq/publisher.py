@@ -10,9 +10,9 @@ from aio_pika.abc import (
     HeadersType,
 )
 
-from yali.core.codecs import data_to_json_bytes
+from yali.core.codecs import JSONNode
+from yali.core.datetimes import Chrono
 from yali.core.errors import YaliError
-from yali.core.utils.datetimes import DateTimeConv
 
 from .common import PublisherConfig, _binding_key_regex
 
@@ -31,7 +31,7 @@ class RMQPublisher:
 
         if self._connection:
             if self._connection.reconnecting:
-                backoff = DateTimeConv.exponential_backoff(2, 5, 30)
+                backoff = Chrono.exponential_backoff(2, 5, 30)
 
                 while True:
                     try:
@@ -111,7 +111,7 @@ class RMQPublisher:
                     f"Exchange {self._config.exchange_name} not initialized yet"
                 )
 
-            mesg_body = data_to_json_bytes(data=json_data)
+            mesg_body = JSONNode.dump_bytes(data=json_data)
             message = Message(
                 body=mesg_body, content_type="application/json", headers=headers
             )

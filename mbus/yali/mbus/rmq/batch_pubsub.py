@@ -4,7 +4,7 @@ from typing import Dict
 
 from aio_pika.abc import AbstractIncomingMessage
 
-from yali.core.codecs import data_from_json
+from yali.core.codecs import JSONNode
 
 from .common import PubSubConfig, RMQBatchBuffer
 from .pubsub import RMQPubSub
@@ -83,7 +83,7 @@ class RMQBatchPubSub(RMQPubSub):
                     await self.__process_batch()
                     return
 
-                mesg_json: Dict = data_from_json(data=message.body)
+                mesg_json: Dict = JSONNode.load_data(data=message.body)
 
                 if self._config.data_preprocessor:
                     mesg_json = await self._q_executor.submit(
