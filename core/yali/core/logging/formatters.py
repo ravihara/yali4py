@@ -6,8 +6,8 @@ from opentelemetry import trace
 from opentelemetry.trace.span import INVALID_SPAN
 
 from ..codecs import JSONNode
-from ..datetimes import Chrono
 from ..settings import LogLevelName, LogSettings
+from ..timings import Chrono
 
 _LOG_DATETIME_FORMAT = "%Y-%m-%d %H:%M:%S.%f"
 _LOG_RECORD_ATTRS = {

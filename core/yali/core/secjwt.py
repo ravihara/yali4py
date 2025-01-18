@@ -6,9 +6,9 @@ import jwt
 from msgspec import DecodeError, ValidationError
 from msgspec.structs import asdict as json_dict
 
-from .datetimes import Chrono
 from .models import BaseModel
 from .osfiles import FSNode
+from .timings import Chrono
 
 _yali_jwt_signing_key: str | None = None
 

@@ -1,7 +1,7 @@
 from yali.core.models import BaseModel
+from yali.core.osfiles import FSNode
 from yali.core.settings import env_config
 from yali.core.typebase import NonEmptyStr, SecretStr
-from yali.core.utils.osfiles import FSNode
 
 _env_config = env_config()
 

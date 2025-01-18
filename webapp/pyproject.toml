@@ -3,9 +3,9 @@ requires = ["poetry-core>=1.0.0"]
 build-backend = "poetry.core.masonry.api"
 
 [tool.poetry]
-name = "yali-appserv"
+name = "yali-webapp"
 version = "0.1.0"
-description = "Micro application-service modules for Yali toolkit"
+description = "Web application modules for Yali toolkit"
 license = "Apache-2.0"
 authors = ["Ravishankar Haranath <ravikh@gmail.com>"]
 readme = "README.md"

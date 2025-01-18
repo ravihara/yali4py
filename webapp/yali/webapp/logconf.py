@@ -1,7 +1,7 @@
 import logging
 from http import HTTPStatus
 
-from yali.core.logging.configs import (
+from yali.core.logging import (
     ROTATING_FILE_HANDLER_CLS,
     STREAM_LOG_HANDLER_CLS,
     effective_log_level,

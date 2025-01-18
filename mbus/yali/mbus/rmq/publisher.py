@@ -11,8 +11,8 @@ from aio_pika.abc import (
 )
 
 from yali.core.codecs import JSONNode
-from yali.core.datetimes import Chrono
 from yali.core.errors import YaliError
+from yali.core.timings import Chrono
 
 from .common import PublisherConfig, _binding_key_regex
 
