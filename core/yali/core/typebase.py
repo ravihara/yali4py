@@ -74,6 +74,14 @@ WebsocketUrl = Annotated[
         pattern=r"^(?:ws|wss)://(\w+):(\d+)/(\w+)$",
     ),
 ]
+MongoUrl = Annotated[
+    str,
+    msgspec.Meta(
+        title="MongoUrl",
+        description="Mongo URL string",
+        pattern=r"^(?:mongodb|mongodb+srv)://(\w+):(\w+)@(\w+):(\d+)/(\w+)$",
+    ),
+]
 
 
 class ConstrNode:

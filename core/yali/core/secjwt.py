@@ -1,8 +1,11 @@
+import base64
 import os
 from http import HTTPStatus
 from typing import Any, Callable, Dict, List
 
 import jwt
+from cryptography.hazmat.primitives import serialization
+from cryptography.hazmat.primitives.asymmetric import ec, rsa
 from msgspec import DecodeError, ValidationError
 from msgspec.structs import asdict as json_dict
 
@@ -30,6 +33,20 @@ class JWTPayload(BaseModel):
     custom: Dict[str, Any] = {}
 
 
+class JWKSEntry(BaseModel):
+    kty: str
+    alg: str
+    use: str
+    kid: str
+    n: str | None
+    e: str | None
+    x: str | None
+    y: str | None
+    crv: str | None
+    x5t: str
+    x5c: List[str]
+
+
 class JWTFailure(BaseModel):
     status: HTTPStatus
     reason: str
@@ -39,6 +56,35 @@ JWTPayloadValidator = Callable[[JWTPayload], JWTFailure | None]
 
 
 class JWTNode:
+    @staticmethod
+    def jwks_to_pem(jwks: JWKSEntry):
+        if jwks.kty == "RSA":
+            public_numbers = rsa.RSAPublicNumbers(
+                e=int.from_bytes(base64.urlsafe_b64decode(jwks.e + "=="), "big"),
+                n=int.from_bytes(base64.urlsafe_b64decode(jwks.n + "=="), "big"),
+            )
+            public_key = public_numbers.public_key()
+        elif jwks.kty == "EC":
+            curve = {
+                "P-256": ec.SECP256R1(),
+                "P-384": ec.SECP384R1(),
+                "P-521": ec.SECP521R1(),
+            }[jwks.crv]
+            public_key = ec.EllipticCurvePublicNumbers(
+                x=int.from_bytes(base64.urlsafe_b64decode(jwks.x + "=="), "big"),
+                y=int.from_bytes(base64.urlsafe_b64decode(jwks.y + "=="), "big"),
+                curve=curve,
+            ).public_key()
+        else:
+            raise ValueError(f"Unsupported key type: {jwks.kty}")
+
+        pem = public_key.public_bytes(
+            encoding=serialization.Encoding.PEM,
+            format=serialization.PublicFormat.SubjectPublicKeyInfo,
+        )
+
+        return pem.decode("utf-8")
+
     @staticmethod
     def signing_key_from_env():
         """
@@ -127,14 +173,13 @@ class JWTNode:
             "require": [],
         }
 
-        payload_dict = jwt.decode(
-            jwt=jwt_token,
-            key=signing_key,
-            algorithms=["HS256"],
-            options=verify_opts,
-        )
-
         try:
+            payload_dict = jwt.decode(
+                jwt=jwt_token,
+                key=signing_key,
+                algorithms=["HS256"],
+                options=verify_opts,
+            )
             jwt_payload = JWTPayload(**payload_dict)
 
             if jwt_payload.iss not in jwt_reference.issuers:
