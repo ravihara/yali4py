@@ -5,7 +5,7 @@ from typing import Any, AsyncGenerator, List
 from yali.core.errors import ErrorOrBytesIO, ErrorOrStr, YaliError
 from yali.core.osfiles import FSNode
 
-from .abc_store import AbstractStore, BulkPutEntry, UnixFsStoreConfig
+from .abc_ostore import AbstractStore, BulkPutEntry, UnixFsStoreConfig
 
 
 class UnixFsStore(AbstractStore):

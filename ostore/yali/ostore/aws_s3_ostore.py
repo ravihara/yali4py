@@ -7,7 +7,7 @@ from minio.error import S3Error
 
 from yali.core.errors import ErrorOrBytesIO, ErrorOrStr, YaliError
 
-from .abc_store import AbstractStore, AwsS3StoreConfig, BulkPutEntry
+from .abc_ostore import AbstractStore, AwsS3StoreConfig, BulkPutEntry
 
 
 class AwsS3Store(AbstractStore):

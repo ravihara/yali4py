@@ -7,7 +7,7 @@ from azure.storage.blob.aio import BlobClient, BlobServiceClient, ContainerClien
 
 from yali.core.errors import ErrorOrBytesIO, ErrorOrStr, YaliError
 
-from .abc_store import AbstractStore, AzureBlobStoreConfig, BulkPutEntry
+from .abc_ostore import AbstractStore, AzureBlobStoreConfig, BulkPutEntry
 
 
 class AzureBlobStore(AbstractStore):

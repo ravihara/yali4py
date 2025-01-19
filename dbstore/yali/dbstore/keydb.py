@@ -15,14 +15,14 @@ _env_config = env_config()
 
 
 class KeydbSettings(BaseModel):
-    host: str = _env_config("KEY_STORE_HOST", default="localhost")
-    port: PositiveInt = _env_config("KEY_STORE_PORT", default=6379, cast=int)
-    password: SecretStr | None = _env_config("KEY_STORE_PASSWORD", default=None)
+    host: str = _env_config("KEYDB_STORE_HOST", default="localhost")
+    port: PositiveInt = _env_config("KEYDB_STORE_PORT", default=6379, cast=int)
+    password: SecretStr | None = _env_config("KEYDB_STORE_PASSWORD", default=None)
     key_prefix: NonEmptyStr = _env_config(
-        "KEY_PREFIX", default="yali|", cast=NonEmptyStr
+        "KEYDB_PREFIX", default="yali|", cast=NonEmptyStr
     )
-    db_id: int = _env_config("DB_ID", default=0, cast=int)
-    resp_proto: int = _env_config("RESP_PROTOCOL", default=2, cast=int)
+    db_id: int = _env_config("KEYDB_ID", default=0, cast=int)
+    resp_proto: int = _env_config("KEYDB_RESP_PROTOCOL", default=2, cast=int)
 
 
 class KeydbEntry(BaseModel):

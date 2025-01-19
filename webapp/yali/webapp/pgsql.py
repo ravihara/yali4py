@@ -12,8 +12,8 @@ from litestar.plugins.sqlalchemy import (
 from sqlalchemy import URL as DbUrl
 from sqlalchemy.ext.asyncio import AsyncEngine
 
-from ..settings import PgSQLSettings
-from .sqldb import DbModel
+from yali.dbstore.settings import PgSQLSettings
+from yali.dbstore.sqlorm import DbModel
 
 __settings = PgSQLSettings()
 __db_url = DbUrl.create(
