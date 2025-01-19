@@ -1,16 +1,27 @@
 import datetime as dt
 import logging
-from typing import Annotated
+from typing import Annotated, Any, Dict, List, Set
 
 from sqlalchemy import URL as DbURL
 from sqlalchemy import create_engine, func, types
+from sqlalchemy import delete as orm_delete
+from sqlalchemy import func as orm_func
+from sqlalchemy import insert as orm_insert
+from sqlalchemy import select as orm_select
+from sqlalchemy import update as orm_update
 from sqlalchemy.orm import DeclarativeBase, Session, mapped_column
-from sqlalchemy.util import EMPTY_DICT as DB_EMPTY_DICT
+from sqlalchemy.util import EMPTY_DICT
 
 from yali.core.codecs import JSONNode
 from yali.core.settings import log_settings
 
-from .settings import MySQLSettings, PgSQLSettings, SqlDbSettings, SqliteSettings
+from .settings import (
+    MSSQLSettings,
+    MySQLSettings,
+    OracleSettings,
+    PgSQLSettings,
+    SqlDbSettings,
+)
 
 
 def mapped_str_type(*, length: int | None = None, is_utf8: bool = True):
@@ -117,18 +128,17 @@ class DbModel(DeclarativeBase):
     pass
 
 
+DbModelType = type[DbModel]
+OptFilters = Dict[str, Any] | None
+
+
 class DbClient:
     __log_settings = log_settings()
 
     def __make_db_engine(self):
         plugins = []
 
-        if isinstance(self.__settings, SqliteSettings):
-            db_url = DbURL.create(
-                drivername="sqlite+pysqlite",
-                database=self.__settings.db_file,
-            )
-        elif isinstance(self.__settings, PgSQLSettings):
+        if isinstance(self.__settings, PgSQLSettings):
             db_url = DbURL.create(
                 drivername="postgresql+psycopg",
                 username=self.__settings.username,
@@ -136,24 +146,12 @@ class DbClient:
                 host=self.__settings.host,
                 port=self.__settings.port,
                 database=self.__settings.database,
+                query=self.__settings.query if self.__settings.query else EMPTY_DICT,
             )
 
             if self.__settings.geospatial:
                 plugins.append("geoalchemy2")
-        else:
-            if self.__settings.ssl_enabled:
-                query_dict = {
-                    "ssl_cert": self.__settings.ssl_cert_file,
-                    "ssl_key": self.__settings.ssl_key_file,
-                    "ssl_check_hostname": "true",
-                }
-
-                if self.__settings.ssl_self_signed:
-                    query_dict["ssl_ca"] = self.__settings.ssl_ca_file
-                    query_dict["ssl_check_hostname"] = "false"
-            else:
-                query_dict = DB_EMPTY_DICT
-
+        elif isinstance(self.__settings, MySQLSettings):
             db_url = DbURL.create(
                 drivername="mysql+mysqldb",
                 username=self.__settings.username,
@@ -161,7 +159,33 @@ class DbClient:
                 host=self.__settings.host,
                 port=self.__settings.port,
                 database=self.__settings.database,
-                query=query_dict,
+                query=self.__settings.query if self.__settings.query else EMPTY_DICT,
+            )
+        elif isinstance(self.__settings, MSSQLSettings):
+            db_url = DbURL.create(
+                drivername="mssql+pyodbc",
+                username=self.__settings.username,
+                password=self.__settings.password,
+                host=self.__settings.host,
+                port=self.__settings.port,
+                database=self.__settings.database,
+                query=self.__settings.query if self.__settings.query else EMPTY_DICT,
+            )
+        elif isinstance(self.__settings, OracleSettings):
+            db_url = DbURL.create(
+                drivername="oracle+oracledb",
+                username=self.__settings.username,
+                password=self.__settings.password,
+                host=self.__settings.host,
+                port=self.__settings.port,
+                database=self.__settings.database,
+                query=self.__settings.query if self.__settings.query else EMPTY_DICT,
+            )
+        else:
+            db_url = DbURL.create(
+                drivername="sqlite+pysqlite",
+                database=self.__settings.db_file,
+                query=self.__settings.query if self.__settings.query else EMPTY_DICT,
             )
 
         if not plugins:
@@ -193,26 +217,96 @@ class DbClient:
 
     @property
     def dialect(self):
-        if isinstance(self.__settings, PgSQLSettings):
-            return "postgresql"
-        elif isinstance(self.__settings, MySQLSettings):
-            return "mysql"
-        else:
-            return "sqlite"
+        parts = self.__settings.client_name.split(".")
+        return parts[1]
 
     @property
     def engine(self):
         return self.__engine
 
-    @property
     def connection_ctx(self):
         """Default connection context"""
         return self.__engine.connect()
 
-    @property
     def txn_connection_ctx(self):
         """Transactional connection context"""
         return self.__engine.begin()
 
     def session_ctx(self) -> Session:
         return Session(bind=self.__engine)
+
+
+class SqlStore:
+    def __init__(self, settings: SqlDbSettings):
+        self._client = DbClient(settings=settings)
+
+    def query(
+        self,
+        model_cls: DbModelType,
+        *,
+        filters: OptFilters = None,
+        order_by: Set | None = None,
+    ):
+        with self._client.session_ctx() as session:
+            if filters:
+                stmt = orm_select(model_cls).filter_by(**filters)
+            else:
+                stmt = orm_select(model_cls)
+
+            if order_by:
+                stmt = stmt.order_by(*order_by)
+
+            return session.scalars(stmt).all()
+
+    def insert(self, model_cls: DbModelType, data: Dict[str, Any]):
+        with self._client.session_ctx() as session:
+            record = model_cls(**data)
+            session.add(record)
+            session.commit()
+
+            return record
+
+    def update(
+        self,
+        model_cls: DbModelType,
+        *,
+        filters: Dict[str, Any],
+        updates: Dict[str, Any],
+    ):
+        with self._client.session_ctx() as session:
+            stmt = orm_update(model_cls).filter_by(**filters).values(**updates)
+            session.execute(stmt)
+            session.commit()
+
+    def delete(self, model_cls: DbModelType, filters: Dict[str, Any]):
+        with self._client.session_ctx() as session:
+            stmt = orm_delete(model_cls).filter_by(**filters)
+            session.execute(stmt)
+            session.commit()
+
+    def bulk_insert(
+        self,
+        model_cls: DbModelType,
+        *,
+        data_list: List[Dict[str, Any]],
+        with_return: bool = False,
+    ):
+        with self._client.session_ctx() as session:
+            if with_return:
+                stmt = orm_insert(model_cls).returning(model_cls)
+            else:
+                stmt = orm_insert(model_cls)
+
+            result = session.scalars(stmt, data_list).all()
+            session.commit()
+
+            return result
+
+    def count(self, model_cls: DbModelType, filters: OptFilters = None):
+        with self._client.session_ctx() as session:
+            if filters:
+                stmt = orm_select(model_cls).filter_by(**filters)
+            else:
+                stmt = orm_select(model_cls)
+
+            return session.scalar(orm_select(orm_func.count()).select_from(stmt))
