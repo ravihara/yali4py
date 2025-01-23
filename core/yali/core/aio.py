@@ -23,7 +23,7 @@ AsyncQTask = Callable[[AsyncQueue[DataType]], Coroutine[Any, Any, Any]]
 SyncConsumer = Callable[[DataType], None]
 AsyncConsumer = Callable[[DataType], Coroutine[Any, Any, None]]
 
-_logger = logging.getLogger("yali.core.utils.threadaio")
+_logger = logging.getLogger("yali.core.aio")
 _threads_queues = weakref.WeakKeyDictionary()
 _shutdown = False
 

@@ -6,8 +6,6 @@ from functools import partial
 from multiprocessing import Queue as LogQueue
 from typing import Any, Callable, Coroutine, Dict, List, Tuple
 
-import uvloop
-
 from .consts import YALI_NUM_PROCESS_WORKERS, YALI_NUM_THREAD_WORKERS
 from .errors import YaliError
 from .logging import LogOptions, YaliLog, init_mproc_logging
@@ -36,7 +34,6 @@ def subprocess_handler(log_queue: LogQueue, proc_func: Callable, *fnargs, **fnkw
 
 class YaliMicro(ABC):
     _env_config = env_config()
-    asyncio.set_event_loop_policy(uvloop.EventLoopPolicy())
 
     def __init__(
         self,

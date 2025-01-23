@@ -3,10 +3,9 @@ from logging import LogRecord, getLogger
 from logging.config import dictConfig as dict_logging_config
 from multiprocessing import Queue as LogQueue
 from multiprocessing import current_process
-from multiprocessing import get_context as mproc_get_context
 from typing import Any, Callable, Dict
 
-from ..common import filename_by_sysinfo
+from ..common import filename_by_sysinfo, yali_mproc_context
 from ..consts import ROTATING_FILE_HANDLER_CLS, STREAM_LOG_HANDLER_CLS, YALI_BREAK_EVENT
 from ..models import BaseModel
 from ..osfiles import FSNode
@@ -148,7 +147,7 @@ class YaliLog(metaclass=SingletonMeta):
         log_config = options.config or default_log_config(log_name=self._log_name)
 
         if self._mproc_enabled:
-            self._mproc_context = mproc_get_context("spawn")
+            self._mproc_context = yali_mproc_context()
             self._mproc_manager = self._mproc_context.Manager()
             self._mproc_queue = self._mproc_manager.Queue(
                 maxsize=_log_settings.log_queue_size

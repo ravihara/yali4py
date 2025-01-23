@@ -8,23 +8,23 @@ from .typebase import DataType, SecretStr
 class JSONNode:
     @staticmethod
     def default_enc_hook(obj: Any) -> Any:
-        if isinstance(obj, BaseException):
-            return str(obj.args[0]) if obj.args else obj.__str__()
+        if isinstance(obj, SecretStr):
+            return obj.get_secret_value()
         elif isinstance(obj, complex):
             return (obj.real, obj.imag)
-        elif isinstance(obj, SecretStr):
-            return obj.get_secret_value()
+        elif isinstance(obj, BaseException):
+            return str(obj.args[0]) if obj.args else obj.__str__()
 
         raise NotImplementedError(f"Objects of type {type(obj)} are not supported")
 
     @staticmethod
     def default_dec_hook(type: Type, obj: Any) -> Any:
-        if issubclass(type, BaseException):
-            return type(obj)
+        if type is SecretStr:
+            return SecretStr(obj)
         elif type is complex:
             return complex(obj[0], obj[1])
-        elif type is SecretStr:
-            return SecretStr(obj)
+        elif issubclass(type, BaseException):
+            return type(obj)
 
         raise NotImplementedError(f"Objects of type {type} are not supported")
 

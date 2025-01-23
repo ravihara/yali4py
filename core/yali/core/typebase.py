@@ -2,6 +2,7 @@ import asyncio
 import datetime as dt
 from concurrent.futures import ProcessPoolExecutor, ThreadPoolExecutor
 from enum import StrEnum
+from multiprocessing.context import ForkContext, SpawnContext
 from threading import Lock
 from typing import Annotated, Any, Callable, Coroutine, Type, TypeVar
 
@@ -12,6 +13,7 @@ DataType = Type[YaliT]
 ResultCode = int | str
 JSONValue = dict | list
 Awaitable = Coroutine | asyncio.Future | asyncio.Task
+MprocContext = ForkContext | SpawnContext
 PoolExecutor = ProcessPoolExecutor | ThreadPoolExecutor
 AwaitableDoneHandler = Callable[[asyncio.Future], None]
 PoolExecutorInitFunc = Callable[[Any], object]

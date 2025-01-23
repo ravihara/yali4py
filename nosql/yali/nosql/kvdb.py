@@ -5,7 +5,6 @@ import redis.asyncio as aio_redis
 from redis.backoff import ExponentialBackoff
 from redis.exceptions import BusyLoadingError, ConnectionError, TimeoutError
 from redis.retry import Retry
-
 from yali.core.codecs import JSONNode
 from yali.core.models import BaseModel, field_specs
 from yali.core.settings import env_config
@@ -14,18 +13,18 @@ from yali.core.typebase import DataType, NonEmptyStr, PositiveInt, SecretStr
 _env_config = env_config()
 
 
-class KeydbSettings(BaseModel):
-    host: str = _env_config("KEYDB_STORE_HOST", default="localhost")
-    port: PositiveInt = _env_config("KEYDB_STORE_PORT", default=6379, cast=int)
-    password: SecretStr | None = _env_config("KEYDB_STORE_PASSWORD", default=None)
+class KVStoreSettings(BaseModel):
+    host: str = _env_config("KV_STORE_HOST", default="localhost")
+    port: PositiveInt = _env_config("KV_STORE_PORT", default=6379, cast=int)
+    password: SecretStr | None = _env_config("KV_STORE_PASSWORD", default=None)
     key_prefix: NonEmptyStr = _env_config(
-        "KEYDB_PREFIX", default="yali|", cast=NonEmptyStr
+        "KV_PREFIX", default="yali|", cast=NonEmptyStr
     )
-    db_id: int = _env_config("KEYDB_ID", default=0, cast=int)
-    resp_proto: int = _env_config("KEYDB_RESP_PROTOCOL", default=2, cast=int)
+    db_id: int = _env_config("KV_ID", default=0, cast=int)
+    resp_proto: int = _env_config("KV_RESP_PROTOCOL", default=2, cast=int)
 
 
-class KeydbEntry(BaseModel):
+class KVEntry(BaseModel):
     key: NonEmptyStr
     value: DataType
     ttl: PositiveInt | None = field_specs(default=None)
@@ -36,10 +35,10 @@ class KeyWithType(BaseModel):
     val_type: DataType | None = None
 
 
-class KeydbStore:
+class KVStore:
     _logger = logging.getLogger("yali.store.keydb_store")
 
-    def __init__(self, settings: KeydbSettings):
+    def __init__(self, settings: KVStoreSettings):
         keydb_pass = settings.password.get_secret_value() if settings.password else None
         keydb_retry = Retry(
             backoff=ExponentialBackoff(),
@@ -68,12 +67,12 @@ class KeydbStore:
         try:
             res = await self.__client.ping()
             if res:
-                self._logger.debug(f"Keydb is connected: {res}")
+                self._logger.debug(f"KVStore is connected: {res}")
                 return True
         except aio_redis.ConnectionError as ex:
-            self._logger.error("Keydb connection error", exc_info=ex)
+            self._logger.error("KVStore connection error", exc_info=ex)
         except Exception as ex:
-            self._logger.error("Error while connecting to Keydb", exc_info=ex)
+            self._logger.error("Error while connecting to KVStore", exc_info=ex)
 
         return False
 
@@ -86,7 +85,7 @@ class KeydbStore:
     async def close(self):
         await self.__client.aclose()
 
-    async def save(self, entry: KeydbEntry):
+    async def save(self, entry: KVEntry):
         if not await self._ensure_connection():
             return None
 
@@ -102,7 +101,7 @@ class KeydbStore:
 
         return await self.__client.set(key, val)
 
-    async def safe_save(self, entry: KeydbEntry):
+    async def safe_save(self, entry: KVEntry):
         if not await self._ensure_connection():
             return None
 
@@ -143,11 +142,11 @@ class KeydbStore:
             return self._decoded_value(val=val, val_type=val_type)
         except aio_redis.ResponseError as ex:
             self._logger.error(
-                f"Keydb response error while fetching key: {key}", exc_info=ex
+                f"KVStore response error while fetching key: {key}", exc_info=ex
             )
         except aio_redis.ReadOnlyError as ex:
             self._logger.error(
-                f"Keydb read-only error while fetching key: {key}", exc_info=ex
+                f"KVStore read-only error while fetching key: {key}", exc_info=ex
             )
         except Exception as ex:
             self._logger.error(f"Error while fetching key: {key}", exc_info=ex)
@@ -205,7 +204,7 @@ class KeydbStore:
 
         return bool(res)
 
-    async def multi_save(self, entries: List[KeydbEntry]):
+    async def multi_save(self, entries: List[KVEntry]):
         if not await self._ensure_connection():
             return None
 

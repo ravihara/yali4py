@@ -83,27 +83,27 @@ DocUpdateOps: FrozenSet[str] = frozenset(
 
 
 def doc_record_enc_hook(obj: Any) -> Any:
-    if isinstance(obj, BaseException):
-        return str(obj.args[0]) if obj.args else obj.__str__()
-    elif isinstance(obj, complex):
-        return (obj.real, obj.imag)
+    if isinstance(obj, ObjectId):
+        return str(obj)
     elif isinstance(obj, SecretStr):
         return obj.get_secret_value()
-    elif isinstance(obj, ObjectId):
-        return str(obj)
+    elif isinstance(obj, complex):
+        return (obj.real, obj.imag)
+    elif isinstance(obj, BaseException):
+        return str(obj.args[0]) if obj.args else obj.__str__()
 
     raise NotImplementedError(f"Objects of type {type(obj)} are not supported")
 
 
 def doc_record_dec_hook(type: Type, obj: Any) -> Any:
-    if issubclass(type, BaseException):
-        return type(obj)
-    elif type is complex:
-        return complex(obj[0], obj[1])
+    if type is ObjectId:
+        return ObjectId(obj)
     elif type is SecretStr:
         return SecretStr(obj)
-    elif type is ObjectId:
-        return ObjectId(obj)
+    elif type is complex:
+        return complex(obj[0], obj[1])
+    elif issubclass(type, BaseException):
+        return type(obj)
 
     raise NotImplementedError(f"Objects of type {type} are not supported")
 
@@ -216,7 +216,6 @@ _docdb_settings = DocDbSettings()
 
 class DocRepo(ABC):
     __db_client: MongoClient | None = None
-    __db_settings: DocDbSettings | None = None
 
     logger = logging.getLogger("yali.dbstore.docdb")
 
@@ -225,14 +224,12 @@ class DocRepo(ABC):
         if cls.__db_client:
             return cls.__db_client
 
-        cls.__db_settings = _docdb_settings
-
         cls.__db_client = MongoClient(
-            cls.__db_settings.docdb_url,
-            username=cls.__db_settings.db_username,
-            password=cls.__db_settings.db_password.get_secret_value(),
+            _docdb_settings.docdb_url,
+            username=_docdb_settings.db_username,
+            password=_docdb_settings.db_password.get_secret_value(),
             authSource="admin",
-            maxPoolSize=cls.__db_settings.db_pool_size,
+            maxPoolSize=_docdb_settings.db_pool_size,
         )
 
         return cls.__db_client
@@ -277,8 +274,7 @@ class DocRepo(ABC):
 
     @property
     def settings(self):
-        assert self.__class__.__db_settings is not None
-        return self.__class__.__db_settings
+        return _docdb_settings
 
     @property
     def client(self):
@@ -479,7 +475,7 @@ class DocRepo(ABC):
 
         self._ops.append(InsertOne(data))
 
-        if len(self._ops) >= self.__db_settings.db_max_bulk_ops:
+        if len(self._ops) >= _docdb_settings.db_max_bulk_ops:
             return self.bulk_commit()
 
         return None
@@ -513,7 +509,7 @@ class DocRepo(ABC):
         else:
             self._ops.append(UpdateMany(filter=filters, update=data, upsert=upsert))
 
-        if len(self._ops) >= self.__db_settings.db_max_bulk_ops:
+        if len(self._ops) >= _docdb_settings.db_max_bulk_ops:
             return self.bulk_commit()
 
         return None
@@ -532,7 +528,7 @@ class DocRepo(ABC):
                 self.sync_updated_audit(doc=doc, actor=actor)
                 self._ops.append(InsertOne(doc))
 
-        if len(self._ops) >= self.__db_settings.db_max_bulk_ops:
+        if len(self._ops) >= _docdb_settings.db_max_bulk_ops:
             return self.bulk_commit()
 
         return None

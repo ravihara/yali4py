@@ -30,13 +30,13 @@ class PublisherConfig(BaseModel):
     amqp_url: AmqpUrl
     exchange_name: SnakeCaseStr
     exchange_type: ExchangeType = ExchangeType.TOPIC
+    prefetch_count: PositiveInt = field_specs(default=1)
     max_message_size: Annotated[int, ConstrNode.constr_num(ge=5120)] = field_specs(
         default=5242880
     )
 
 
 class PubSubConfig(PublisherConfig):
-    prefetch_count: PositiveInt = field_specs(default=1)
     binding_keys: List[str] = []
     data_processor: RMQDataProcessor
     data_preprocessor: RMQDataPreprocessor | None = None
