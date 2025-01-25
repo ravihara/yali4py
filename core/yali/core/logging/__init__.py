@@ -8,7 +8,7 @@ from ..models import BaseModel
 from ..settings import log_settings
 from ..strings import lower_with_hyphens
 from ..typebase import NonEmptyStr, SingletonMeta
-from .config import default_log_config, mproc_qlog_config
+from .config import MprocQueue, default_log_config, mproc_qlog_config
 from .formatters import effective_log_level
 
 _log_settings = log_settings()
@@ -24,8 +24,10 @@ class LogOptions(BaseModel):
 
 class YaliLog(metaclass=SingletonMeta):
     def __init__(self, *, options: LogOptions):
-        self._log_name = lower_with_hyphens(options.name)
-        log_config = options.config or default_log_config(log_name=self._log_name)
+        self.__mproc_queue: MprocQueue | None = None
+        self.__log_name = lower_with_hyphens(options.name)
+
+        log_config = options.config or default_log_config(log_name=self.__log_name)
 
         if _log_settings.enable_mproc_logging:
             self.__mproc_context = yali_mproc_context()
@@ -46,7 +48,7 @@ class YaliLog(metaclass=SingletonMeta):
             dict_logging_config(config=log_config)
 
         self._root = getLogger()
-        self._app = getLogger(name=self._log_name)
+        self._app = getLogger(name=self.__log_name)
         self._root.propagate = False
 
         if options.post_hook:
@@ -54,7 +56,7 @@ class YaliLog(metaclass=SingletonMeta):
 
     @property
     def name(self):
-        return self._log_name
+        return self.__log_name
 
     @property
     def level(self):
@@ -72,9 +74,13 @@ class YaliLog(metaclass=SingletonMeta):
     def mproc_enabled(self):
         return _log_settings.enable_mproc_logging
 
+    @property
+    def mproc_queue(self):
+        return self.__mproc_queue
+
     def get_logger(self, name: str = ""):
         """Get a logger by name, or the app logger if no name is provided"""
-        name = name.strip() if name else self._log_name
+        name = name.strip() if name else self.__log_name
 
         if name:
             return getLogger(name=name)

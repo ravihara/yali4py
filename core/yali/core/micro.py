@@ -8,7 +8,7 @@ from typing import Any, Callable, Coroutine, Dict, List, Tuple
 
 from .consts import YALI_NUM_PROCESS_WORKERS, YALI_NUM_THREAD_WORKERS
 from .errors import YaliError
-from .logging import LogOptions, YaliLog, init_mproc_logging
+from .logging import LogOptions, YaliLog, mproc_qlog_config
 from .models import AioExceptValue
 from .settings import env_config
 from .typebase import (
@@ -22,7 +22,7 @@ from .typebase import (
 
 def subprocess_handler(log_queue: LogQueue, proc_func: Callable, *fnargs, **fnkwargs):
     if log_queue:
-        init_mproc_logging(queue=log_queue, is_main=False)
+        mproc_qlog_config(log_queue=log_queue, is_main_process=False)
 
     proc_logger = logging.getLogger(proc_func.__name__)
 
