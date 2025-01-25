@@ -42,6 +42,10 @@ class LogLevelNumber(IntEnum):
     TRACE = 5
 
 
+def log_level_num_for_name(name: LogLevelName):
+    return LogLevelNumber[name].value
+
+
 __env_config: EnvConfig | None = None
 
 

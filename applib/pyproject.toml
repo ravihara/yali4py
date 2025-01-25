@@ -1,0 +1,96 @@
+[build-system]
+requires = ["poetry-core>=1.0.0"]
+build-backend = "poetry.core.masonry.api"
+
+[tool.poetry]
+name = "yali-applib"
+version = "0.1.0"
+description = "App-service modules for Yali toolkit"
+license = "Apache-2.0"
+authors = ["Ravishankar Haranath <ravikh@gmail.com>"]
+readme = "README.md"
+include = ["VERSION", "README.md", "CHANGELOG.md"]
+packages = [{ include = "yali" }]
+
+[tool.poetry.dependencies]
+python = "^3.11"
+yali-core = { path = "../core", develop = true }
+litestar = { extras = [
+    "brotli",
+    "cli",
+    "cryptography",
+    "jwt",
+    "opentelemetry",
+    "redis",
+    "sqlalchemy",
+    "standard",
+], version = "^2.14.0" }
+advanced-alchemy = { extras = [
+    "duckdb",
+    "mssql",
+    "mysql",
+    "oracle",
+    "postgres",
+    "sqlite",
+], version = "^0.30.2" }
+
+[tool.poetry.group.dev.dependencies]
+pylint = "^3.2.6"
+pyright = "^1.1.376"
+ruff = "^0.8.3"
+
+[tool.poetry.group.test.dependencies]
+pytest = "^8.3.2"
+pytest-asyncio = "^0.23.8"
+pytest-dependency = "^0.6.0"
+
+[tool.pyright]
+
+[tool.pylint."messages control"]
+disable = "all"
+enable = [
+    "empty-docstring",
+    "missing-module-docstring",
+    "missing-class-docstring",
+    "missing-function-docstring",
+]
+ignore = ["setup.py", "__init__.py"]
+ignore-paths = ["tests"]
+
+[tool.ruff]
+# Exclude a variety of commonly ignored directories.
+exclude = [
+    ".bzr",
+    ".direnv",
+    ".eggs",
+    ".git",
+    ".git-rewrite",
+    ".hg",
+    ".ipynb_checkpoints",
+    ".mypy_cache",
+    ".nox",
+    ".pants.d",
+    ".pyenv",
+    ".pytest_cache",
+    ".pytype",
+    ".ruff_cache",
+    ".svn",
+    ".tox",
+    ".venv",
+    ".vscode",
+    "__pypackages__",
+    "_build",
+    "buck-out",
+    "build",
+    "dist",
+    "node_modules",
+    "site-packages",
+    "venv",
+]
+
+# Same as Black.
+line-length = 88
+indent-width = 4
+
+# Assume Python 3.11
+target-version = "py311"

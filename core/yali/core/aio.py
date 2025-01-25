@@ -15,7 +15,7 @@ from typing import Any, Callable, Coroutine, MutableSet
 from janus import AsyncQueue, SyncQueue
 from janus import Queue as _Queue
 
-from .consts import YALI_BREAK_EVENT, YALI_NUM_THREAD_WORKERS
+from .consts import YALI_NUM_THREAD_WORKERS, YALI_SENTINEL
 from .typebase import DataType
 
 SyncQTask = Callable[[SyncQueue[DataType]], Any]
@@ -330,7 +330,7 @@ class ThreadAio:
         while True:
             item = self.__sync_q.get()
 
-            if item is YALI_BREAK_EVENT:
+            if item is YALI_SENTINEL:
                 break
 
             try:
@@ -347,7 +347,7 @@ class ThreadAio:
         while True:
             item = await self.__async_q.get()
 
-            if item is YALI_BREAK_EVENT:
+            if item is YALI_SENTINEL:
                 break
 
             try:
