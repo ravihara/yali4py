@@ -45,11 +45,9 @@ class JSONNode:
 
     @staticmethod
     def dump_file(data: Any, *, file_path: str):
-        with open(file_path, "w") as f:
+        with open(file_path, "wb") as f:
             return f.write(
-                msgspec.json.encode(data, enc_hook=JSONNode.default_enc_hook).decode(
-                    "utf-8"
-                )
+                msgspec.json.encode(data, enc_hook=JSONNode.default_enc_hook)
             )
 
     ## Decoding functions

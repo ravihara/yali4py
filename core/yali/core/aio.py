@@ -81,7 +81,7 @@ class _WorkItem(object):
 
         try:
             result = await self.coro
-        except BaseException as ex:
+        except Exception as ex:
             self.future.set_exception(ex)
             # Break a reference cycle with the exception 'ex'
             self = None
@@ -100,7 +100,7 @@ def _worker(
     if initializer is not None:
         try:
             initializer(*initargs)
-        except:
+        except Exception:
             _logger.critical("Exception in initializer:", exc_info=True)
             ref_instance = executor_reference()
 
@@ -143,7 +143,7 @@ def _worker(
                 return
 
             del ref_instance
-    except:
+    except Exception:
         _logger.critical("Exception in worker", exc_info=True)
 
 

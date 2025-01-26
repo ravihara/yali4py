@@ -1,5 +1,6 @@
 import pytest
-from core.yali.core.utils.strings import StringConv
+
+from yali.core.strings import StringConv
 
 
 @pytest.mark.parametrize(

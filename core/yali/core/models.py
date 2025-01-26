@@ -59,7 +59,7 @@ class DateTimeRange(BaseModel):
 class Failure(BaseModel):
     error: NonEmptyStr
     cause: BaseException | None = None
-    extrac: Dict[str, Any] | None = None
+    extra: Dict[str, Any] | None = None
 
 
 class Success(BaseModel):

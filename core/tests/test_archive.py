@@ -1,6 +1,6 @@
 import os
 
-from core.yali.core.utils.archives import (
+from yali.core.archive import (
     Archiver,
     CompressionConfig,
     DecompressionConfig,
@@ -8,21 +8,19 @@ from core.yali.core.utils.archives import (
     Lz4Compression,
     ZstdCompression,
 )
-from core.yali.core.utils.osfiles import FSNode
+from yali.core.osfiles import FSNode
 
 test_root = os.path.dirname(os.path.abspath(__file__))
 
 if not FSNode.is_dir_readable(dir_path=test_root):
-    test_root = "/yali-core/tests"
+    test_root = "/yali/core/tests"
 
 gzip_conf = GzipCompression()
 lz4_conf = Lz4Compression()
 zstd_conf = ZstdCompression()
 
 
-test_bytes = (
-    b"123inthisworldofpracticalrealitiesapurelybookisheducationhasnoperfectjustification!#$"
-)
+test_bytes = b"123inthisworldofpracticalrealitiesapurelybookisheducationhasnoperfectjustification!#$"
 test_string = "Hello world from Yali!!"
 test_json: dict = {"a": 1, "b": [2, 3]}
 

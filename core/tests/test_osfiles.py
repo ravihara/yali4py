@@ -1,39 +1,47 @@
 from os import path as ospath
 from typing import List
 
-from core.yali.core.utils.osfiles import FSNode
+from yali.core.osfiles import FSNode
 
 base_dir = ospath.dirname(__file__)
 data_dir = ospath.join(base_dir, "samples", "data")
 
 
 def test_is_file_readable():
-    assert FSNode.is_file_readable(f"{base_dir}/samples/testfile.txt") == True
-    assert FSNode.is_file_readable(f"{base_dir}/samples/nofile.txt") == False
+    assert FSNode.is_file_readable(f"{base_dir}/samples/testfile.txt") is True
+    assert FSNode.is_file_readable(f"{base_dir}/samples/nofile.txt") is False
 
 
 def test_is_file_writable():
-    assert FSNode.is_file_writable(f"{base_dir}/samples/testfile.txt") == True
+    assert FSNode.is_file_writable(f"{base_dir}/samples/testfile.txt") is True
     assert (
-        FSNode.is_file_writable(f"{base_dir}/samples/testfile1.txt", check_creatable=True)
-        == True
+        FSNode.is_file_writable(
+            f"{base_dir}/samples/testfile1.txt", check_creatable=True
+        )
+        is True
     )
     assert (
-        FSNode.is_file_writable(f"{base_dir}/samples/nodir/testfile.txt", check_creatable=True)
-        == False
+        FSNode.is_file_writable(
+            f"{base_dir}/samples/nodir/testfile.txt", check_creatable=True
+        )
+        is False
     )
 
 
 def test_is_dir_readable():
-    assert FSNode.is_dir_readable(f"{base_dir}/samples") == True
-    assert FSNode.is_dir_readable(f"{base_dir}/samples/nodir") == False
+    assert FSNode.is_dir_readable(f"{base_dir}/samples") is True
+    assert FSNode.is_dir_readable(f"{base_dir}/samples/nodir") is False
 
 
 def test_is_dir_writable():
-    assert FSNode.is_dir_writable(f"{base_dir}/samples") == True
-    assert FSNode.is_dir_writable(f"{base_dir}/samples/newdir", check_creatable=True) == True
+    assert FSNode.is_dir_writable(f"{base_dir}/samples") is True
     assert (
-        FSNode.is_dir_writable(f"{base_dir}/samples/nodir/newdir", check_creatable=True) == False
+        FSNode.is_dir_writable(f"{base_dir}/samples/newdir", check_creatable=True)
+        is True
+    )
+    assert (
+        FSNode.is_dir_writable(f"{base_dir}/samples/nodir/newdir", check_creatable=True)
+        is False
     )
 
 
@@ -48,7 +56,9 @@ def test_file_paths():
 
     fpaths.clear()
 
-    for fpath in FSNode.file_paths_from_dir(base_dir=data_dir, extensions=[".in", ".txt"]):
+    for fpath in FSNode.file_paths_from_dir(
+        base_dir=data_dir, extensions=[".in", ".txt"]
+    ):
         fpaths.append(fpath)
 
     assert len(fpaths) == 8
