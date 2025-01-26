@@ -113,6 +113,8 @@ def get_sys_ipaddrs():
         except ValueError:
             pass
 
+    ip_addresses.sort()
+
     return ip_addresses
 
 
@@ -140,8 +142,6 @@ def id_by_sysinfo(suffix: str = "", use_pid: bool = False, hash_algo: str = "md5
 
     if not ip_addresses:
         ip_addresses = ["127.0.0.1"]
-
-    ip_addresses.sort()
 
     sysid = "".join(ip_addresses) + os_uname_str()
 
@@ -179,8 +179,6 @@ def filename_by_sysinfo(basename: str, extension: str = ".out"):
     if not ip_addresses:
         ip_addresses = ["127.0.0.1"]
 
-    ip_addresses.sort()
-
     suffix = "".join(ip_addresses) + os_uname_str()
     suffix = hashlib.md5(suffix.encode()).hexdigest()
 
@@ -206,6 +204,13 @@ def dict_to_result(data: dict) -> Result:
     try:
         res = Success(**data)
         return res
+    except TypeError:
+        try:
+            res = Failure(**data)
+            return res
+        except TypeError:
+            res = Failure(error="Invalid data", extra={"data": data})
+            return res
     except (ValidationError, DecodeError):
-        res = Failure(**data)
+        res = Failure(error="Invalid data", extra={"data": data})
         return res

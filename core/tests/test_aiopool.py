@@ -9,7 +9,7 @@ from yali.core.aio import ThreadPoolAsyncExecutor
 
 
 @pytest.mark.asyncio(scope="class")
-class TestAioThread:
+class TestAsyncThreadPool:
     counter: int = 0
     logger = logging.getLogger(__name__)
 

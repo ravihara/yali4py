@@ -355,7 +355,7 @@ class ThreadAio:
             except Exception as ex:
                 _logger.error("Unhandled error while consuming message", exc_info=ex)
 
-            await self.__async_q.task_done()
+            self.__async_q.task_done()
 
     def run_task(self, sync_q_task: SyncQTask):
         if not self.__sync_executor:
