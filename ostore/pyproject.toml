@@ -1,33 +1,50 @@
-[build-system]
-requires = ["poetry-core>=1.0.0"]
-build-backend = "poetry.core.masonry.api"
-
-[tool.poetry]
+[project]
 name = "yali-ostore"
 version = "0.1.0"
 description = "Database and object storage modules for Yali toolkit"
-license = "Apache-2.0"
-authors = ["Ravishankar Haranath <ravikh@gmail.com>"]
 readme = "README.md"
-include = ["VERSION", "README.md", "CHANGELOG.md"]
-packages = [{ include = "yali" }]
+requires-python = ">=3.11"
+license-files = ["LICENSE"]
+authors = [{ name = "Ravishankar Haranath", email = "ravikh@gmailcom" }]
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "Operating System :: OS Independent",
+    "Topic :: Software Development :: Libraries",
+    "Topic :: Software Development :: Libraries :: Python Modules",
+]
+keywords = ["yali", "yali4py", "yali-toolkit", "yali-mbus"]
+dependencies = [
+    "yali-core>=0.1.0,<0.2.0",
+    "minio>=7.2.11,<8.0.0",
+    "azure-storage-blob>=12.24.0,<13.0.0",
+    "urllib3>=2.3.0,<3.0.0",
+]
 
-[tool.poetry.dependencies]
-python = "^3.11"
-yali-core = { path = "../core", develop = true }
-minio = "^7.2.11"
-azure-storage-blob = "^12.24.0"
-urllib3 = "^2.3.0"
+[dependency-groups]
+dev = ["pylint>=3.2.6,<4.0.0", "pyright>=1.1.376,<2.0.0", "ruff>=0.8.3,<1.0.0"]
+test = [
+    "pytest>=8.3.2,<9.0.0",
+    "pytest-asyncio>=0.23.8,<1.0.0",
+    "pytest-dependency>=0.6.0,<1.0.0",
+]
 
-[tool.poetry.group.dev.dependencies]
-pylint = "^3.2.6"
-pyright = "^1.1.376"
-ruff = "^0.8.3"
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
 
-[tool.poetry.group.test.dependencies]
-pytest = "^8.3.2"
-pytest-asyncio = "^0.23.8"
-pytest-dependency = "^0.6.0"
+[tool.hatch.build.targets.sdist]
+include = [
+    "yali/**/*",
+    "tests/**/*",
+    "pytest.ini",
+    "README.md",
+    "VERSION",
+    "LICENSE",
+    "pyproject.toml",
+]
+
+[tool.hatch.build.targets.wheel]
+packages = ["yali"]
 
 [tool.pyright]
 
@@ -79,3 +96,6 @@ indent-width = 4
 
 # Assume Python 3.11
 target-version = "py311"
+
+[tool.uv.sources]
+yali-core = { path = "../core", editable = true }
