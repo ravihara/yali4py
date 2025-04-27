@@ -1,19 +1,34 @@
+import asyncio
 import os
 import re
 from collections import ChainMap
-from typing import List
+from multiprocessing import get_context as mproc_get_context
+from typing import Dict, List
 
+import uvloop
 import yaml
 from decouple import Config as EnvConfig
 from decouple import RepositoryEnv, RepositoryIni
+from dotenv import find_dotenv, load_dotenv
 
+from ..models import BaseModel
 from ..osfiles import FSNode
+from ..typebase import MprocContext
+
+
+class AppConfig(BaseModel):
+    mproc_ctx: MprocContext | None = None
+    data: Dict = {}
+
+
+## Regex pattern to capture variables with multiple fallbacks, e.g. ${VAR:-${DEFAULT_VAR:-default_value}}
+__env_var_regex = re.compile(r"\$\{([^}^{]+)\}")
 
 ## Global environment configuration
 __env_config: EnvConfig | None = None
 
-## Regex pattern to capture variables with multiple fallbacks, e.g. ${VAR:-${DEFAULT_VAR:-default_value}}
-__env_var_regex = re.compile(r"\$\{([^}^{]+)\}")
+## Global application configuration
+__app_config: AppConfig | None = None
 
 
 def replace_env_var(match):
@@ -55,10 +70,38 @@ def expand_env_vars_in_string(content):
     return content
 
 
-def config_from_yaml(yaml_conf_file: str):
+def load_environment(env_file: str | None = None):
+    if env_file:
+        dotenv_path = find_dotenv(env_file)
+
+        if not dotenv_path:
+            default_env = find_dotenv()
+
+            if default_env:
+                load_dotenv(dotenv_path=default_env)
+
+            return
+
+        if not FSNode.is_file_readable(dotenv_path):
+            raise ValueError(f"Environment file '{dotenv_path}' is not readable")
+
+        load_dotenv(dotenv_path=dotenv_path)
+    else:
+        default_env = find_dotenv()
+
+        if default_env:
+            load_dotenv(dotenv_path=default_env)
+
+
+def config_from_yaml(yaml_conf_file: str, *, env_file: str | None = None):
     """
     Loads YAML, expanding environment variables with multiple fallbacks.
     """
+    load_environment(env_file=env_file)
+
+    if not FSNode.is_file_readable(yaml_conf_file):
+        raise ValueError(f"Yaml file '{yaml_conf_file}' is not readable")
+
     with open(yaml_conf_file, "r") as f:
         raw_content = f.read()
 
@@ -93,9 +136,32 @@ def env_config(env_files: List[str] = []):
 
     if not conf_repos:
         raise ValueError(
-            "No environment files found. Please set ENV_FILES environment variable with comma separated list of environment files (.env or .ini) or, pass it as a list of file paths."
+            "No environment files found. Either pass env_files or set ENV_FILES environment variable to a comma-separated list of environment files. Both ini env files are supported."
         )
 
     __env_config = EnvConfig(ChainMap(*conf_repos))
 
     return __env_config
+
+
+def init_application_config(yaml_conf_file: str, *, env_file: str | None = None):
+    global __app_config
+
+    if __app_config:
+        print("Application configuration already initialized")
+        return __app_config
+
+    print("Initializing application configuration")
+    asyncio.set_event_loop_policy(uvloop.EventLoopPolicy())
+
+    __app_config = AppConfig()
+    mproc_ctx_env = os.getenv("MULTI_PROCESS_CONTEXT", "spawn").lower().strip()
+
+    if mproc_ctx_env == "spawn":
+        __app_config.mproc_ctx = mproc_get_context("spawn")
+    else:
+        __app_config.mproc_ctx = mproc_get_context("fork")
+
+    __app_config.data = config_from_yaml(yaml_conf_file, env_file=env_file)
+
+    return __app_config

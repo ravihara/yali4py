@@ -1,53 +1,15 @@
-import asyncio
 import hashlib
 import os
 import re
 import socket
 import sys
-from multiprocessing import get_context as mproc_get_context
 from typing import Iterable
 
 import netifaces
-import uvloop
 from cachetools.func import ttl_cache
 from msgspec import DecodeError, ValidationError
 
 from .models import Failure, Result, Success
-from .typebase import MprocContext
-
-__yali_main_initialized = False
-__yali_mproc_context: MprocContext | None = None
-
-
-def yali_main_init():
-    global __yali_main_initialized
-    global __yali_mproc_context
-
-    if __yali_main_initialized:
-        print("main-init already invoked")
-        return
-
-    mproc_ctx_env = os.getenv("MULTI_PROCESS_CONTEXT", "spawn").lower().strip()
-
-    if mproc_ctx_env == "spawn":
-        __yali_mproc_context = mproc_get_context("spawn")
-    else:
-        __yali_mproc_context = mproc_get_context("fork")
-
-    asyncio.set_event_loop_policy(uvloop.EventLoopPolicy())
-    print("main-init invoked for the first time")
-
-    __yali_main_initialized = True
-
-
-def yali_mproc_context():
-    global __yali_mproc_context
-
-    if not __yali_mproc_context:
-        yali_main_init()
-
-    assert __yali_mproc_context
-    return __yali_mproc_context
 
 
 def os_uname_str():

@@ -72,8 +72,8 @@ class ClientSSLConfig(BaseModel):
                 )
 
 
-_def_client_ssl_config = ClientSSLConfig()
-_def_server_ssl_config = ServerSSLConfig()
+__def_client_ssl_config = ClientSSLConfig()
+__def_server_ssl_config = ServerSSLConfig()
 
 
 def create_context(
@@ -100,7 +100,7 @@ def create_context(
     return ctx
 
 
-def server_context(settings: ServerSSLConfig = _def_server_ssl_config):
+def server_context(settings: ServerSSLConfig = __def_server_ssl_config):
     """
     Get the SSL context for the server using environment variables
 
@@ -127,7 +127,7 @@ def server_context(settings: ServerSSLConfig = _def_server_ssl_config):
     return ctx
 
 
-def client_context(settings: ClientSSLConfig = _def_client_ssl_config):
+def client_context(settings: ClientSSLConfig = __def_client_ssl_config):
     """
     Get the SSL context for the client using environment variables
 
