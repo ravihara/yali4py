@@ -11,10 +11,10 @@ from websockets.exceptions import ConnectionClosedError as WsConnectionClosedErr
 from websockets.exceptions import ConnectionClosedOK as WsConnectionClosedOK
 from websockets.frames import CloseCode
 
+from yali.core.appconf.ssl import server_context
 from yali.core.codecs import JSONNode
 from yali.core.models import BaseModel, Failure, Result
 from yali.core.secjwt import JWTPayloadValidator, JWTReference
-from yali.core.secssl import SSLNode
 from yali.core.typebase import NonEmptyStr, PositiveInt
 
 from .common import AioWsServerConnection, wrap_server_process_request
@@ -145,7 +145,7 @@ class WebSocketServer:
 
         if self._config.with_ssl:
             try:
-                ssl_context = SSLNode.server_context()
+                ssl_context = server_context()
             except ValueError as ex:
                 self._logger.error(ex, exc_info=True)
                 return

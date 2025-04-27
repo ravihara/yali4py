@@ -7,6 +7,8 @@ import yaml
 from decouple import Config as EnvConfig
 from decouple import RepositoryEnv, RepositoryIni
 
+from ..osfiles import FSNode
+
 ## Global environment configuration
 __env_config: EnvConfig | None = None
 
@@ -53,11 +55,11 @@ def expand_env_vars_in_string(content):
     return content
 
 
-def load_yaml_with_env(filename):
+def config_from_yaml(yaml_conf_file: str):
     """
     Loads YAML, expanding environment variables with multiple fallbacks.
     """
-    with open(filename) as f:
+    with open(yaml_conf_file, "r") as f:
         raw_content = f.read()
 
     # Expand environment variables
@@ -80,6 +82,9 @@ def env_config(env_files: List[str] = []):
 
     for env_file in env_files:
         env_file = env_file.strip()
+
+        if not FSNode.is_file_readable(env_file):
+            continue
 
         if env_file.endswith(".env"):
             conf_repos.append(RepositoryEnv(env_file))

@@ -9,11 +9,11 @@ from websockets.asyncio.client import ClientConnection as AioWsClientConnection
 from websockets.asyncio.client import connect as aio_ws_connect
 from websockets.frames import CloseCode
 
+from yali.core.appconf.ssl import client_context
 from yali.core.codecs import JSONNode
 from yali.core.common import dict_to_result
 from yali.core.models import BaseModel, Failure, Result, Success, field_specs
 from yali.core.secjwt import JWTNode, JWTPayload
-from yali.core.secssl import SSLNode
 from yali.core.typebase import Constraint, WebsocketUrl
 
 WsClientExcludeArgs = [
@@ -77,7 +77,7 @@ class UniTxnWsClient:
         _update_headers(self._kwargs, self._cid, self._jwt_payload)
 
         if ws_url.startswith("wss://"):
-            self._ssl_context = SSLNode.client_context()
+            self._ssl_context = client_context()
         else:
             self._ssl_context = None
             self._logger.warning(
@@ -167,7 +167,7 @@ class LoopedWsClient:
         _update_headers(self._kwargs, self._cid, self._config.jwt_payload)
 
         if config.ws_url.startswith("wss://"):
-            self._ssl_context = SSLNode.client_context()
+            self._ssl_context = client_context()
         else:
             self._ssl_context = None
             self._logger.warning(

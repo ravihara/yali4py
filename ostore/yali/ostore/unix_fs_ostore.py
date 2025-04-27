@@ -13,6 +13,7 @@ class UnixFsStore(AbstractStore):
         self, *, config: UnixFsStoreConfig, aio_loop: asyncio.AbstractEventLoop
     ):
         self._config = config
+        super().__init__(config, aio_loop)
 
         if self._config.is_readonly:
             if not FSNode.is_dir_readable(self._config.sroot):
@@ -23,8 +24,6 @@ class UnixFsStore(AbstractStore):
             raise YaliError(
                 f"Store's root folder is not writable: {self._config.sroot}"
             )
-
-        super().__init__(config, aio_loop)
 
     def object_store_path(self, key: str):
         if key.startswith(f"{self._config.sroot}/"):
