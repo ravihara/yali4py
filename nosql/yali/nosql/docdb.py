@@ -22,8 +22,8 @@ from pymongo.results import (
 from yali.core.appconf import EnvConfig, env_config
 from yali.core.codecs import JSONNode
 from yali.core.models import BaseModel, field_specs
-from yali.core.timings import Chrono, dt
 from yali.core.typebase import Constraint, MongoUrl, PositiveInt, SecretStr
+from yali.core.utils.timings import Chrono, dt
 
 DocId = str | ObjectId
 DocOp = InsertOne | UpdateOne | UpdateMany

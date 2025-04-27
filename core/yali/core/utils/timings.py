@@ -1,7 +1,7 @@
 import datetime as dt
 
-from .consts import ALLOWED_DATETIME_FORMATS
-from .models import BaseModel
+from ..consts import ALLOWED_DATETIME_FORMATS
+from ..models import BaseModel
 
 
 class TimeParts(BaseModel):

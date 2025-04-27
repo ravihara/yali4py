@@ -7,7 +7,12 @@ from websockets.asyncio.server import Response as AioWsResponse
 from websockets.asyncio.server import ServerConnection as AioWsServerConnection
 
 from yali.core.codecs import JSONNode
-from yali.core.secjwt import JWTFailure, JWTNode, JWTPayloadValidator, JWTReference
+from yali.core.utils.secjwt import (
+    JWTFailure,
+    JWTNode,
+    JWTPayloadValidator,
+    JWTReference,
+)
 
 WsClientType = Literal["UNI_TXN_WS_CLIENT", "LOOPED_WS_CLIENT"]
 WsClients: List[WsClientType] = [

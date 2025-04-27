@@ -11,11 +11,11 @@ from opentelemetry.sdk.resources import Resource
 from opentelemetry.sdk.trace import Tracer, TracerProvider
 from opentelemetry.sdk.trace.export import BatchSpanProcessor
 
-from .appconf import EnvConfig, env_config
-from .common import id_by_sysinfo
-from .consts import SERVICE_INST_ID_KEY
-from .models import BaseModel
-from .typebase import Constraint, SingletonMeta
+from ..appconf import EnvConfig, env_config
+from ..common import id_by_sysinfo
+from ..consts import SERVICE_INST_ID_KEY
+from ..models import BaseModel
+from ..typebase import Constraint, SingletonMeta
 
 OTelResourceAttrsStr = Annotated[
     str,

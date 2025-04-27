@@ -9,7 +9,7 @@ from cryptography.hazmat.primitives.asymmetric import ec, rsa
 from msgspec import DecodeError, ValidationError
 from msgspec.structs import asdict as json_dict
 
-from .models import BaseModel
+from ..models import BaseModel
 from .osfiles import FSNode
 from .timings import Chrono
 

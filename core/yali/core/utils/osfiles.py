@@ -6,8 +6,8 @@ from typing import Dict, List
 
 import yaml
 
-from .codecs import JSONNode
-from .errors import YaliError
+from ..codecs import JSONNode
+from ..errors import YaliError
 
 
 def _select_matching_file(

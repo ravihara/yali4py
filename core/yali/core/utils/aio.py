@@ -15,8 +15,8 @@ from typing import Any, Callable, Coroutine, MutableSet
 from janus import AsyncQueue, SyncQueue
 from janus import Queue as _Queue
 
-from .consts import YALI_NUM_THREAD_WORKERS, YALI_SENTINEL
-from .typebase import DataType
+from ..consts import YALI_NUM_THREAD_WORKERS, YALI_SENTINEL
+from ..typebase import DataType
 
 SyncQTask = Callable[[SyncQueue[DataType]], Any]
 AsyncQTask = Callable[[AsyncQueue[DataType]], Coroutine[Any, Any, Any]]

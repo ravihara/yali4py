@@ -9,10 +9,10 @@ import lz4.frame as lz4f
 import zstandard as zstd
 from msgspec import DecodeError, ValidationError
 
-from .codecs import JSONNode
-from .consts import DEFAULT_COMPRESS_LEVEL
-from .models import BaseModel
-from .typebase import Constraint, JSONValue
+from ..codecs import JSONNode
+from ..consts import DEFAULT_COMPRESS_LEVEL
+from ..models import BaseModel
+from ..typebase import Constraint, JSONValue
 
 GzipLevel = Annotated[int, Constraint.as_number(ge=0, le=9)]
 ZstdLevel = Annotated[int, Constraint.as_number(ge=0, le=22)]

@@ -2,7 +2,7 @@ import hashlib
 import re
 from typing import Dict
 
-from .codecs import JSONNode
+from ..codecs import JSONNode
 
 
 class Hasher:

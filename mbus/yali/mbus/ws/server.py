@@ -14,8 +14,8 @@ from websockets.frames import CloseCode
 from yali.core.appconf.ssl import server_context
 from yali.core.codecs import JSONNode
 from yali.core.models import BaseModel, Failure, Result
-from yali.core.secjwt import JWTPayloadValidator, JWTReference
 from yali.core.typebase import NonEmptyStr, PositiveInt
+from yali.core.utils.secjwt import JWTPayloadValidator, JWTReference
 
 from .common import AioWsServerConnection, wrap_server_process_request
 
