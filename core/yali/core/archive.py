@@ -12,11 +12,11 @@ from msgspec import DecodeError, ValidationError
 from .codecs import JSONNode
 from .consts import DEFAULT_COMPRESS_LEVEL
 from .models import BaseModel
-from .typebase import ConstrNode, JSONValue
+from .typebase import Constraint, JSONValue
 
-GzipLevel = Annotated[int, ConstrNode.constr_num(ge=0, le=9)]
-ZstdLevel = Annotated[int, ConstrNode.constr_num(ge=0, le=22)]
-Lz4Level = Annotated[int, ConstrNode.constr_num(ge=0, le=16)]
+GzipLevel = Annotated[int, Constraint.as_number(ge=0, le=9)]
+ZstdLevel = Annotated[int, Constraint.as_number(ge=0, le=22)]
+Lz4Level = Annotated[int, Constraint.as_number(ge=0, le=16)]
 
 
 class GzipCompression(BaseModel):

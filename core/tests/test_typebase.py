@@ -187,13 +187,13 @@ def test_secret_str():
 
 
 def test_constr_node():
-    MultiOf2 = Annotated[int, tb.ConstrNode.constr_num(multiple_of=2, ge=0)]
-    Str8 = Annotated[str, tb.ConstrNode.constr_str(min_length=8, max_length=8)]
+    MultiOf2 = Annotated[int, tb.Constraint.as_number(multiple_of=2, ge=0)]
+    Str8 = Annotated[str, tb.Constraint.as_string(min_length=8, max_length=8)]
     KebabStr = Annotated[
-        str, tb.ConstrNode.constr_str(pattern=r"^[a-z0-9-]+$", min_length=1)
+        str, tb.Constraint.as_string(pattern=r"^[a-z0-9-]+$", min_length=1)
     ]
     IntList8 = Annotated[
-        list[int], tb.ConstrNode.constr_seq(min_length=8, max_length=8)
+        list[int], tb.Constraint.as_sequence(min_length=8, max_length=8)
     ]
 
     msgspec.json.decode(b"0", type=MultiOf2)

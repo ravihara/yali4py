@@ -9,7 +9,7 @@ from yali.core.common import sizeof_object
 from yali.core.models import BaseModel, field_specs
 from yali.core.typebase import (
     AmqpUrl,
-    ConstrNode,
+    Constraint,
     NonEmptyStr,
     PositiveInt,
     SnakeCaseStr,
@@ -31,7 +31,7 @@ class PublisherConfig(BaseModel):
     exchange_name: SnakeCaseStr
     exchange_type: ExchangeType = ExchangeType.TOPIC
     prefetch_count: PositiveInt = field_specs(default=1)
-    max_message_size: Annotated[int, ConstrNode.constr_num(ge=5120)] = field_specs(
+    max_message_size: Annotated[int, Constraint.as_number(ge=5120)] = field_specs(
         default=5242880
     )
 
@@ -42,11 +42,11 @@ class PubSubConfig(PublisherConfig):
     data_preprocessor: RMQDataPreprocessor | None = None
 
     ## Only used for batch based pubsub
-    batch_interval: Annotated[float, ConstrNode.constr_num(ge=1.0)] = field_specs(
+    batch_interval: Annotated[float, Constraint.as_number(ge=1.0)] = field_specs(
         default=10.0
     )
     max_batch_entries: PositiveInt = field_specs(default=10)
-    max_batch_size: Annotated[int, ConstrNode.constr_num(ge=10240)] = field_specs(
+    max_batch_size: Annotated[int, Constraint.as_number(ge=10240)] = field_specs(
         default=52428800
     )
 

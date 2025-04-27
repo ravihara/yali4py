@@ -14,7 +14,7 @@ from yali.core.codecs import JSONNode
 from yali.core.errors import ErrorOrBytesIO, ErrorOrStr
 from yali.core.models import BaseModel, field_specs
 from yali.core.settings import env_config
-from yali.core.typebase import ConstrNode, NonEmptyStr, SecretStr
+from yali.core.typebase import Constraint, NonEmptyStr, SecretStr
 
 _env_config = env_config()
 
@@ -22,9 +22,9 @@ _env_config = env_config()
 # It is a tuple of (key, data, overwrite)
 BulkPutEntry = Tuple[str, BytesIO, bool]
 
-CacheSizeInt = Annotated[int, ConstrNode.constr_num(ge=1)]
-CacheTTLInt = Annotated[int, ConstrNode.constr_num(ge=10)]
-StorageConcurrancyInt = Annotated[int, ConstrNode.constr_num(ge=1)]
+CacheSizeInt = Annotated[int, Constraint.as_number(ge=1)]
+CacheTTLInt = Annotated[int, Constraint.as_number(ge=10)]
+StorageConcurrancyInt = Annotated[int, Constraint.as_number(ge=1)]
 
 
 class StorageSettings(BaseModel):

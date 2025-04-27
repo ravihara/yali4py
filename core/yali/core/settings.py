@@ -10,18 +10,18 @@ from .common import id_by_sysinfo
 from .consts import SERVICE_INST_ID_KEY
 from .models import BaseModel
 from .osfiles import FSNode
-from .typebase import ConstrNode, SecretStr
+from .typebase import Constraint, SecretStr
 
 OTelResourceAttrsStr = Annotated[
     str,
-    ConstrNode.constr_str(
+    Constraint.as_string(
         pattern=r"^service.name=[a-zA-Z0-9_.-]+,service.version=[a-zA-Z0-9_.-]+,deployment.environment=[a-zA-Z0-9_.-]+(,[a-zA-Z0-9_.]+=[a-zA-Z0-9_.,%&@\'\"\[\]-]+)*$"
     ),
 ]
-IntervalMillisFloat = Annotated[float, ConstrNode.constr_num(ge=1000)]
-QueueSizeInt = Annotated[int, ConstrNode.constr_num(ge=1000)]
-LogFileBytesInt = Annotated[int, ConstrNode.constr_num(ge=1048576)]
-LogRotationsInt = Annotated[int, ConstrNode.constr_num(gt=1, le=100)]
+IntervalMillisFloat = Annotated[float, Constraint.as_number(ge=1000)]
+QueueSizeInt = Annotated[int, Constraint.as_number(ge=1000)]
+LogFileBytesInt = Annotated[int, Constraint.as_number(ge=1048576)]
+LogRotationsInt = Annotated[int, Constraint.as_number(gt=1, le=100)]
 
 
 class LogLevelName(StrEnum):

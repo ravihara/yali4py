@@ -23,7 +23,7 @@ from yali.core.codecs import JSONNode
 from yali.core.models import BaseModel, field_specs
 from yali.core.settings import EnvConfig, env_config
 from yali.core.timings import Chrono
-from yali.core.typebase import ConstrNode, MongoUrl, PositiveInt, SecretStr
+from yali.core.typebase import Constraint, MongoUrl, PositiveInt, SecretStr
 
 DocId = str | ObjectId
 DocOp = InsertOne | UpdateOne | UpdateMany
@@ -114,7 +114,7 @@ class DocIndexConfig(BaseModel):
     sparse: bool = False
     background: bool = False
     expireAfterSeconds: (
-        Annotated[int, ConstrNode.constr_num(ge=0, le=2147483647)] | None
+        Annotated[int, Constraint.as_number(ge=0, le=2147483647)] | None
     ) = field_specs(default=None)
 
 
@@ -126,11 +126,11 @@ class TextIndexConfig(DocIndexConfig):
 
 
 class Geo2DIndexConfig(DocIndexConfig):
-    bits: Annotated[int, ConstrNode.constr_num(ge=1, le=32)] = field_specs(default=26)
-    min: Annotated[float, ConstrNode.constr_num(ge=-180.0, le=180.0)] = field_specs(
+    bits: Annotated[int, Constraint.as_number(ge=1, le=32)] = field_specs(default=26)
+    min: Annotated[float, Constraint.as_number(ge=-180.0, le=180.0)] = field_specs(
         default=-180.0
     )
-    max: Annotated[float, ConstrNode.constr_num(ge=-180.0, le=180.0)] = field_specs(
+    max: Annotated[float, Constraint.as_number(ge=-180.0, le=180.0)] = field_specs(
         default=180.0
     )
 
@@ -187,7 +187,7 @@ class DocDbSettings(BaseModel):
 
 class DocIndex(BaseModel):
     fields: Annotated[
-        list[IndexField], ConstrNode.constr_seq(min_length=1, max_length=32)
+        list[IndexField], Constraint.as_sequence(min_length=1, max_length=32)
     ]
     config: IndexConfig = DocIndexConfig
 

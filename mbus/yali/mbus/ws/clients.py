@@ -14,7 +14,7 @@ from yali.core.common import dict_to_result
 from yali.core.models import BaseModel, Failure, Result, Success, field_specs
 from yali.core.secjwt import JWTNode, JWTPayload
 from yali.core.secssl import SSLNode
-from yali.core.typebase import ConstrNode, WebsocketUrl
+from yali.core.typebase import Constraint, WebsocketUrl
 
 WsClientExcludeArgs = [
     "ws_url",
@@ -50,7 +50,7 @@ class LoopedWsClientConfig(BaseModel):
     ws_url: WebsocketUrl
     on_message: Callable[[AioWsClientConnection], Coroutine[Any, Any, None]]
     jwt_payload: JWTPayload | None = None
-    retry_timeout_sec: Annotated[float, ConstrNode.constr_num(ge=10.0)] = field_specs(
+    retry_timeout_sec: Annotated[float, Constraint.as_number(ge=10.0)] = field_specs(
         default=10.0
     )
 

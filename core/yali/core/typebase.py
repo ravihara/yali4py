@@ -86,9 +86,9 @@ MongoUrl = Annotated[
 ]
 
 
-class ConstrNode:
+class Constraint:
     @staticmethod
-    def constr_num(
+    def as_number(
         *,
         title: str | None = None,
         description: str | None = None,
@@ -120,7 +120,7 @@ class ConstrNode:
         )
 
     @staticmethod
-    def constr_str(
+    def as_string(
         *,
         title: str | None = None,
         description: str | None = None,
@@ -142,7 +142,7 @@ class ConstrNode:
         )
 
     @staticmethod
-    def constr_seq(
+    def as_sequence(
         *,
         title: str | None = None,
         description: str | None = None,
