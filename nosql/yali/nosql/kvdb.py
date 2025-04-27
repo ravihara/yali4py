@@ -5,9 +5,10 @@ import redis.asyncio as aio_redis
 from redis.backoff import ExponentialBackoff
 from redis.exceptions import BusyLoadingError, ConnectionError, TimeoutError
 from redis.retry import Retry
+
+from yali.core.appconf import env_config
 from yali.core.codecs import JSONNode
 from yali.core.models import BaseModel, field_specs
-from yali.core.settings import env_config
 from yali.core.typebase import DataType, NonEmptyStr, PositiveInt, SecretStr
 
 _env_config = env_config()
@@ -22,6 +23,9 @@ class KVStoreSettings(BaseModel):
     )
     db_id: int = _env_config("KV_ID", default=0, cast=int)
     resp_proto: int = _env_config("KV_RESP_PROTOCOL", default=2, cast=int)
+    retry_base_sec: float = _env_config("KV_RETRY_BASE_SEC", default=5, cast=float)
+    retry_cap_sec: float = _env_config("KV_RETRY_CAP_SEC", default=30, cast=float)
+    max_retries: int = _env_config("KV_MAX_RETRIES", default=3, cast=int)
 
 
 class KVEntry(BaseModel):
@@ -36,13 +40,15 @@ class KeyWithType(BaseModel):
 
 
 class KVStore:
-    _logger = logging.getLogger("yali.store.keydb_store")
+    _logger = logging.getLogger("yali.nosql.kvdb")
 
     def __init__(self, settings: KVStoreSettings):
         keydb_pass = settings.password.get_secret_value() if settings.password else None
         keydb_retry = Retry(
-            backoff=ExponentialBackoff(),
-            retries=3,
+            backoff=ExponentialBackoff(
+                cap=settings.retry_cap_sec, base=settings.retry_base_sec
+            ),
+            retries=settings.max_retries,
             supported_errors=(ConnectionError, TimeoutError, BusyLoadingError),
         )
 

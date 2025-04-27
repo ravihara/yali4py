@@ -12,8 +12,6 @@ class TimeParts(BaseModel):
 
 
 class Chrono:
-    mod = dt
-
     @staticmethod
     def get_current_utc_time(strip_tzinfo=False) -> dt.datetime:
         """

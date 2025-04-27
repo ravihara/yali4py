@@ -10,10 +10,10 @@ from typing import Annotated, Any, AsyncGenerator, Callable, List, Literal, Tupl
 import urllib3
 from minio.credentials.providers import Provider as CredentialsProvider
 
+from yali.core.appconf import env_config
 from yali.core.codecs import JSONNode
 from yali.core.errors import ErrorOrBytesIO, ErrorOrStr
 from yali.core.models import BaseModel, field_specs
-from yali.core.settings import env_config
 from yali.core.typebase import Constraint, NonEmptyStr, SecretStr
 
 _env_config = env_config()

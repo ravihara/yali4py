@@ -6,11 +6,11 @@ from functools import partial
 from multiprocessing import Queue as LogQueue
 from typing import Any, Callable, Coroutine, Dict, List, Tuple
 
+from .appconf import env_config
 from .consts import YALI_NUM_PROCESS_WORKERS, YALI_NUM_THREAD_WORKERS
 from .errors import YaliError
 from .logging import LogOptions, YaliLog, mproc_qlog_config
 from .models import AioExceptValue
-from .settings import env_config
 from .typebase import (
     Awaitable,
     AwaitableDoneHandler,

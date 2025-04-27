@@ -9,7 +9,7 @@ from ..consts import (
     STREAM_LOG_HANDLER_CLS,
 )
 from ..osfiles import FSNode
-from ..settings import log_settings
+from .common import log_settings
 from .filters import get_filter_class_for_level
 from .formatters import DefaultLogFormatter, effective_log_level
 

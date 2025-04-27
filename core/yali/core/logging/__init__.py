@@ -5,10 +5,9 @@ from typing import Any, Callable, Dict
 from ..common import yali_mproc_context
 from ..consts import DEFAULT_LOG_FORMAT
 from ..models import BaseModel
-from ..settings import log_settings
 from ..strings import lower_with_hyphens
 from ..typebase import NonEmptyStr, SingletonMeta
-from .config import MprocQueue, default_log_config, mproc_qlog_config
+from .config import MprocQueue, default_log_config, log_settings, mproc_qlog_config
 from .formatters import effective_log_level
 
 _log_settings = log_settings()

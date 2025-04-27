@@ -1,7 +1,7 @@
 from logging import Filter as LogFilter
 from typing import Dict
 
-from ..settings import LogLevelName, LogLevelNumber
+from .common import LogLevelName, LogLevelNumber
 
 
 class CriticalLogFilter(LogFilter):

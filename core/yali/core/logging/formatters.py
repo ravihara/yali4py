@@ -6,8 +6,8 @@ from opentelemetry import trace
 from opentelemetry.trace.span import INVALID_SPAN
 
 from ..codecs import JSONNode
-from ..settings import LogLevelName, LogSettings
-from ..timings import Chrono
+from ..timings import Chrono, dt
+from .common import LogLevelName, log_settings
 
 _LOG_DATETIME_FORMAT = "%Y-%m-%d %H:%M:%S.%f"
 _LOG_RECORD_ATTRS = {
@@ -37,30 +37,22 @@ _LOG_RECORD_ATTRS = {
     "otelSpanID",
 }
 
-log_settings = LogSettings()
+_log_settings = log_settings()
 
 
 def effective_log_level():
     """Return the effective log level based on debug mode and log level setting"""
-    if log_settings.log_level in [LogLevelName.DEBUG, LogLevelName.TRACE]:
-        return log_settings.log_level
+    if _log_settings.log_level in [LogLevelName.DEBUG, LogLevelName.TRACE]:
+        return _log_settings.log_level
 
-    if log_settings.debug_enabled:
+    if _log_settings.debug_enabled:
         return LogLevelName.DEBUG
 
-    return log_settings.log_level
+    return _log_settings.log_level
 
 
 class DefaultLogFormatter(logging.Formatter):
-    _keep_attr_types = (
-        bool,
-        int,
-        float,
-        Decimal,
-        complex,
-        str,
-        Chrono.mod.datetime,
-    )
+    _keep_attr_types = (bool, int, float, Decimal, complex, str, dt.datetime)
 
     def format(self, record):
         message = record.getMessage()
@@ -176,7 +168,7 @@ class DefaultLogFormatter(logging.Formatter):
         for attr_name in json_record:
             attr = json_record[attr_name]
 
-            if isinstance(attr, Chrono.mod.datetime):
+            if isinstance(attr, dt.datetime):
                 attr_str = attr.strftime(_LOG_DATETIME_FORMAT)[:-3]
                 json_record[attr_name] = attr_str + attr.strftime("%z")
 

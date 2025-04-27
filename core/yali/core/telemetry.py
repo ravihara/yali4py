@@ -1,4 +1,4 @@
-from typing import Dict
+from typing import Annotated, ClassVar, Dict, Literal
 
 import grpc
 from opentelemetry import metrics as otel_metrics
@@ -11,12 +11,73 @@ from opentelemetry.sdk.resources import Resource
 from opentelemetry.sdk.trace import Tracer, TracerProvider
 from opentelemetry.sdk.trace.export import BatchSpanProcessor
 
-from .settings import telemetry_settings
-from .typebase import SingletonMeta
+from .appconf import EnvConfig, env_config
+from .common import id_by_sysinfo
+from .consts import SERVICE_INST_ID_KEY
+from .models import BaseModel
+from .typebase import Constraint, SingletonMeta
+
+OTelResourceAttrsStr = Annotated[
+    str,
+    Constraint.as_string(
+        pattern=r"^service.name=[a-zA-Z0-9_.-]+,service.version=[a-zA-Z0-9_.-]+,deployment.environment=[a-zA-Z0-9_.-]+(,[a-zA-Z0-9_.]+=[a-zA-Z0-9_.,%&@\'\"\[\]-]+)*$"
+    ),
+]
+IntervalMillisFloat = Annotated[float, Constraint.as_number(ge=1000)]
+
+
+class TelemetrySettings(BaseModel):
+    _env_config: ClassVar[EnvConfig] = env_config()
+
+    otel_exporter: Literal["otlp"] = "otlp"
+    otel_exporter_headers: str = _env_config("OTEL_EXPORTER_OTLP_HEADERS")
+    otel_exporter_endpoint: str = _env_config("OTEL_EXPORTER_OTLP_ENDPOINT")
+    otel_resource_attributes: OTelResourceAttrsStr = _env_config(
+        "OTEL_RESOURCE_ATTRIBUTES", cast=OTelResourceAttrsStr
+    )
+    otel_export_interval_millis: IntervalMillisFloat = _env_config(
+        "OTEL_EXPORT_INTERVAL_MILLIS", default=5000, cast=IntervalMillisFloat
+    )
+    otel_exporter_certificate: str | None = _env_config(
+        "OTEL_EXPORTER_OTLP_CERTIFICATE", default=None
+    )
+    otel_exporter_certchain: str | None = _env_config(
+        "OTEL_EXPORTER_CERTCHAIN", default=None
+    )
+    otel_exporter_privkey: str | None = _env_config(
+        "OTEL_EXPORTER_PRIVKEY", default=None
+    )
+    resource_attributes: dict = {}
+
+    def __post_init__(self):
+        if (
+            self.otel_exporter_certchain is not None
+            and self.otel_exporter_privkey is None
+        ):
+            raise ValueError(
+                "If 'otel_exporter_certchain' is set, 'otel_exporter_privkey' must be set as well"
+            )
+
+        if (
+            self.otel_exporter_certchain is None
+            and self.otel_exporter_privkey is not None
+        ):
+            raise ValueError(
+                "If 'otel_exporter_privkey' is set, 'otel_exporter_certchain' must be set as well"
+            )
+
+        resource_pairs = self.otel_resource_attributes.split(",")
+
+        for resource_pair in resource_pairs:
+            key, value = resource_pair.split("=")
+            self.resource_attributes[key] = value
+
+        if SERVICE_INST_ID_KEY not in self.resource_attributes:
+            self.resource_attributes[SERVICE_INST_ID_KEY] = id_by_sysinfo()
 
 
 class YaliTelemetry(metaclass=SingletonMeta):
-    __settings = telemetry_settings()
+    __settings = TelemetrySettings()
 
     def __init__(self):
         self._insecure: bool = True

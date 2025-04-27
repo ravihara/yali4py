@@ -74,7 +74,7 @@ class WebSocketServer:
         request_path = connection.request.path
         connect_res = await self._config.on_connect(connection, request_path)
 
-        if connect_res.tid == "fl":
+        if isinstance(connect_res, Failure):
             self._logger.error(connect_res.error)
             await connection.close(
                 code=CloseCode.INTERNAL_ERROR, reason=connect_res.error

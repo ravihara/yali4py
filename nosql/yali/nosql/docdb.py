@@ -19,10 +19,10 @@ from pymongo.results import (
     UpdateResult,
 )
 
+from yali.core.appconf import EnvConfig, env_config
 from yali.core.codecs import JSONNode
 from yali.core.models import BaseModel, field_specs
-from yali.core.settings import EnvConfig, env_config
-from yali.core.timings import Chrono
+from yali.core.timings import Chrono, dt
 from yali.core.typebase import Constraint, MongoUrl, PositiveInt, SecretStr
 
 DocId = str | ObjectId
@@ -108,50 +108,6 @@ def doc_record_dec_hook(type: Type, obj: Any) -> Any:
     raise NotImplementedError(f"Objects of type {type} are not supported")
 
 
-class DocIndexConfig(BaseModel):
-    name: str | None = None
-    unique: bool = False
-    sparse: bool = False
-    background: bool = False
-    expireAfterSeconds: (
-        Annotated[int, Constraint.as_number(ge=0, le=2147483647)] | None
-    ) = field_specs(default=None)
-
-
-class TextIndexConfig(DocIndexConfig):
-    weights: Dict[str, int] | None = None
-    default_language: str = "english"
-    language_override: str = "language"
-    text_version: int | None = None
-
-
-class Geo2DIndexConfig(DocIndexConfig):
-    bits: Annotated[int, Constraint.as_number(ge=1, le=32)] = field_specs(default=26)
-    min: Annotated[float, Constraint.as_number(ge=-180.0, le=180.0)] = field_specs(
-        default=-180.0
-    )
-    max: Annotated[float, Constraint.as_number(ge=-180.0, le=180.0)] = field_specs(
-        default=180.0
-    )
-
-
-class IndexQualifier(Enum):
-    Ascending = pymongo.ASCENDING
-    Descending = pymongo.DESCENDING
-    Hashed = pymongo.HASHED
-    Text = pymongo.TEXT
-    Geo2D = pymongo.GEO2D
-    GeoSphere = pymongo.GEOSPHERE
-
-
-class IndexField(BaseModel):
-    name: str
-    qualifier: IndexQualifier = IndexQualifier.Ascending
-
-
-IndexConfig = DocIndexConfig | TextIndexConfig | Geo2DIndexConfig
-
-
 class DocDbSettings(BaseModel):
     _env_config: ClassVar[EnvConfig] = env_config()
 
@@ -185,6 +141,50 @@ class DocDbSettings(BaseModel):
             self.docdb_url = f"mongodb://{self.db_host}:{self.db_port}"
 
 
+class IndexQualifier(Enum):
+    Ascending = pymongo.ASCENDING
+    Descending = pymongo.DESCENDING
+    Hashed = pymongo.HASHED
+    Text = pymongo.TEXT
+    Geo2D = pymongo.GEO2D
+    GeoSphere = pymongo.GEOSPHERE
+
+
+class IndexField(BaseModel):
+    name: str
+    qualifier: IndexQualifier = IndexQualifier.Ascending
+
+
+class DocIndexConfig(BaseModel):
+    name: str | None = None
+    unique: bool = False
+    sparse: bool = False
+    background: bool = False
+    expireAfterSeconds: (
+        Annotated[int, Constraint.as_number(ge=0, le=2147483647)] | None
+    ) = field_specs(default=None)
+
+
+class TextIndexConfig(DocIndexConfig):
+    weights: Dict[str, int] | None = None
+    default_language: str = "english"
+    language_override: str = "language"
+    text_version: int | None = None
+
+
+class Geo2DIndexConfig(DocIndexConfig):
+    bits: Annotated[int, Constraint.as_number(ge=1, le=32)] = field_specs(default=26)
+    min: Annotated[float, Constraint.as_number(ge=-180.0, le=180.0)] = field_specs(
+        default=-180.0
+    )
+    max: Annotated[float, Constraint.as_number(ge=-180.0, le=180.0)] = field_specs(
+        default=180.0
+    )
+
+
+IndexConfig = DocIndexConfig | TextIndexConfig | Geo2DIndexConfig
+
+
 class DocIndex(BaseModel):
     fields: Annotated[
         list[IndexField], Constraint.as_sequence(min_length=1, max_length=32)
@@ -194,12 +194,8 @@ class DocIndex(BaseModel):
 
 class DocRecord(BaseModel):
     id: DocId | None = field_specs(default=None, name="_id")
-    created_at: Chrono.mod.datetime = field_specs(
-        default_factory=Chrono.get_current_utc_time
-    )
-    updated_at: Chrono.mod.datetime = field_specs(
-        default_factory=Chrono.get_current_utc_time
-    )
+    created_at: dt.datetime = field_specs(default_factory=Chrono.get_current_utc_time)
+    updated_at: dt.datetime = field_specs(default_factory=Chrono.get_current_utc_time)
     created_by: str | None = None
     updated_by: str | None = None
 
@@ -217,7 +213,7 @@ _docdb_settings = DocDbSettings()
 class DocRepo(ABC):
     __db_client: MongoClient | None = None
 
-    logger = logging.getLogger("yali.dbstore.docdb")
+    logger = logging.getLogger("yali.nosql.docdb")
 
     @classmethod
     def _init_client(cls):
@@ -312,9 +308,8 @@ class DocRepo(ABC):
                 continue
 
             try:
-                self.collection.create_index(
-                    index_entries, **JSONNode.load_data(data=index.config)
-                )
+                index_config = msgspec.to_builtins(index.config, str_keys=True)
+                self.collection.create_index(index_entries, **index_config)
             except Exception as e:
                 self.logger.error(
                     f"Failed to create index {JSONNode.dump_str(index)}. Error: {str(e)}"

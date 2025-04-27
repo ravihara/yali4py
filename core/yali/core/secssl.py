@@ -1,10 +1,10 @@
 import os
 import ssl
 
-from .settings import ClientSSLSettings, ServerSSLSettings
+from .appconf.ssl import ClientSSLConfig, ServerSSLConfig
 
-_def_client_ssl_settings = ClientSSLSettings()
-_def_server_ssl_settings = ServerSSLSettings()
+_def_client_ssl_settings = ClientSSLConfig()
+_def_server_ssl_settings = ServerSSLConfig()
 
 
 class SSLNode:
@@ -33,7 +33,7 @@ class SSLNode:
         return ctx
 
     @staticmethod
-    def server_context(settings: ServerSSLSettings = _def_server_ssl_settings):
+    def server_context(settings: ServerSSLConfig = _def_server_ssl_settings):
         """
         Get the SSL context for the server using environment variables
 
@@ -64,7 +64,7 @@ class SSLNode:
         return ctx
 
     @staticmethod
-    def client_context(settings: ClientSSLSettings = _def_client_ssl_settings):
+    def client_context(settings: ClientSSLConfig = _def_client_ssl_settings):
         """
         Get the SSL context for the client using environment variables
 
