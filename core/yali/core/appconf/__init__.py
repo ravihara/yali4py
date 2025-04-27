@@ -93,7 +93,7 @@ def load_environment(env_file: str | None = None):
             load_dotenv(dotenv_path=default_env)
 
 
-def config_from_yaml(yaml_conf_file: str, *, env_file: str | None = None):
+def config_data_from_yaml(yaml_conf_file: str, *, env_file: str | None = None):
     """
     Loads YAML, expanding environment variables with multiple fallbacks.
     """
@@ -144,11 +144,12 @@ def env_config(env_files: List[str] = []):
     return __env_config
 
 
-def init_application_config(yaml_conf_file: str, *, env_file: str | None = None):
+def application_config(
+    *, yaml_conf_file: str | None = None, env_file: str | None = None
+):
     global __app_config
 
     if __app_config:
-        print("Application configuration already initialized")
         return __app_config
 
     print("Initializing application configuration")
@@ -162,6 +163,7 @@ def init_application_config(yaml_conf_file: str, *, env_file: str | None = None)
     else:
         __app_config.mproc_ctx = mproc_get_context("fork")
 
-    __app_config.data = config_from_yaml(yaml_conf_file, env_file=env_file)
+    if yaml_conf_file:
+        __app_config.data = config_data_from_yaml(yaml_conf_file, env_file=env_file)
 
     return __app_config
