@@ -8,7 +8,7 @@ from multiprocessing import Queue as MprocQueue
 from multiprocessing import current_process
 from typing import Any, Dict
 
-from ..common import yali_mproc_context
+from ..appconf import application_mproc_context
 from ..consts import YALI_SENTINEL
 
 
@@ -48,8 +48,8 @@ class MprocLogQueueListener:
         This starts up a background process to monitor the queue for
         LogRecords to handle.
         """
-        mproc_ctx = yali_mproc_context()
-        self._log_process = mproc_ctx.Process(
+        mproc_context = application_mproc_context()
+        self._log_process = mproc_context.Process(
             name="yali-mproc-log-listener", target=self._monitor
         )
 

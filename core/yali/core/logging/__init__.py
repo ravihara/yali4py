@@ -2,11 +2,11 @@ from logging import getLogger
 from logging.config import dictConfig as dict_logging_config
 from typing import Any, Callable, Dict
 
-from ..common import yali_mproc_context
+from ..appconf import application_mproc_context
 from ..consts import DEFAULT_LOG_FORMAT
 from ..models import BaseModel
-from ..strings import lower_with_hyphens
 from ..typebase import NonEmptyStr, SingletonMeta
+from ..utils.strings import lower_with_hyphens
 from .config import MprocQueue, default_log_config, log_settings, mproc_qlog_config
 from .formatters import effective_log_level
 
@@ -29,7 +29,7 @@ class YaliLog(metaclass=SingletonMeta):
         log_config = options.config or default_log_config(log_name=self.__log_name)
 
         if _log_settings.enable_mproc_logging:
-            self.__mproc_context = yali_mproc_context()
+            self.__mproc_context = application_mproc_context()
             self.__mproc_manager = self.__mproc_context.Manager()
             self.__mproc_queue = self.__mproc_manager.Queue(
                 maxsize=_log_settings.log_queue_size
