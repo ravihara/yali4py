@@ -9,9 +9,9 @@ from websockets.asyncio.client import ClientConnection as AioWsClientConnection
 from websockets.asyncio.client import connect as aio_ws_connect
 from websockets.frames import CloseCode
 
-from yali.core.appconf.ssl import client_context
 from yali.core.codecs import JSONNode
 from yali.core.common import dict_to_result
+from yali.core.config.ssl import client_context
 from yali.core.models import BaseModel, Failure, Result, Success, field_specs
 from yali.core.typebase import Constraint, WebsocketUrl
 from yali.core.utils.secjwt import JWTNode, JWTPayload

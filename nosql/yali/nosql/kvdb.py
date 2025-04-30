@@ -6,8 +6,8 @@ from redis.backoff import ExponentialBackoff
 from redis.exceptions import BusyLoadingError, ConnectionError, TimeoutError
 from redis.retry import Retry
 
-from yali.core.appconf import env_config
 from yali.core.codecs import JSONNode
+from yali.core.config import env_config
 from yali.core.models import BaseModel, field_specs
 from yali.core.typebase import DataType, NonEmptyStr, PositiveInt, SecretStr
 

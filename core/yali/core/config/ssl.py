@@ -3,8 +3,8 @@ import ssl
 from typing import ClassVar
 
 from ..models import BaseModel
-from ..osfiles import FSNode
 from ..typebase import SecretStr
+from ..utils.osfiles import FSNode
 from . import EnvConfig, env_config
 
 
@@ -115,7 +115,7 @@ def server_context(settings: ServerSSLConfig = __def_server_ssl_config):
         (lambda: settings.password.get_secret_value()) if settings.password else None
     )
 
-    ctx = ssl.SSLContext(ssl.PROTOCOL_TLS_SERVER)
+    ctx = ssl.SSLContext(ssl.PROTOCOL_TLS_SERVER)  # NOSONAR
     ctx.load_default_certs(ssl.Purpose.CLIENT_AUTH)
     ctx.load_cert_chain(settings.cert_file, settings.key_file, get_password)
 
@@ -142,7 +142,7 @@ def client_context(settings: ClientSSLConfig = __def_client_ssl_config):
         (lambda: settings.password.get_secret_value()) if settings.password else None
     )
 
-    ctx = ssl.SSLContext(ssl.PROTOCOL_TLS_CLIENT)
+    ctx = ssl.SSLContext(ssl.PROTOCOL_TLS_CLIENT)  # NOSONAR
     ctx.load_default_certs(ssl.Purpose.SERVER_AUTH)
     ctx.load_cert_chain(settings.cert_file, settings.key_file, get_password)
 

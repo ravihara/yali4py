@@ -1,7 +1,7 @@
 from enum import IntEnum, StrEnum
 from typing import Annotated, ClassVar
 
-from ..appconf import EnvConfig, env_config
+from ..config import EnvConfig, env_config
 from ..models import BaseModel
 from ..typebase import Constraint
 
